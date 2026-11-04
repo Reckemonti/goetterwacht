@@ -46,6 +46,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 #xpfill{height:100%;width:100%;background:linear-gradient(90deg,#3b7dd8,var(--xp),#a6d4ff);transform-origin:left;transform:scaleX(0);box-shadow:0 0 12px rgba(88,166,255,.7)}
 .hud-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-top:14px}
 .hp-wrap{min-width:0;width:min(42vw,260px)}
+#buffs{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+#buffs span{font-size:12px;font-weight:700;letter-spacing:.04em;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.5);border:1px solid var(--c);color:var(--c)}
 .hp-top{display:flex;justify-content:space-between;font-weight:600;font-size:15px;letter-spacing:.04em}
 .hp-top .lv{color:var(--gold)}
 #hpbar{height:12px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:3px;overflow:hidden;margin-top:3px}
@@ -184,6 +186,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
     <div class="hp-wrap">
       <div class="hp-top"><span id="hptext">100 / 100</span><span class="lv" id="lvtext">Stufe 1</span></div>
       <div id="hpbar"><div id="hpfill"></div></div>
+      <div id="buffs"></div>
     </div>
     <div class="wave"><b id="wavetext">Welle 1</b><span id="wavesub">0:30</span></div>
     <div class="stats"><span class="runehud" id="runehud">ᚱ <span id="runes">0</span></span><span><span class="k">Kills</span> <span id="kills">0</span></span>
@@ -199,7 +202,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 21</div>
+    <div class="ver" id="ver">Version 22</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -803,7 +806,7 @@ function newRun(godId){
     dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
-    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
+    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
   addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
   Object.assign(G,{ shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
@@ -846,6 +849,7 @@ function hurt(e, dmg, kx=0, ky=0, kb=0, col=0){
   if(G.god==="skadi" && e.slow>0){ d *= 1.25; }
   if(e.frozen>0) d*=1.5;
   if(e.mark>0) d*=1.2;
+  if(G.buffs.zorn>0) d*=1.5;
   const crit = Math.random()<.06+G.fate.crit+(G.luck||0)*.015; if(crit) d*=2;
   d = Math.round(d);
   e.hp -= d; e.fl = .09;
@@ -1320,13 +1324,13 @@ function pickupsUpdate(dt){
       if(g.k==="gem"){ gainXp(g.v); sfx("pick"); }
       else if(g.k==="meat"){ G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.3); text(G.x,G.y-30,`+${Math.round(G.maxHp*.3)} Leben`,4); burst(G.x,G.y,16,PIDX.green,160,.5,3); }
       else if(g.k==="magnet"){ for(const o of GM) if(o.on&&o.k==="gem") o.vac=true; }
-      else if(g.k==="coin"){ const v=Math.max(1,Math.round((1+Math.floor(G.wave/6))*G.runeMul)); G.runes+=v; if(BOT.on) BOT.rs.coin=(BOT.rs.coin||0)+v; G.coinFx=.35; sfx("coin"); text(G.x+rnd(-8,8),G.y-26,`+${v} ᚱ`,2); }
+      else if(g.k==="coin"){ const v=Math.max(1,Math.round((1+Math.floor(G.wave/6))*G.runeMul*(G.buffs.gier>0?2:1))); G.runes+=v; if(BOT.on) BOT.rs.coin=(BOT.rs.coin||0)+v; G.coinFx=.35; sfx("coin"); text(G.x+rnd(-8,8),G.y-26,`+${v} ᚱ`,2); }
       else if(g.k==="apple"){ G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.5); text(G.x,G.y-30,"Iduns Apfel",4); burst(G.x,G.y,24,PIDX.gold,180,.6,3); sfx("level"); }
       else if(g.k==="chest"){ G.pendingLv+=G.sk.freyja?2:1; G.chest=true; burst(G.x,G.y,40,PIDX.gold,260,.7,4); }
     }
   }
 }
-function gainXp(v){ G.xp += v*G.xpMul; while(G.xp>=G.xpNeed){ G.xp-=G.xpNeed; G.level++; G.xpNeed=xpNeed(G.level); G.pendingLv++; if(G.level%9===0) G.pendingFate++; } }
+function gainXp(v){ G.xp += v*G.xpMul*(G.buffs.gier>0?2:1); while(G.xp>=G.xpNeed){ G.xp-=G.xpNeed; G.level++; G.xpNeed=xpNeed(G.level); G.pendingLv++; if(G.level%9===0) G.pendingFate++; } }
 /* ---- Schicksalswurf: two random boons every 10 levels ---- */
 const FATE = [
   { k:"dmg", name:"Zorn der Ahnen", rune:"ᚢ", roll:()=>ri(10,25), txt:v=>`+${v} % Schaden`, apply:v=>G.fate.dmg*=1+v/100 },
@@ -1461,7 +1465,7 @@ function playerUpdate(dt){
   const m=Math.hypot(mx,my); if(m>1){ mx/=m; my/=m; }
   G.moving = m>.05;
   if(G.moving){ G.dirx=mx; G.diry=my; if(Math.abs(mx)>.1) G.facing = mx>0?1:-1; G.walk+=dt*10; }
-  const spd=G.speed*(G.hasteT>0?1.5:1); G.x=clamp(G.x+mx*spd*dt,-WORLD+20,WORLD-20); G.y=clamp(G.y+my*spd*dt,-WORLD+20,WORLD-20);
+  const spd=G.speed*(G.hasteT>0?1.5:1)*(G.buffs.eile>0?1.4:1); G.x=clamp(G.x+mx*spd*dt,-WORLD+20,WORLD-20); G.y=clamp(G.y+my*spd*dt,-WORLD+20,WORLD-20);
   if(G.inv>0) G.inv-=dt; if(G.hurtT>0) G.hurtT-=dt;
   G.hp=Math.min(G.maxHp, G.hp + G.regen*dt);
   G.healBud=Math.min(G.maxHp*.05, (G.healBud||0)+G.maxHp*.025*dt);
@@ -1496,6 +1500,25 @@ function frame(now){
   render(dt);
   hudT-=dt; if(hudT<=0 && G){ hudT=.1; hud(); }
 }
+/* ---- Shrines: step in to claim a short blessing ---- */
+const SHRINES = [
+  { id:"zorn", name:"Schrein des Zorns", rune:"ᚢ", col:"#ff6a4a", glow:"red", d:"+50 % Schaden", dur:15 },
+  { id:"eile", name:"Schrein der Eile", rune:"ᛖ", col:"#7fd8ff", glow:"frost", d:"+40 % Tempo", dur:15 },
+  { id:"leben", name:"Schrein des Lebens", rune:"ᛒ", col:"#7dffb0", glow:"green", d:"Heilt 40 %", dur:0 },
+  { id:"gier", name:"Schrein der Gier", rune:"ᚠ", col:"#f2c14e", glow:"gold", d:"Doppelte Seelen und Münzen", dur:20 },
+];
+function shrinesUpdate(dt){
+  G.shrineT-=dt;
+  if(G.shrineT<=0 && G.shrines.length<2){ G.shrineT=rnd(35,55); const a=Math.random()*TAU, r=rnd(380,620), sh=pick(SHRINES);
+    G.shrines.push({ ...sh, x:clamp(G.x+Math.cos(a)*r,-WORLD+80,WORLD-80), y:clamp(G.y+Math.sin(a)*r,-WORLD+80,WORLD-80), prog:0, life:40 }); }
+  for(let i=G.shrines.length-1;i>=0;i--){ const h=G.shrines[i]; h.life-=dt; if(h.life<=0){ G.shrines.splice(i,1); continue; }
+    const d=Math.hypot(G.x-h.x,G.y-h.y); h.prog = d<46 ? h.prog+dt/1.0 : Math.max(0,h.prog-dt);
+    if(h.prog>=1){ G.shrines.splice(i,1); if(h.id==="leben") G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.4); else G.buffs[h.id]=h.dur;
+      effects.push({k:"ring",x:h.x,y:h.y,r:160,l:.5,m:.5,c:h.id==="zorn"?"rgba(255,100,70,":h.id==="eile"?"rgba(127,216,255,":h.id==="leben"?"rgba(125,255,176,":"rgba(242,193,78,"});
+      burst(h.x,h.y,40,h.id==="zorn"?PIDX.red:h.id==="eile"?PIDX.frost:h.id==="leben"?PIDX.green:PIDX.gold,260,.7,4); sfx("level"); kick=Math.max(kick,.3);
+      if(!BOT.on) banner(h.name, h.d); } }
+  for(const k in G.buffs){ if(G.buffs[k]>0) G.buffs[k]-=dt; }
+}
 function tipsUpdate(){ if(G.tips && G.tips.length && G.time>=G.tips[0][0]){ const t=G.tips.shift(); if(!BOT.on) banner(null,t[1]); } }
 function update(dt){
   if(G.hitstop>0){ G.hitstop-=dt; dt*=.15; }
@@ -1512,7 +1535,7 @@ function update(dt){
   skillsUpdate(dt);
   icewavesUpdate(dt);
   pickupsUpdate(dt);
-  waveUpdate(dt); tipsUpdate();
+  waveUpdate(dt); tipsUpdate(); shrinesUpdate(dt);
   // particles
   for(let i=0;i<MAXPT;i++){ if(pt.l[i]<=0) continue; pt.l[i]-=dt; pt.x[i]+=pt.vx[i]*dt; pt.y[i]+=pt.vy[i]*dt; pt.vx[i]*=.92; pt.vy[i]*=.92; }
   for(const t of TX){ if(!t.on) continue; t.l-=dt; t.y-=40*dt; if(t.l<=0) t.on=false; }
@@ -1555,6 +1578,11 @@ function render(dt){
     if(t.kind==="slam"){ c.fillStyle=t.enemy?`rgba(255,70,50,${.12+k*.18})`:`rgba(255,210,110,${.08+k*.14})`; c.beginPath(); c.arc(t.x,t.y,t.r,0,TAU); c.fill();
       c.strokeStyle=t.enemy?"rgba(255,90,70,.9)":"rgba(255,220,130,.9)"; c.lineWidth=2.5; c.beginPath(); c.arc(t.x,t.y,t.r*k,0,TAU); c.stroke(); c.beginPath(); c.arc(t.x,t.y,t.r,0,TAU); c.stroke(); }
     else if(t.kind==="line"){ c.save(); c.translate(t.x,t.y); c.rotate(t.a); c.fillStyle=`rgba(255,70,50,${.15+k*.25})`; c.fillRect(0,-t.w/2,t.len,t.w); c.fillStyle=`rgba(255,120,100,${.5})`; c.fillRect(0,-t.w/2,t.len*k,t.w); c.restore(); } }
+  // shrines
+  for(const h of G.shrines){ if(h.x<x0-60||h.x>x1+60||h.y<y0-60||h.y>y1+60) continue; const pulse=.7+.3*Math.sin(T*4), fade=Math.min(1,h.life/3);
+    c.globalAlpha=fade; c.globalCompositeOperation="lighter"; c.drawImage(GLOW[h.glow],h.x-70*pulse,h.y-70*pulse,140*pulse,140*pulse); c.globalCompositeOperation="source-over";
+    c.strokeStyle=h.col; c.lineWidth=2; c.beginPath(); c.arc(h.x,h.y,46,0,TAU); c.stroke(); if(h.prog>0){ c.lineWidth=5; c.beginPath(); c.arc(h.x,h.y,46,-Math.PI/2,-Math.PI/2+h.prog*TAU); c.stroke(); }
+    c.drawImage(DECOR_SPR.stone,h.x-24,h.y-60,48,72); c.fillStyle=h.col; c.font="bold 22px 'Noto Sans Runic', serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(h.rune,h.x,h.y-30+Math.sin(T*3)*3); c.globalAlpha=1; }
   // small enemies' attack windows
   for(let i=0;i<MAXE;i++){ const e=E[i]; if(!e.on||(e.st!=="melee"&&e.st!=="aim")||e.x<x0||e.x>x1||e.y<y0||e.y>y1) continue;
     if(e.st==="melee"){ const k=1-e.stT/e.stM; c.fillStyle=`rgba(255,60,40,${.12+k*.22})`; c.beginPath(); c.arc(e.mx,e.my,e.mr,0,TAU); c.fill(); c.strokeStyle="rgba(255,80,60,.85)"; c.lineWidth=1.6; c.beginPath(); c.arc(e.mx,e.my,e.mr*k,0,TAU); c.stroke(); }
@@ -1715,12 +1743,15 @@ function render(dt){
   if(G.cine>0){ const k=Math.min(1,G.cine/.4, (2-G.cine)/.35+0), bh=VH*.09*Math.min(1,Math.min(G.cine,2-G.cine)/.3); c.fillStyle="#000"; c.fillRect(0,0,VW,bh); c.fillRect(0,VH-bh,VW,bh); }
   if(flash>0){ c.fillStyle=`rgba(220,240,255,${flash*.5})`; c.fillRect(0,0,VW,VH); }
   // boss pointer
+  for(const h of G.shrines){ const bx=(h.x-camX)*ZOOM+VW/2, by=(h.y-camY)*ZOOM+VH/2; if(bx<0||bx>VW||by<0||by>VH){ const a=Math.atan2(by-VH/2,bx-VW/2), px=clamp(VW/2+Math.cos(a)*(VW/2-30),30,VW-30), py=clamp(VH/2+Math.sin(a)*(VH/2-30),90,VH-30);
+    c.save(); c.translate(px,py); c.fillStyle=h.col; c.beginPath(); c.arc(0,0,10,0,TAU); c.fill(); c.fillStyle="#0b0f16"; c.font="bold 12px 'Noto Sans Runic', serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(h.rune,0,1); c.restore(); } }
   for(const B of (G.bosses||[])){ if(!B.on) continue; const bx=(B.x-camX)*ZOOM+VW/2, by=(B.y-camY)*ZOOM+VH/2; if(bx<0||bx>VW||by<0||by>VH){ const a=Math.atan2(by-VH/2,bx-VW/2), px=clamp(VW/2+Math.cos(a)*(VW/2-34),34,VW-34), py=clamp(VH/2+Math.sin(a)*(VH/2-34),90,VH-34); c.save(); c.translate(px,py); c.rotate(a); c.fillStyle="#ff4d3d"; c.beginPath(); c.moveTo(16,0); c.lineTo(-8,-10); c.lineTo(-8,10); c.fill(); c.restore(); } }
   // minimap
   const mm=Math.min(120, VW*.26), mx=VW-mm-Math.max(12,0), my=VH-mm-12-(window.visualViewport?0:0);
   c.fillStyle="rgba(8,12,20,.7)"; c.fillRect(mx,my,mm,mm); c.strokeStyle="rgba(127,216,255,.3)"; c.lineWidth=1; c.strokeRect(mx+.5,my+.5,mm-1,mm-1);
   const mS=mm/(WORLD*2);
   c.fillStyle="rgba(255,90,70,.55)"; for(let i=0;i<MAXE;i+=3){ const e=E[i]; if(!e.on) continue; c.fillRect(mx+(e.x+WORLD)*mS-1,my+(e.y+WORLD)*mS-1,1.5,1.5); }
+  for(const h of G.shrines){ c.fillStyle=h.col; c.fillRect(mx+(h.x+WORLD)*mS-2.5,my+(h.y+WORLD)*mS-2.5,5,5); }
   c.fillStyle="#ff4d3d"; for(const B of (G.bosses||[])){ if(!B.on) continue; c.beginPath(); c.arc(mx+(B.x+WORLD)*mS,my+(B.y+WORLD)*mS,4,0,TAU); c.fill(); }
   c.strokeStyle="rgba(255,255,255,.35)"; c.strokeRect(mx+(camX-hw+WORLD)*mS, my+(camY-hh+WORLD)*mS, hw*2*mS, hh*2*mS);
   c.fillStyle="#f2c14e"; c.beginPath(); c.arc(mx+(G.x+WORLD)*mS,my+(G.y+WORLD)*mS,3,0,TAU); c.fill();
@@ -1790,12 +1821,14 @@ function renderTitleBg(dt){
 }
 
 /* ---------------- HUD ---------------- */
-const hudEls = { hp:$("hpfill"), hpt:$("hptext"), lv:$("lvtext"), xp:$("xpfill"), wave:$("wavetext"), sub:$("wavesub"), kills:$("kills"), boss:$("bossfill"), runes:$("runes"), runehud:$("runehud") };
+const hudEls = { hp:$("hpfill"), hpt:$("hptext"), lv:$("lvtext"), xp:$("xpfill"), wave:$("wavetext"), sub:$("wavesub"), kills:$("kills"), boss:$("bossfill"), runes:$("runes"), runehud:$("runehud"), buffs:$("buffs") };
 const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
 function hud(){
   hudEls.hp.style.transform=`scaleX(${clamp(G.hp/G.maxHp,0,1)})`; hudEls.hpt.textContent=`${Math.ceil(Math.max(0,G.hp))} / ${Math.round(G.maxHp)}`;
   hudEls.lv.textContent=`Stufe ${G.level}`; hudEls.xp.style.transform=`scaleX(${clamp(G.xp/G.xpNeed,0,1)})`;
-  hudEls.wave.textContent=`Welle ${G.wave}`; hudEls.kills.textContent=G.kills; hudEls.runes.textContent=G.runes; hudEls.runehud.classList.toggle("pop", (G.coinFx||0)>0); if(G.coinFx>0) G.coinFx-=.1;
+  hudEls.wave.textContent=`Welle ${G.wave}`; hudEls.kills.textContent=G.kills;
+  { let bh=""; for(const sh of SHRINES){ const t=G.buffs[sh.id]; if(t>0) bh+=`<span style="--c:${sh.col}">${sh.rune} ${sh.d.split(" ").slice(0,2).join(" ")} ${Math.ceil(t)} s</span>`; } if(G.bearT>0) bh+=`<span style="--c:#c98a4a">Bärenhaut ${Math.ceil(G.bearT)} s</span>`; if(G.frenzyT>0.3) bh+=`<span style="--c:#ff4d3d">Blutrausch</span>`;
+    if(hudEls.buffs.dataset.h!==bh){ hudEls.buffs.innerHTML=bh; hudEls.buffs.dataset.h=bh; } } hudEls.runes.textContent=G.runes; hudEls.runehud.classList.toggle("pop", (G.coinFx||0)>0); if(G.coinFx>0) G.coinFx-=.1;
   if(G.phase==="fight"){ hudEls.sub.textContent=fmt(Math.max(0,G.waveT)); hudEls.sub.className=""; }
   else if(G.phase==="boss"){ { const nb=(G.bosses||[]).filter(b=>b.on).length; hudEls.sub.textContent= nb>1? `Besiege die Bosse (${nb})` : "Besiege den Wächter"; } hudEls.sub.className="boss"; }
   else { hudEls.sub.textContent="Atempause"; hudEls.sub.className=""; }
@@ -1973,7 +2006,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 21;
+const GAME_VERSION = 22;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2020,6 +2053,7 @@ function botThink(){
   // goals: pickups, then targets
   let best=null, bd=1e9; for(const g of GM){ if(!g.on) continue; const d=Math.hypot(g.x-px,g.y-py); const w = g.k==="meat"||g.k==="apple" ? (G.hp<G.maxHp*.75?.3:3) : g.k==="chest"?.3 : 1; const dd=d*w; if(d<420 && dd<bd){ bd=dd; best=g; } }
   if(best) push(best.x-px,best.y-py, best.k==="meat"&&G.hp<G.maxHp*.6?2.2:.9);
+  if(G.shrines.length && cn<14){ const h=G.shrines[0]; push(h.x-px,h.y-py,1.3); }
   const tgt = (G.boss&&G.boss.on) ? G.boss : near;
   if(tgt){ const d=Math.hypot(tgt.x-px,tgt.y-py), want = melee? (tgt.boss? tgt.r+40 : 70) : 160; if(d>want) push(tgt.x-px,tgt.y-py, tgt.boss?1.4:.6); }
   if(cn>18){ push(px-cx/cn,py-cy/cn,1.2); }
