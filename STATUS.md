@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 18
+Stand: 04.11.2026, Version 19
 
 ## Zuletzt geändert
+- Version 19: Wächter am Anfang fairer (weniger Kontakt- und Schlagschaden), Schmiede-Fähigkeiten und Vidar abgeschwächt, Spätphase ab Welle 7 deutlich zäher; Simulation mit Mensch-Modus: frisch ~Welle 9, mittlere Schmiede ~Welle 17
 - Version 18: Test-Autopilot (Simulation) eingebaut; Balancing: weniger und langsamere Pfeile, schwächere Irrlicht-Kugeln, Geschoss-Obergrenze, langsamere Stufen, Ulfr/Skadi/Donar angeglichen
 - Version 17: Musik halb so laut; Ton startet schon beim ersten Tippen auf dem Startbildschirm
 - Version 16: Ton-Freischaltung für iPhone (auch bei Stummschalter) und Android verbessert; App-Symbol und Web-App-Manifest
