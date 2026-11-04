@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 16
+Stand: 04.11.2026, Version 17
 
 ## Zuletzt geändert
+- Version 17: Musik halb so laut; Ton startet schon beim ersten Tippen auf dem Startbildschirm
 - Version 16: Ton-Freischaltung für iPhone (auch bei Stummschalter) und Android verbessert; App-Symbol und Web-App-Manifest
 - Version 15: eigene Musik (Startbildschirm, Kampf, Bosskampf) mit Überblendung, Knopf Musik an/aus
 - Version 14: Startbildschirm mit Blitzen, Bergen, Glut und atmenden Götterbildern; 3 neue grosse Bosse (Nidhögg, Modgud, Fafnir) und 4 neue Wächter (Knochenbrecher, Sturmhexe, Höhlenbär, Grabhüter) mit eigenen Angriffen; Kino-Auftritt der Bosse, Lichtstrahlen beim Boss-Tod, Wetter je nach Welle

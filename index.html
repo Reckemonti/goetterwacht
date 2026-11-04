@@ -199,7 +199,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 16</div>
+    <div class="ver" id="ver">Version 17</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -688,7 +688,7 @@ const MEL_BATTLE=[[0,0,62,4],[0,4,62,2],[0,6,65,2],[0,8,64,4],[0,12,62,4],[2,0,7
 const mf = m => 440*Math.pow(2,(m-69)/12);
 function musInit(){
   if(MUS.bus || !AC) return;
-  MUS.bus=AC.createGain(); MUS.bus.gain.value=meta.music===false?0:.95; MUS.bus.connect(master);
+  MUS.bus=AC.createGain(); MUS.bus.gain.value=meta.music===false?0:.48; MUS.bus.connect(master);
   // generated hall reverb
   MUS.rev=AC.createConvolver(); const len=AC.sampleRate*2.8, ir=AC.createBuffer(2,len,AC.sampleRate);
   for(let ch=0;ch<2;ch++){ const d=ir.getChannelData(ch); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
@@ -1813,10 +1813,10 @@ function pause(){ if(state!=="play") return; state="pause"; renderSlots(); show(
 function resume(){ if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
 $("pausebtn").addEventListener("click", pause); $("btn-resume").addEventListener("click", resume);
 $("btn-quit").addEventListener("click", ()=>{ hide("ov-pause"); state="play"; gameOver(); });
-function toggleSound(){ meta.sound=!meta.sound; saveMeta(); if(master) master.gain.value=meta.sound?.5:0; $("btn-sound").textContent=$("btn-sound2").textContent=`Ton: ${meta.sound?"an":"aus"}`; }
+function toggleSound(){ unlockAudio(); meta.sound=!meta.sound; saveMeta(); if(master) master.gain.value=meta.sound?.5:0; $("btn-sound").textContent=$("btn-sound2").textContent=`Ton: ${meta.sound?"an":"aus"}`; }
 $("btn-sound").addEventListener("click", toggleSound); $("btn-sound2").addEventListener("click", toggleSound);
 function musicLabel(){ $("btn-music").textContent=$("btn-music2").textContent=`Musik: ${meta.music===false?"aus":"an"}`; }
-function toggleMusic(){ meta.music = meta.music===false; saveMeta(); audioInit(); if(MUS.bus) MUS.bus.gain.value = meta.music===false?0:.95; if(meta.music!==false && !MUS.theme) setMusic(state==="play"?"battle":"title"); musicLabel(); }
+function toggleMusic(){ meta.music = meta.music===false; saveMeta(); unlockAudio(); if(MUS.bus) MUS.bus.gain.value = meta.music===false?0:.48; if(meta.music!==false && !MUS.theme) setMusic(state==="play"?"battle":"title"); musicLabel(); }
 $("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventListener("click", toggleMusic); musicLabel();
 
 function gameOver(){
@@ -1964,7 +1964,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 16;
+const GAME_VERSION = 17;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -1980,7 +1980,10 @@ function unlockAudio(){
   if(!MUS.theme) setMusic(state==="play"?"battle":"title");
   setTimeout(()=>{ if(AC && AC.state==="running") $("music-hint").hidden=true; },200);
 }
-for(const ev of ["pointerdown","touchend","click","keydown"]) addEventListener(ev, unlockAudio, {passive:true});
+for(const ev of ["pointerdown","touchstart","touchend","mousedown","click","keydown"]) addEventListener(ev, unlockAudio, {passive:true, capture:true});
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && AC && AC.state!=="running") AC.resume().catch(()=>{}); });
+// if the context reports running but we never heard anything, nudge it once more on the next gesture
+setInterval(()=>{ if(AC && AC.state!=="running") $("music-hint").hidden=false; }, 2000);
 genDecor(); renderGods();
 requestAnimationFrame(t=>{ lastT=t; requestAnimationFrame(frame); });
 initShared();
