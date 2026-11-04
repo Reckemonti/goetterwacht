@@ -69,7 +69,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* overlays */
 .ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:max(16px, env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) max(16px, env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));
   background:radial-gradient(ellipse at center, rgba(7,11,18,.55), rgba(7,11,18,.92));overflow-y:auto;touch-action:pan-y}
-.ov-in{width:min(1040px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto}
+.ov-in{width:min(1180px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto}
 .logo{font-family:var(--font-display);font-weight:800;font-size:clamp(40px,9vw,92px);letter-spacing:.06em;line-height:1;text-align:center;
   background:linear-gradient(180deg,#fff6d8,var(--gold) 55%,#9a6b14);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 24px rgba(242,193,78,.25))}
 .ver{margin-top:-10px;font-family:var(--font-ui);font-weight:600;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:rgba(242,193,78,.75);border:1px solid rgba(242,193,78,.35);border-radius:999px;padding:2px 12px}
@@ -134,12 +134,17 @@ h2.t{font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin
 .board .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .board .g{color:var(--mute);font-size:14px}
 .board .w{font-variant-numeric:tabular-nums;font-weight:700}
-.shop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
-@media (max-width:720px){.shop{grid-template-columns:1fr}}
+.shop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%}
+@media (max-width:980px){.shop{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.shop{grid-template-columns:1fr}}
 .shop .card{animation:none;grid-template-columns:44px minmax(0,1fr)}
 .shop .card .ic{width:44px;height:44px;font-size:24px}
 .shop .card[disabled]{opacity:.45;cursor:default;transform:none}
 .cost{font-family:var(--font-display);color:var(--gold);font-size:14px;margin-top:6px}
+.shop-grp{grid-column:1/-1;font-family:var(--font-display);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-top:6px}
+.lvl-n{font-family:var(--font-ui);font-size:13px;color:var(--gold);letter-spacing:.06em;margin-left:4px}
+.bar{height:5px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#c08a1e,var(--gold))}
+.tot{font-size:13px;color:#d9e2ee;margin-top:3px}
 .pips{display:flex;gap:3px;margin-top:4px}.pips i{width:12px;height:4px;border-radius:2px;background:var(--line)}.pips i.on{background:var(--gold)}
 .runesTotal{font-family:var(--font-display);color:var(--gold);font-size:18px}
 textarea.code{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);font:13px/1.35 ui-monospace,Consolas,monospace;resize:vertical;word-break:break-all;-webkit-user-select:text;user-select:text}
@@ -173,7 +178,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 10</div>
+    <div class="ver" id="ver">Version 11</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -535,18 +540,31 @@ const EVO = {
   slam:{ needP:"ruestung", name:"Götterzorn", d:"Doppelte Druckwelle und deutlich öfter." },
   aura:{ needP:"herz", name:"Weltenglut", d:"Der Kreis wächst stark und heilt dich, solange Gegner brennen." },
 };
+// Runenschmiede: many small steps, rising costs. grp = section in the forge
 const META = {
-  hp:{ name:"Lebenskraft", rune:"ᛒ", max:5, d:"+12 Leben zu Beginn", cost:l=>40+l*45 },
-  dmg:{ name:"Stärke", rune:"ᚢ", max:5, d:"+6 % Schaden", cost:l=>50+l*55 },
-  spd:{ name:"Flinkheit", rune:"ᛖ", max:5, d:"+4 % Tempo", cost:l=>40+l*40 },
-  xp:{ name:"Weisheit", rune:"ᚨ", max:5, d:"+8 % Erfahrung", cost:l=>50+l*50 },
-  revive:{ name:"Zweites Leben", rune:"ᛇ", max:1, d:"Einmal pro Runde wiederauferstehen", cost:()=>400 },
-  reroll:{ name:"Schicksalsfaden", rune:"ᚾ", max:3, d:"+1 Mal Gaben neu würfeln pro Runde", cost:l=>120+l*120 },
+  hp:{ grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+5 Leben", tot:l=>`+${l*5} Leben`, cost:l=>30+l*18 },
+  armor:{ grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.5 Rüstung", tot:l=>`+${(l*.5).toFixed(1)} Rüstung`, cost:l=>60+l*35 },
+  regen:{ grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.15 Leben pro Sekunde", tot:l=>`+${(l*.15).toFixed(2)} Leben/s`, cost:l=>50+l*30 },
+  spd:{ grp:"Körper", name:"Flinkheit", rune:"ᛖ", max:15, d:"+2 % Tempo", tot:l=>`+${l*2} % Tempo`, cost:l=>35+l*20 },
+  dmg:{ grp:"Kampf", name:"Stärke", rune:"ᚢ", max:20, d:"+2 % Schaden", tot:l=>`+${l*2} % Schaden`, cost:l=>40+l*22 },
+  cd:{ grp:"Kampf", name:"Rastlosigkeit", rune:"ᚱ", max:15, d:"−1.5 % Abklingzeit", tot:l=>`−${(l*1.5).toFixed(1)} % Abklingzeit`, cost:l=>60+l*30 },
+  area:{ grp:"Kampf", name:"Weite", rune:"ᛞ", max:10, d:"+2 % Wirkungsbereich", tot:l=>`+${l*2} % Bereich`, cost:l=>50+l*28 },
+  ulti:{ grp:"Kampf", name:"Götterruf", rune:"ᚺ", max:10, d:"Ulti 3 % öfter", tot:l=>`Ulti −${l*3} % Abklingzeit`, cost:l=>70+l*35 },
+  luck:{ grp:"Glück", name:"Glück", rune:"ᛟ", max:15, d:"+1.5 % kritische Treffer, öfter Herzen und Münzen", tot:l=>`+${(l*1.5).toFixed(1)} % Krit, +${l*4} % Funde`, cost:l=>45+l*25 },
+  magnet:{ grp:"Glück", name:"Anziehung", rune:"ᚷ", max:15, d:"+6 % Sammelradius", tot:l=>`+${l*6} % Sammelradius`, cost:l=>25+l*15 },
+  greed:{ grp:"Glück", name:"Gier", rune:"ᚠ", max:15, d:"+5 % Runen", tot:l=>`+${l*5} % Runen`, cost:l=>50+l*25 },
+  xp:{ grp:"Glück", name:"Weisheit", rune:"ᚨ", max:15, d:"+3 % Erfahrung", tot:l=>`+${l*3} % Erfahrung`, cost:l=>40+l*20 },
+  reroll:{ grp:"Schicksal", name:"Schicksalsfaden", rune:"ᚾ", max:5, d:"+1 Mal Gaben neu würfeln pro Runde", tot:l=>`${l}× neu würfeln`, cost:l=>100+l*100 },
+  start:{ grp:"Schicksal", name:"Erbe der Ahnen", rune:"ᛜ", max:3, d:"Starte mit einer zusätzlichen Gabe", tot:l=>`${l} Gabe${l>1?"n":""} zum Start`, cost:l=>300+l*300 },
+  revive:{ grp:"Schicksal", name:"Zweites Leben", rune:"ᛇ", max:2, d:"Einmal pro Runde wiederauferstehen", tot:l=>`${l}× wiederauferstehen`, cost:l=>400+l*500 },
 };
 
 /* ---------------- persistent meta ---------------- */
 let meta = store.get("gw-meta", null) || { runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true };
-meta.up = meta.up || {}; for(const k in META) meta.up[k] = meta.up[k]||0;
+meta.up = meta.up || {};
+if(!meta.forgeV){ const OLD={hp:l=>40+l*45,dmg:l=>50+l*55,spd:l=>40+l*40,xp:l=>50+l*50,revive:()=>400,reroll:l=>120+l*120}; let back=0;
+  for(const k in OLD){ for(let l=0;l<(meta.up[k]||0);l++) back+=OLD[k](l); meta.up[k]=0; } meta.runes=(meta.runes||0)+back; meta.forgeV=2; meta.refunded=back; }
+for(const k in META) meta.up[k] = meta.up[k]||0;
 const saveMeta = ()=>store.set("gw-meta", meta);
 
 /* ---------------- audio ---------------- */
@@ -615,13 +633,13 @@ function newRun(godId){
   const god = GODS[godId], u = meta.up;
   for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
   pt.l.fill(0); effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
-  const maxHp = god.hp + u.hp*12;
-  G = { god:godId, x:0, y:0, r:15, hp:maxHp, maxHp, speed:god.speed*(1+u.spd*.04), armor:god.armor,
-    dmgMul:god.dmg*(1+u.dmg*.06), cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.08,
+  const maxHp = god.hp + u.hp*5;
+  G = { god:godId, x:0, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor,
+    dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
     bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
-  addWeapon(god.start);
+  addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   T=0; shake=0; flash=0;
   for(let i=0;i<14;i++){ const a=i/14*TAU+rnd(-.1,.1); spawnEnemy("draugr", Math.cos(a)*rnd(380,460), Math.sin(a)*rnd(380,460)); }
   banner(`Welle 1`, "Halte stand");
@@ -637,13 +655,13 @@ function addPassive(id){ G.passives[id]=(G.passives[id]||0)+1; applyPassives(id)
 function applyPassives(id){
   const god=GODS[G.god], u=meta.up, p=G.passives;
   const F=G.fate;
-  G.dmgMul = god.dmg*(1+u.dmg*.06)*(1+(p.macht||0)*.12)*F.dmg;
-  G.cdMul = Math.pow(.93, p.eile||0)*F.cd;
-  G.speed = god.speed*(1+u.spd*.04)*(1+(p.tempo||0)*.08)*F.spd;
-  G.magnet = 90*(1+(p.magnet||0)*.35)*F.magnet;
-  G.armor = Math.max(0, god.armor + (p.ruestung||0) + F.armor);
-  G.area = (1+(p.weite||0)*.1)*F.area;
-  G.regen = (p.herz||0)*.6;
+  G.dmgMul = god.dmg*(1+u.dmg*.02)*(1+(p.macht||0)*.12)*F.dmg;
+  G.cdMul = Math.pow(.93, p.eile||0)*F.cd*(1-u.cd*.015);
+  G.speed = god.speed*(1+u.spd*.02)*(1+(p.tempo||0)*.08)*F.spd;
+  G.magnet = 90*(1+(p.magnet||0)*.35)*F.magnet*(1+u.magnet*.06);
+  G.armor = Math.max(0, god.armor + (p.ruestung||0) + F.armor + u.armor*.5);
+  G.area = (1+(p.weite||0)*.1)*F.area*(1+u.area*.02);
+  G.regen = (p.herz||0)*.6 + u.regen*.15;
   if(id==="ausdauer"){ G.maxHp+=25; G.hp=Math.min(G.maxHp,G.hp+25); }
   if(G.weapons.valk) syncValk();
 }
@@ -658,7 +676,7 @@ function hurt(e, dmg, kx=0, ky=0, kb=0, col=0){
   if(G.god==="ulfr"){ d *= 1 + .6*(1-G.hp/G.maxHp); }
   if(G.god==="skadi" && e.slow>0){ d *= 1.25; }
   if(e.frozen>0) d*=1.5;
-  const crit = Math.random()<.06+G.fate.crit; if(crit) d*=2;
+  const crit = Math.random()<.06+G.fate.crit+(G.luck||0)*.015; if(crit) d*=2;
   d = Math.round(d);
   e.hp -= d; e.fl = .09;
   if(kb && !e.boss){ const m=Math.hypot(kx,ky)||1; e.kx += kx/m*kb*e.kbm; e.ky += ky/m*kb*e.kbm; }
@@ -673,8 +691,9 @@ function kill(e){
   burst(e.x,e.y,e.boss?60:8,c,e.boss?320:150,e.boss?1:.45,e.boss?5:3);
   if(e.boss){ bossDown(e); return; }
   dropGem(e.x,e.y,e.xp);
-  if(Math.random()<.004) dropItem(e.x,e.y,"meat");
-  const cn = e.elite? ri(3,5) : Math.random()<.025+G.wave*.002 ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
+  const lk=1+(G.luck||0)*.04;
+  if(Math.random()<.004*lk) dropItem(e.x,e.y,"meat");
+  const cn = e.elite? ri(3,5) : Math.random()<(.025+G.wave*.002)*lk ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
   if(Math.random()<.0025) dropItem(e.x,e.y,"magnet");
   if(G.god==="ulfr"){ G.healAcc += .4; }
   G.healAcc += G.fate.steal;
@@ -747,7 +766,7 @@ function weaponsUpdate(dt){
         const base=Math.atan2(t.y-G.y,t.x-G.x);
         for(let i=0;i<n;i++){ const a=base+(i-(n-1)/2)*.16; shoot("arrow",G.x,G.y,Math.cos(a)*720,Math.sin(a)*720,9,L(D.dmg,l)*G.dmgMul,L(D.pierce,l),1.1,{evo:w.evo}); }
         sfx("shoot"); }
-      else if(id==="slam"){ w.t=L(D.cd,l)*cdm*(w.evo?.75:1); const R=L(D.rad,l)*A, dmg=L(D.dmg,l)*G.dmgMul;
+      else if(id==="slam"){ w.t=L(D.cd,l)*cdm*(w.evo?.75:1)*(1-meta.up.ulti*.03); const R=L(D.rad,l)*A, dmg=L(D.dmg,l)*G.dmgMul;
         const others=Object.keys(GODS).filter(k=>k!==G.god), gd=others[G.slamGod++%others.length];
         const tx=G.x+G.dirx*40, ty=G.y+G.diry*40;
         G.ultiDim=gd==="donar"?2.4:1.25; sfx(gd==="donar"?"thunder":"horn");
@@ -970,11 +989,11 @@ function bossDown(e){
   G.bosses=(G.bosses||[]).filter(b=>b!==e&&b.on);
   for(let i=0;i<8+G.wave;i++) dropItem(e.x+rnd(-40,40),e.y+rnd(-40,40),"coin");
   for(let i=0;i<(e.big?3:2);i++) dropItem(e.x+rnd(-30,30),e.y+rnd(-30,30),"meat");
-  if(G.bosses.length){ G.boss=G.bosses[0]; const r=5+G.wave; G.runes+=r; text(e.x,e.y-40,`+${r} Runen`,2); 
+  if(G.bosses.length){ G.boss=G.bosses[0]; const r=Math.round((5+G.wave)*G.runeMul); G.runes+=r; text(e.x,e.y-40,`+${r} Runen`,2); 
     burst(e.x,e.y,40,PIDX.gold,300,.8,4); shake=Math.max(shake,10); banner(null, `Noch ${G.bosses.length} ${G.bosses.length===1?"Boss":"Bosse"}`); return; }
   G.boss=null; $("bossbar").hidden=true; G.wavesDone=G.wave; kick=Math.max(kick,1); G.hitstop=.15;
   dropItem(e.x,e.y,"chest");
-  const rr = e.big? 60+G.wave*6 : 10+G.wave*2; G.runes += rr;
+  const rr = Math.round((e.big? 60+G.wave*6 : 10+G.wave*2)*G.runeMul); G.runes += rr;
   shake=18; flash=.4; sfx("win");
   effects.push({k:"glow", x:e.x, y:e.y, r:300, l:.8, m:.8, img:GLOW.gold});
   G.phase="break"; G.breakT=4.5;
@@ -1058,7 +1077,7 @@ function pickupsUpdate(dt){
       if(g.k==="gem"){ gainXp(g.v); sfx("pick"); }
       else if(g.k==="meat"){ G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.3); text(G.x,G.y-30,`+${Math.round(G.maxHp*.3)} Leben`,4); burst(G.x,G.y,16,PIDX.green,160,.5,3); }
       else if(g.k==="magnet"){ for(const o of GM) if(o.on&&o.k==="gem") o.vac=true; }
-      else if(g.k==="coin"){ const v=1+Math.floor(G.wave/4); G.runes+=v; G.coinFx=.35; sfx("coin"); text(G.x+rnd(-8,8),G.y-26,`+${v} ᚱ`,2); }
+      else if(g.k==="coin"){ const v=Math.max(1,Math.round((1+Math.floor(G.wave/4))*G.runeMul)); G.runes+=v; G.coinFx=.35; sfx("coin"); text(G.x+rnd(-8,8),G.y-26,`+${v} ᚱ`,2); }
       else if(g.k==="chest"){ G.pendingLv++; G.chest=true; burst(G.x,G.y,40,PIDX.gold,260,.7,4); }
     }
   }
@@ -1492,7 +1511,7 @@ $("btn-sound").addEventListener("click", toggleSound); $("btn-sound2").addEventL
 
 function gameOver(){
   if(state==="over") return; state="over";
-  const waves = G.wavesDone, earned = G.runes + waves*8 + Math.floor(G.kills/25);
+  const waves = G.wavesDone, earned = G.runes + Math.round((waves*8 + Math.floor(G.kills/25))*G.runeMul);
   meta.runes += earned;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
   let record=false; if(waves>meta.best.wave || (waves===meta.best.wave && G.kills>meta.best.kills)){ meta.best={wave:waves,kills:G.kills,god:G.god}; record=true; }
@@ -1511,8 +1530,12 @@ function toTitle(){ G=null; state="title"; $("hud").hidden=true; renderGods(); o
 // shop
 function renderShop(){
   $("runes-shop").textContent=`ᚱ ${meta.runes} Runen`;
-  $("shop").innerHTML = Object.entries(META).map(([id,m])=>{ const l=meta.up[id], maxed=l>=m.max, cost=m.cost(l), can=!maxed&&meta.runes>=cost;
-    return `<button class="card" type="button" data-up="${id}" ${can?"":"disabled"}><div class="ic">${m.rune}</div><div><h4>${m.name}</h4><p>${m.d}</p><div class="pips">${Array.from({length:m.max},(_,i)=>`<i class="${i<l?"on":""}"></i>`).join("")}</div><div class="cost">${maxed?"Voll ausgebaut":`ᚱ ${cost}`}</div></div></button>`; }).join("");
+  let last="", h="";
+  for(const [id,m] of Object.entries(META)){ const l=meta.up[id], maxed=l>=m.max, cost=m.cost(l), can=!maxed&&meta.runes>=cost;
+    if(m.grp!==last){ last=m.grp; h+=`<div class="shop-grp">${m.grp}</div>`; }
+    h+=`<button class="card" type="button" data-up="${id}" ${can?"":"disabled"}><div class="ic">${m.rune}</div><div><h4>${m.name} <span class="lvl-n">${l}/${m.max}</span></h4><p>${m.d} pro Stufe</p><div class="bar"><i style="width:${l/m.max*100}%"></i></div><div class="tot">${l?m.tot(l):"noch nicht gelernt"}</div><div class="cost">${maxed?"Voll ausgebaut":`ᚱ ${cost}`}</div></div></button>`; }
+  $("shop").innerHTML = h + (meta.refunded?`<div class="shop-grp" style="color:var(--gold)">Die Schmiede wurde neu gebaut: ${meta.refunded} Runen aus deinen alten Upgrades wurden dir zurückgegeben.</div>`:"");
+  if(meta.refunded){ meta.refunded=0; saveMeta(); }
 }
 $("shop").addEventListener("click", e=>{ const b=e.target.closest("[data-up]"); if(!b||b.disabled) return; const id=b.dataset.up, m=META[id], l=meta.up[id], cost=m.cost(l); if(l>=m.max||meta.runes<cost) return; meta.runes-=cost; meta.up[id]++; saveMeta(); audioInit(); sfx("level"); renderShop(); });
 let shopFrom="ov-title";
@@ -1601,7 +1624,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 10;
+const GAME_VERSION = 11;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 genDecor(); renderGods();
