@@ -183,7 +183,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 20</div>
+    <div class="ver" id="ver">Version 21</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -276,7 +276,7 @@ let VW=0, VH=0, DPR=1, ZOOM=1;
 const MOBILE = matchMedia("(pointer:coarse)").matches;
 function resize(){
   VW = innerWidth; VH = innerHeight;
-  DPR = Math.min(devicePixelRatio||1, MOBILE?1.75:2);
+  DPR = Math.min(devicePixelRatio||1, MOBILE?1.5:2);
   cv.width = Math.round(VW*DPR); cv.height = Math.round(VH*DPR);
   ZOOM = clamp(Math.min(VW,VH)/640, .7, 1.15);
 }
@@ -760,7 +760,8 @@ const pt = { x:new Float32Array(MAXPT), y:new Float32Array(MAXPT), vx:new Float3
 const PCOL = ["#ffffff","#8ff4ff","#ffcf5a","#ff7a2a","#ff4d3d","#c08bff","#9fb59e","#6fa8d6","#59e39a","#d9eefb"];
 const PIDX = { white:0, frost:1, gold:2, fire:3, red:4, violet:5, rot:6, ice:7, green:8, snow:9 };
 let pHead=0;
-function particle(x,y,vx,vy,life,size,col){ const i=pHead; pHead=(pHead+1)%MAXPT; pt.x[i]=x; pt.y[i]=y; pt.vx[i]=vx; pt.vy[i]=vy; pt.l[i]=life; pt.m[i]=life; pt.s[i]=size; pt.c[i]=col; }
+let QUAL=1, lowT=0, highT=0;   // adaptive quality: drops when the frame rate sags, recovers when it is smooth
+function particle(x,y,vx,vy,life,size,col){ if(QUAL<1 && Math.random()>QUAL) return; const i=pHead; pHead=(pHead+1)%MAXPT; pt.x[i]=x; pt.y[i]=y; pt.vx[i]=vx; pt.vy[i]=vy; pt.l[i]=life; pt.m[i]=life; pt.s[i]=size; pt.c[i]=col; }
 function burst(x,y,n,col,spd=160,life=.5,size=3){ for(let i=0;i<n;i++){ const a=Math.random()*TAU, s=rnd(.3,1)*spd; particle(x,y,Math.cos(a)*s,Math.sin(a)*s,rnd(.5,1)*life,rnd(.6,1.2)*size,col); } }
 
 const grid = new Int32Array(GN*GN), gnext = new Int32Array(MAXE), QR = new Int32Array(MAXE);
@@ -794,6 +795,7 @@ function newRun(godId){
   T=0; shake=0; flash=0;
   for(let i=0;i<14;i++){ const a=i/14*TAU+rnd(-.1,.1); spawnEnemy("draugr", Math.cos(a)*rnd(380,460), Math.sin(a)*rnd(380,460)); }
   banner(`Welle 1`, "Halte stand");
+  G.tips = (meta.runs||0)<3 ? [[6,"Tipp: Weiche den roten Feldern aus, dann trifft dich nichts"],[16,"Tipp: Blaue Seelen einsammeln bringt neue Gaben"],[28,"Tipp: Am Ende jeder Welle kommen Bosse, besiege sie alle"],[45,"Tipp: Runen aus jeder Runde machen dich in der Runenschmiede dauerhaft stärker"]] : [];
 }
 const xpNeed = l => Math.floor(6 + l*5 + Math.pow(l,1.85));
 const waveLen = w => Math.min(26 + w*2.2, 52);
@@ -853,7 +855,7 @@ function kill(e){
   G.healAcc += G.fate.steal;
   if(G.god==="ulfr"){ G.kt.push(T); while(G.kt.length && T-G.kt[0]>1) G.kt.shift(); if(G.kt.length>=6 && G.frenzyT<=0){ G.frenzyT=4; banner("Blutrausch","Mehrfach-Kill"); G.kt.length=0; } else if(G.kt.length>=6) G.frenzyT=Math.max(G.frenzyT,4); }
 }
-function text(x,y,v,col){ for(const t of TX){ if(!t.on){ t.on=true; t.x=x; t.y=y; t.v=v; t.l=.6; t.c=col; return; } } }
+function text(x,y,v,col){ if(QUAL<.8 && col!==2 && col!==4 && Math.random()>QUAL) return; for(const t of TX){ if(!t.on){ t.on=true; t.x=x; t.y=y; t.v=v; t.l=.6; t.c=col; return; } } }
 
 function weaponsUpdate(dt){
   const W=G.weapons, cdm=G.cdMul, A=G.area;
@@ -1145,10 +1147,10 @@ function spawner(dt){
   if(G.phase==="break") return;
   const w=G.wave, alive=E.reduce((n,e)=>n+(e.on?1:0),0);
   const late=Math.max(0,w-4);
-  const cap = Math.min(30 + w*20 + late*14, 600) * (G.phase==="boss"?.7:1);
+  const cap = Math.min(30 + w*20 + late*14, 600) * (G.phase==="boss"?.7:1) * (BOT.on?1:(.55+.45*QUAL));
   const rate = (6 + w*2.6 + late*1.8) * (G.phase==="boss"?.6:1);
   G.spawnAcc += rate*dt;
-  while(G.spawnAcc>=1){ G.spawnAcc-=1; if(alive>=cap) { G.spawnAcc=0; break; } const [x,y]=spawnRing(); const e=spawnEnemy(pickKind(w),x,y);
+  while(G.spawnAcc>=1){ G.spawnAcc-=1; if(alive>=cap) { G.spawnAcc=0; break; } const [x,y]=spawnRing(); const e=spawnEnemy(pickKind(w),x,y); if(e && !BOT.on && QUAL<1){ const f=1/(.55+.45*QUAL); e.hp*=f; e.maxHp*=f; e.xp*=f; }
     if(e && w>=5 && Math.random()<.004+w*.004){ e.elite=true; e.hp*=4; e.maxHp*=4; e.r*=1.4; e.scale*=1.4; e.xp*=8; e.dmg*=1.5; e.kbm*=.4; } }
   // wolf horde storms in from one side, mid-wave from wave 4
   if(w>=5 && G.phase==="fight" && !G.hordeDone && G.waveT<waveLen(w)*.5){ G.hordeDone=true; const a=Math.random()*TAU, R=Math.hypot(VW,VH)/2/ZOOM+40, n=20+w*5;
@@ -1466,7 +1468,8 @@ const STEP=1/60;
 function frame(now){
   requestAnimationFrame(frame);
   let dt=(now-lastT)/1000; lastT=now; if(dt>.25) dt=.25;
-  fpsAcc+=dt; fpsN++; if(fpsAcc>=1){ fps=fpsN/fpsAcc; fpsAcc=0; fpsN=0; }
+  fpsAcc+=dt; fpsN++; if(fpsAcc>=1){ fps=fpsN/fpsAcc; fpsAcc=0; fpsN=0;
+    if(state==="play"){ if(fps<46){ lowT++; highT=0; if(lowT>=2){ QUAL=Math.max(.45,QUAL-.15); lowT=0; } } else if(fps>57){ highT++; lowT=0; if(highT>=4){ QUAL=Math.min(1,QUAL+.1); highT=0; } } } }
   if(state==="play"){
     acc+=dt; let steps=0;
     while(acc>=STEP && steps<4){ update(STEP); acc-=STEP; steps++; if(state!=="play") break; }
@@ -1477,6 +1480,7 @@ function frame(now){
   render(dt);
   hudT-=dt; if(hudT<=0 && G){ hudT=.1; hud(); }
 }
+function tipsUpdate(){ if(G.tips && G.tips.length && G.time>=G.tips[0][0]){ const t=G.tips.shift(); if(!BOT.on) banner(null,t[1]); } }
 function update(dt){
   if(G.hitstop>0){ G.hitstop-=dt; dt*=.15; }
   if(G.ultiDim>0) G.ultiDim-=dt; if(G.cine>0) G.cine-=dt;
@@ -1492,7 +1496,7 @@ function update(dt){
   skillsUpdate(dt);
   icewavesUpdate(dt);
   pickupsUpdate(dt);
-  waveUpdate(dt);
+  waveUpdate(dt); tipsUpdate();
   // particles
   for(let i=0;i<MAXPT;i++){ if(pt.l[i]<=0) continue; pt.l[i]-=dt; pt.x[i]+=pt.vx[i]*dt; pt.y[i]+=pt.vy[i]*dt; pt.vx[i]*=.92; pt.vy[i]*=.92; }
   for(const t of TX){ if(!t.on) continue; t.l-=dt; t.y-=40*dt; if(t.l<=0) t.on=false; }
@@ -1953,7 +1957,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 20;
+const GAME_VERSION = 21;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
