@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 12
+Stand: 04.11.2026, Version 13
 
 ## Zuletzt geändert
+- Version 13: 15 freischaltbare Fähigkeiten in der Runenschmiede (Bärenhaut, Schildmaid, Iduns Apfel, Hermods Eile, Tyrs Urteil, Heimdalls Horn, Wurzeln Yggdrasils, Odins Raben, Freyjas Gunst, Seelensog, Andvaris Hort, Mimirs Quelle, Nornenblick, Einherjer, Hels Gnade); alle freigeschaltet: Vidar erscheint als Verbündeter
 - Version 12: Spielstand als JSON-Datei speichern und laden (Startbildschirm)
 - Version 11: Runenschmiede neu mit 15 Upgrades und 180 Stufen (Körper, Kampf, Glück, Schicksal); alte Upgrades werden in Runen zurückerstattet
 - Version 10: Versionsanzeige im Titel; Steuerungshinweis passend zu Handy oder PC
