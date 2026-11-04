@@ -183,7 +183,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 15</div>
+    <div class="ver" id="ver">Version 16</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -1791,7 +1791,7 @@ function renderGods(){
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`;
 }
 $("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b) return; startGame(b.dataset.god); });
-function startGame(god){ audioInit(); if(AC&&AC.state==="suspended") AC.resume(); setMusic("battle"); lastGod=god; newRun(god); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
+function startGame(god){ unlockAudio(); setMusic("battle"); lastGod=god; newRun(god); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
 let lastGod="donar";
 function pause(){ if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
 function resume(){ if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
@@ -1948,11 +1948,23 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 15;
+const GAME_VERSION = 16;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
-const firstGesture=()=>{ audioInit(); if(AC){ if(AC.state==="suspended") AC.resume(); if(!MUS.theme) setMusic(state==="play"?"battle":"title"); } $("music-hint").hidden=true; };
-addEventListener("pointerdown", firstGesture, {once:true}); addEventListener("keydown", firstGesture, {once:true});
+// Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
+// unless the page also plays an <audio> element (switches the session to "playback").
+let silentEl=null;
+function unlockAudio(){
+  try{ if(navigator.audioSession) navigator.audioSession.type="playback"; }catch(e){}
+  if(!silentEl){ try{ silentEl=new Audio("data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=="); silentEl.loop=true; silentEl.volume=0.01; silentEl.setAttribute("playsinline",""); }catch(e){} }
+  try{ silentEl && silentEl.play().catch(()=>{}); }catch(e){}
+  audioInit(); if(!AC) return;
+  if(AC.state!=="running") AC.resume().catch(()=>{});
+  try{ const b=AC.createBuffer(1,1,22050), src=AC.createBufferSource(); src.buffer=b; src.connect(AC.destination); src.start(0); }catch(e){}
+  if(!MUS.theme) setMusic(state==="play"?"battle":"title");
+  setTimeout(()=>{ if(AC && AC.state==="running") $("music-hint").hidden=true; },200);
+}
+for(const ev of ["pointerdown","touchend","click","keydown"]) addEventListener(ev, unlockAudio, {passive:true});
 genDecor(); renderGods();
 requestAnimationFrame(t=>{ lastT=t; requestAnimationFrame(frame); });
 initShared();
