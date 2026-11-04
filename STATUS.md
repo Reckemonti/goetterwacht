@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 17
+Stand: 04.11.2026, Version 18
 
 ## Zuletzt geändert
+- Version 18: Test-Autopilot (Simulation) eingebaut; Balancing: weniger und langsamere Pfeile, schwächere Irrlicht-Kugeln, Geschoss-Obergrenze, langsamere Stufen, Ulfr/Skadi/Donar angeglichen
 - Version 17: Musik halb so laut; Ton startet schon beim ersten Tippen auf dem Startbildschirm
 - Version 16: Ton-Freischaltung für iPhone (auch bei Stummschalter) und Android verbessert; App-Symbol und Web-App-Manifest
 - Version 15: eigene Musik (Startbildschirm, Kampf, Bosskampf) mit Überblendung, Knopf Musik an/aus
