@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 14
+Stand: 04.11.2026, Version 15
 
 ## Zuletzt geändert
+- Version 15: eigene Musik (Startbildschirm, Kampf, Bosskampf) mit Überblendung, Knopf Musik an/aus
 - Version 14: Startbildschirm mit Blitzen, Bergen, Glut und atmenden Götterbildern; 3 neue grosse Bosse (Nidhögg, Modgud, Fafnir) und 4 neue Wächter (Knochenbrecher, Sturmhexe, Höhlenbär, Grabhüter) mit eigenen Angriffen; Kino-Auftritt der Bosse, Lichtstrahlen beim Boss-Tod, Wetter je nach Welle
 - Version 13: 15 freischaltbare Fähigkeiten in der Runenschmiede (Bärenhaut, Schildmaid, Iduns Apfel, Hermods Eile, Tyrs Urteil, Heimdalls Horn, Wurzeln Yggdrasils, Odins Raben, Freyjas Gunst, Seelensog, Andvaris Hort, Mimirs Quelle, Nornenblick, Einherjer, Hels Gnade); alle freigeschaltet: Vidar erscheint als Verbündeter
 - Version 12: Spielstand als JSON-Datei speichern und laden (Startbildschirm)

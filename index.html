@@ -191,7 +191,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 14</div>
+    <div class="ver" id="ver">Version 15</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -203,11 +203,13 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
       <button class="btn" id="btn-quicksave" type="button">⬇ Spielstand speichern</button>
       <label class="btn" for="quick-load" style="cursor:pointer">⬆ Spielstand laden</label><input type="file" id="quick-load" accept=".json,.gwsave,.txt,application/json,text/plain" hidden>
       <button class="btn" id="btn-sound" type="button">Ton: an</button>
+      <button class="btn" id="btn-music" type="button">Musik: an</button>
     </div>
     <div class="keys" id="keys-desktop"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeile bewegen</span><span><kbd>Esc</kbd> Pause</span></div>
     <div class="keys" id="keys-touch" hidden><span>Daumen irgendwo aufs Spielfeld legen und ziehen, um zu laufen</span><span>❚❚ oben rechts: Pause</span></div>
     <div class="hint" id="best-title"></div>
     <div class="hint" id="quick-msg" role="status"></div>
+    <div class="hint" id="music-hint" style="color:var(--gold)">♪ Tippe irgendwo, um die Musik zu starten</div>
   </div>
 </div>
 
@@ -218,7 +220,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="cards fate" id="fate-cards"></div>
   <div class="row"><button class="btn gold" id="btn-fate" type="button" hidden>Annehmen</button></div></div></div>
 <div class="ov" id="ov-pause" hidden><div class="ov-in"><h2 class="t">Pause</h2><div class="build" id="pause-build"></div>
-  <div class="row"><button class="btn gold" id="btn-resume" type="button">Weiter</button><button class="btn" id="btn-sound2" type="button">Ton: an</button><button class="btn" id="btn-quit" type="button">Aufgeben</button></div></div></div>
+  <div class="row"><button class="btn gold" id="btn-resume" type="button">Weiter</button><button class="btn" id="btn-sound2" type="button">Ton: an</button><button class="btn" id="btn-music2" type="button">Musik: an</button><button class="btn" id="btn-quit" type="button">Aufgeben</button></div></div></div>
 
 <div class="ov" id="ov-over" hidden><div class="ov-in">
   <h2 class="t" id="over-title">Gefallen in Welle 7</h2>
@@ -665,6 +667,70 @@ function audioInit(){
     noiseBuf = AC.createBuffer(1, AC.sampleRate*1, AC.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
   }catch(e){ AC=null; }
 }
+/* ---------------- music: procedural Nordic score (title / battle / boss) ---------------- */
+const MUS = { on:false, theme:null, gains:{}, rev:null, bus:null, next:0, step:0, timer:null };
+const CH = { Dm:[50,53,57], Bb:[46,50,53], F:[53,57,60], C:[48,52,55], A:[45,49,52], Eb:[51,55,58], Gm:[43,46,50] };
+const THEMES = {
+  title:{ bpm:66, prog:["Dm","Bb","F","C","Dm","C","Bb","A"] },
+  battle:{ bpm:94, prog:["Dm","Dm","Bb","C","Dm","Dm","Gm","A"] },
+  boss:{ bpm:116, prog:["Dm","Eb","Dm","C","Dm","Eb","Bb","A"] },
+};
+const MEL_TITLE=[[0,0,62,6],[0,6,65,2],[0,8,69,8],[1,0,70,8],[1,8,69,4],[1,12,67,4],[2,0,65,12],[2,12,64,4],[3,0,67,16],[4,0,62,6],[4,6,65,2],[4,8,69,8],[5,0,72,8],[5,8,70,4],[5,12,69,4],[6,0,67,8],[6,8,65,8],[7,0,64,16]];
+const MEL_BATTLE=[[0,0,62,4],[0,4,62,2],[0,6,65,2],[0,8,64,4],[0,12,62,4],[2,0,70,4],[2,4,69,4],[2,8,67,8],[3,0,69,16],[4,0,62,4],[4,4,62,2],[4,6,65,2],[4,8,69,4],[4,12,72,4],[6,0,70,4],[6,4,69,4],[6,8,67,4],[6,12,65,4],[7,0,64,16]];
+const mf = m => 440*Math.pow(2,(m-69)/12);
+function musInit(){
+  if(MUS.bus || !AC) return;
+  MUS.bus=AC.createGain(); MUS.bus.gain.value=meta.music===false?0:.95; MUS.bus.connect(master);
+  // generated hall reverb
+  MUS.rev=AC.createConvolver(); const len=AC.sampleRate*2.8, ir=AC.createBuffer(2,len,AC.sampleRate);
+  for(let ch=0;ch<2;ch++){ const d=ir.getChannelData(ch); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+  MUS.rev.buffer=ir; const wet=AC.createGain(); wet.gain.value=.38; MUS.rev.connect(wet); wet.connect(MUS.bus);
+  for(const k in THEMES){ const g=AC.createGain(); g.gain.value=0; g.connect(MUS.bus); g.connect(MUS.rev); MUS.gains[k]=g; }
+}
+function setMusic(theme){
+  if(!AC) return; musInit(); if(MUS.theme===theme) return;
+  const now=AC.currentTime;
+  for(const k in MUS.gains){ const g=MUS.gains[k].gain; g.cancelScheduledValues(now); g.setValueAtTime(g.value,now); g.linearRampToValueAtTime(k===theme?1:0, now+(k===theme?1.6:1.2)); }
+  MUS.theme=theme; MUS.step=0; MUS.next=Math.max(MUS.next, now+.05);
+  if(!MUS.timer) MUS.timer=setInterval(musTick,50);
+}
+function env(g,t,a,peak,hold,rel){ g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(peak,t+a); g.gain.setValueAtTime(peak,t+a+hold); g.gain.exponentialRampToValueAtTime(0.0001,t+a+hold+rel); }
+function mDrum(out,t,f0,vol){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f0*.42,t+.3); env(g,t,.005,vol,.02,.5); o.connect(g); g.connect(out); o.start(t); o.stop(t+.6);
+  const n=AC.createBufferSource(); n.buffer=noiseBuf; const f=AC.createBiquadFilter(); f.type="lowpass"; f.frequency.value=380; const ng=AC.createGain(); env(ng,t,.002,vol*.5,.01,.12); n.connect(f); f.connect(ng); ng.connect(out); n.start(t); n.stop(t+.2); }
+function mClack(out,t,vol){ const n=AC.createBufferSource(); n.buffer=noiseBuf; const f=AC.createBiquadFilter(); f.type="bandpass"; f.frequency.value=1700; f.Q.value=1.2; const g=AC.createGain(); env(g,t,.002,vol,.01,.1); n.connect(f); f.connect(g); g.connect(out); n.start(t,Math.random()*.5); n.stop(t+.15); }
+function mBass(out,t,m,dur,vol){ const o=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain(); o.type="sawtooth"; o.frequency.value=mf(m); f.type="lowpass"; f.frequency.value=420; env(g,t,.01,vol,dur*.6,dur*.5); o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t+dur*1.2+.1); }
+function mPad(out,t,notes,dur,vol){ for(const m of notes){ for(const det of [-7,7]){ const o=AC.createOscillator(); o.type="sawtooth"; o.frequency.value=mf(m); o.detune.value=det;
+      const f1=AC.createBiquadFilter(); f1.type="bandpass"; f1.frequency.value=650; f1.Q.value=2.5; const f2=AC.createBiquadFilter(); f2.type="bandpass"; f2.frequency.value=1080; f2.Q.value=3;
+      const g=AC.createGain(); env(g,t,dur*.35,vol,dur*.35,dur*.5); o.connect(f1); o.connect(f2); f1.connect(g); f2.connect(g); g.connect(out); o.start(t); o.stop(t+dur*1.25+.2); } } }
+function mHorn(out,t,m,dur,vol){ const o=AC.createOscillator(), o2=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain(), lfo=AC.createOscillator(), lg=AC.createGain();
+  o.type="sawtooth"; o2.type="square"; o.frequency.value=mf(m); o2.frequency.value=mf(m)/2; lfo.frequency.value=5; lg.gain.value=4; lfo.connect(lg); lg.connect(o.frequency);
+  f.type="lowpass"; f.frequency.setValueAtTime(500,t); f.frequency.linearRampToValueAtTime(1500,t+.12); f.frequency.linearRampToValueAtTime(1000,t+dur);
+  const g2=AC.createGain(); g2.gain.value=.35; o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(out); env(g,t,.08,vol,dur*.8,.3);
+  o.start(t); o2.start(t); lfo.start(t); o.stop(t+dur+.5); o2.stop(t+dur+.5); lfo.stop(t+dur+.5); }
+function musTick(){
+  if(!AC || !MUS.theme) return; if(meta.music===false || !meta.sound) { MUS.next=AC.currentTime+.1; return; }
+  while(MUS.next < AC.currentTime+.3){ playStep(MUS.theme, MUS.step, MUS.next); const th=THEMES[MUS.theme]; MUS.next += 60/th.bpm/4; MUS.step++; }
+}
+function playStep(theme, st, t){
+  const th=THEMES[theme], out=MUS.gains[theme], sd=60/th.bpm/4, bar=Math.floor(st/16), s16=st%16, ch=CH[th.prog[bar%8]], bl=sd*16;
+  const tier = G? tierOf(G.wave) : 0;
+  if(theme==="title"){
+    if(s16===0){ mPad(out,t,ch,bl,.05); mBass(out,t,ch[0]-12,bl,.09); mDrum(out,t,bar%4===0?55:62,bar%4===0?.55:.35); }
+    if(s16===10) mDrum(out,t,70,.22); if(s16===12 && bar%2===1) mDrum(out,t,66,.25);
+    if(Math.floor(bar/8)%2===1){ for(const [b,s,m,d] of MEL_TITLE) if(b===bar%8 && s===s16) mHorn(out,t,m,d*sd,.08); }
+  } else if(theme==="battle"){
+    if(s16===0) mPad(out,t,ch.map(x=>x+(tier>=3?12:0)),bl,tier>=3?.022:.026);
+    if([0,3,6,8,11,14].includes(s16)) mDrum(out,t,s16===0?60:74,s16===0?.5:.28);
+    if(s16===4||s16===12) mClack(out,t,.18); if(tier>=2 && s16%2===1) mClack(out,t,.05);
+    if(s16%2===0){ const pat=[0,0,7,0,12,0,7,0]; mBass(out,t,ch[0]-12+pat[s16/2],sd*1.8,.06); }
+    if(Math.floor(bar/8)%2===1){ for(const [b,s,m,d] of MEL_BATTLE) if(b===bar%8 && s===s16) mHorn(out,t,m,d*sd,.05); }
+  } else if(theme==="boss"){
+    if(s16===0) mPad(out,t,ch.map(x=>x+12),bl,.026);
+    if(s16%4===0) mDrum(out,t,55,.6); if(s16%4===2) mDrum(out,t,80,.3); if(s16===4||s16===12) mClack(out,t,.28); if(s16%2===1) mClack(out,t,.06);
+    mBass(out,t,ch[0]-12+(s16%8===6?1:0),sd*.9,.055);
+    if(s16===0||s16===8||(s16===14&&bar%2)) for(const m of ch) mHorn(out,t,m+12,sd*(s16===14?2:3),.03);
+  }
+}
 function sfx(name){
   if(!AC||!meta.sound) return; const now=AC.currentTime;
   const gap={coin:.05,hit:.045,pick:.03,zap:.06,boom:.08,axe:.08,shoot:.07}[name]||0;
@@ -1110,7 +1176,7 @@ function spawnBoss(){
   let free=E.reduce((k,e)=>k+(e.on?0:1),0);
   if(free<n+8){ const far=E.filter(e=>e.on&&!e.boss).sort((p,q)=>((q.x-G.x)**2+(q.y-G.y)**2)-((p.x-G.x)**2+(p.y-G.y)**2)); for(const e of far){ if(free>=n+8) break; e.on=false; free++; } }
   for(let i=0;i<n;i++) spawnOneBoss(i===0 && w%5===0, a0+i/n*TAU, n);
-  G.cine=2; kick=Math.max(kick,.6);
+  G.cine=2; kick=Math.max(kick,.6); setMusic("boss");
   const lead=G.bosses[0]; if(lead){ $("bossbar").hidden=false; $("bossname").textContent = n>1? `${lead.name} und ${n-1} weitere` : lead.name;
     banner(lead.name, n>1? `Welle ${w}: ${n} Bosse` : (lead.big?`Welle ${w}: Grosser Boss`:`Welle ${w}: Wächter`)); sfx("horn"); }
 }
@@ -1139,7 +1205,7 @@ function bossDown(e){
   const rr = Math.round((e.big? 60+G.wave*6 : 10+G.wave*2)*G.runeMul); G.runes += rr;
   shake=18; flash=.4; sfx("win");
   effects.push({k:"glow", x:e.x, y:e.y, r:300, l:.8, m:.8, img:GLOW.gold});
-  G.phase="break"; G.breakT=4.5;
+  G.phase="break"; G.breakT=4.5; setMusic("battle");
   banner(`Welle ${G.wave} überstanden`, `+${rr} Runen`);
   for(const g of GM) if(g.on) g.vac=true;   // all souls fly home
 }
@@ -1733,7 +1799,7 @@ function renderGods(){
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`;
 }
 $("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b) return; startGame(b.dataset.god); });
-function startGame(god){ audioInit(); if(AC&&AC.state==="suspended") AC.resume(); lastGod=god; newRun(god); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
+function startGame(god){ audioInit(); if(AC&&AC.state==="suspended") AC.resume(); setMusic("battle"); lastGod=god; newRun(god); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
 let lastGod="donar";
 function pause(){ if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
 function resume(){ if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
@@ -1741,9 +1807,12 @@ $("pausebtn").addEventListener("click", pause); $("btn-resume").addEventListener
 $("btn-quit").addEventListener("click", ()=>{ hide("ov-pause"); state="play"; gameOver(); });
 function toggleSound(){ meta.sound=!meta.sound; saveMeta(); if(master) master.gain.value=meta.sound?.5:0; $("btn-sound").textContent=$("btn-sound2").textContent=`Ton: ${meta.sound?"an":"aus"}`; }
 $("btn-sound").addEventListener("click", toggleSound); $("btn-sound2").addEventListener("click", toggleSound);
+function musicLabel(){ $("btn-music").textContent=$("btn-music2").textContent=`Musik: ${meta.music===false?"aus":"an"}`; }
+function toggleMusic(){ meta.music = meta.music===false; saveMeta(); audioInit(); if(MUS.bus) MUS.bus.gain.value = meta.music===false?0:.95; if(meta.music!==false && !MUS.theme) setMusic(state==="play"?"battle":"title"); musicLabel(); }
+$("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventListener("click", toggleMusic); musicLabel();
 
 function gameOver(){
-  if(state==="over") return; state="over";
+  if(state==="over") return; state="over"; setMusic("title");
   const waves = G.wavesDone, earned = G.runes + Math.round((waves*8 + Math.floor(G.kills/25))*G.runeMul);
   meta.runes += earned;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
@@ -1758,7 +1827,7 @@ function gameOver(){
 }
 $("btn-again").addEventListener("click", ()=>startGame(lastGod));
 $("btn-menu").addEventListener("click", toTitle);
-function toTitle(){ G=null; state="title"; $("hud").hidden=true; renderGods(); only("ov-title"); }
+function toTitle(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; renderGods(); only("ov-title"); }
 
 // shop
 function renderShop(){
@@ -1887,15 +1956,17 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 14;
+const GAME_VERSION = 15;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
+const firstGesture=()=>{ audioInit(); if(AC){ if(AC.state==="suspended") AC.resume(); if(!MUS.theme) setMusic(state==="play"?"battle":"title"); } $("music-hint").hidden=true; };
+addEventListener("pointerdown", firstGesture, {once:true}); addEventListener("keydown", firstGesture, {once:true});
 genDecor(); renderGods();
 requestAnimationFrame(t=>{ lastT=t; requestAnimationFrame(frame); });
 initShared();
 if(document.fonts && document.fonts.load){ document.fonts.load("16px 'Noto Sans Runic'").then(()=>{ /* re-render decor runes once the font is ready */ DECOR_SPR.stone = mk(64,96,(g)=>{ g.translate(32,60); g.fillStyle="rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(0,10,18,6,0,0,TAU); g.fill(); g.fillStyle=radial(g,0,-20,30,"#76828f","#323b46"); g.beginPath(); g.moveTo(-14,10); g.lineTo(-16,-30); g.quadraticCurveTo(0,-50,16,-30); g.lineTo(14,10); g.closePath(); g.fill(); g.fillStyle="rgba(127,216,255,.85)"; g.font="18px 'Noto Sans Runic', serif"; g.textAlign="center"; g.fillText("ᛟ",0,-14); g.fillText("ᚦ",0,4); }); }).catch(()=>{}); }
 // test hook (used for automated performance checks)
-window.__gw = { hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get fps(){return fps;}, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+window.__gw = { mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get fps(){return fps;}, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
 })();
 </script>
 
