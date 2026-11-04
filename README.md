@@ -20,7 +20,7 @@ Steuerung: `W` `A` `S` `D` oder Pfeiltasten, `Esc` für Pause. Handy: Daumen auf
 
 ## Spielstand
 
-Der Fortschritt wird automatisch im Browser gespeichert. Unter **Spielstand** lässt er sich als Code oder Datei sichern und auf einem anderen Gerät wieder laden.
+Der Fortschritt wird automatisch im Browser gespeichert. Mit **⬇ Spielstand speichern** auf dem Startbildschirm lädst du eine JSON-Datei herunter (Runen, Runenschmiede, Rekorde). Mit **⬆ Spielstand laden** stellst du sie wieder her, auch auf einem anderen Gerät.
 
 ## Dateien
 

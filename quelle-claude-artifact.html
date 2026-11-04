@@ -170,18 +170,23 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 11</div>
+    <div class="ver" id="ver">Version 12</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
       <button class="btn" id="btn-shop" type="button">Runenschmiede <span class="runesTotal" id="runes-title"></span></button>
       <button class="btn" id="btn-board" type="button">Ruhmeshalle</button>
       <button class="btn" id="btn-save" type="button">Spielstand</button>
+    </div>
+    <div class="row">
+      <button class="btn" id="btn-quicksave" type="button">⬇ Spielstand speichern</button>
+      <label class="btn" for="quick-load" style="cursor:pointer">⬆ Spielstand laden</label><input type="file" id="quick-load" accept=".json,.gwsave,.txt,application/json,text/plain" hidden>
       <button class="btn" id="btn-sound" type="button">Ton: an</button>
     </div>
     <div class="keys" id="keys-desktop"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeile bewegen</span><span><kbd>Esc</kbd> Pause</span></div>
     <div class="keys" id="keys-touch" hidden><span>Daumen irgendwo aufs Spielfeld legen und ziehen, um zu laufen</span><span>❚❚ oben rechts: Pause</span></div>
     <div class="hint" id="best-title"></div>
+    <div class="hint" id="quick-msg" role="status"></div>
   </div>
 </div>
 
@@ -222,12 +227,12 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
     <div class="hint" style="text-align:left" id="save-summary"></div>
     <label class="hint" style="text-align:left" for="save-code">Dein Spielstand-Code</label>
     <textarea id="save-code" class="code" readonly rows="3"></textarea>
-    <div class="row" style="justify-content:flex-start"><button class="btn gold" id="btn-copy" type="button">Code kopieren</button><button class="btn" id="btn-dl" type="button">Als Datei speichern</button></div>
+    <div class="row" style="justify-content:flex-start"><button class="btn gold" id="btn-dl" type="button">Als Datei speichern (JSON)</button><button class="btn" id="btn-copy" type="button">Code kopieren</button></div>
   </div>
   <div class="panel" style="display:flex;flex-direction:column;gap:10px">
     <label class="hint" style="text-align:left" for="load-code">Spielstand laden: Code einfügen oder Datei wählen</label>
-    <textarea id="load-code" class="code" rows="3" placeholder="GW1...."></textarea>
-    <div class="row" style="justify-content:flex-start"><button class="btn" id="btn-load" type="button">Code laden</button><label class="btn" for="load-file" style="cursor:pointer">Datei laden</label><input type="file" id="load-file" accept=".txt,.gwsave,text/plain" hidden></div>
+    <textarea id="load-code" class="code" rows="3" placeholder="GW1-Code oder Inhalt der JSON-Datei"></textarea>
+    <div class="row" style="justify-content:flex-start"><button class="btn" id="btn-load" type="button">Code laden</button><label class="btn" for="load-file" style="cursor:pointer">Datei laden</label><input type="file" id="load-file" accept=".json,.txt,.gwsave,application/json,text/plain" hidden></div>
     <div class="hint" style="text-align:left" id="load-msg" role="status"></div>
   </div>
   <div class="row"><button class="btn gold" id="btn-saveback" type="button">Zurück</button></div>
@@ -554,8 +559,9 @@ const META = {
 /* ---------------- persistent meta ---------------- */
 let meta = store.get("gw-meta", null) || { runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true };
 meta.up = meta.up || {};
-if(!meta.forgeV){ const OLD={hp:l=>40+l*45,dmg:l=>50+l*55,spd:l=>40+l*40,xp:l=>50+l*50,revive:()=>400,reroll:l=>120+l*120}; let back=0;
-  for(const k in OLD){ for(let l=0;l<(meta.up[k]||0);l++) back+=OLD[k](l); meta.up[k]=0; } meta.runes=(meta.runes||0)+back; meta.forgeV=2; meta.refunded=back; }
+function migrateMeta(m){ if(m.forgeV) return m; m.up=m.up||{}; const OLD={hp:l=>40+l*45,dmg:l=>50+l*55,spd:l=>40+l*40,xp:l=>50+l*50,revive:()=>400,reroll:l=>120+l*120}; let back=0;
+  for(const k in OLD){ for(let l=0;l<(m.up[k]||0);l++) back+=OLD[k](l); m.up[k]=0; } m.runes=(m.runes||0)+back; m.forgeV=2; m.refunded=back; return m; }
+migrateMeta(meta);
 for(const k in META) meta.up[k] = meta.up[k]||0;
 const saveMeta = ()=>store.set("gw-meta", meta);
 
@@ -1559,6 +1565,23 @@ async function submitScore(s){
 /* ---------------- Spielstand: export / import ---------------- */
 function sum32(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
 function saveCode(){ const j=JSON.stringify({v:1, at:Date.now(), meta}); const b=btoa(unescape(encodeURIComponent(j))); return "GW1."+b+"."+sum32(b); }
+function saveJSON(){ const d=new Date();
+  return JSON.stringify({ spiel:"Götterwacht", format:2, version:GAME_VERSION, gespeichert:d.toISOString(), name:meta.nick||"",
+    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound }, null, 2); }
+function downloadSave(){ const d=new Date(), name=`Goetterwacht_Spielstand_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  const blob=new Blob([saveJSON()],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); return name; }
+function readAny(text){
+  const t=String(text||"").trim();
+  if(t.startsWith("GW1")) return migrateMeta(readCode(t).meta);
+  let j; try{ j=JSON.parse(t); }catch(e){ throw new Error("Die Datei ist kein Götterwacht-Spielstand (kein gültiges JSON)."); }
+  if(j && j.meta) j=j.meta;                       // tolerate older/other shapes
+  const up=j.runenschmiede||j.up, runes=j.runen??j.runes;
+  if(!up || typeof up!=="object" || typeof runes!=="number") throw new Error("In der Datei fehlen Runen oder Runenschmiede.");
+  const clean={}; for(const k in META){ const v=Math.floor(Number(up[k])||0); clean[k]=clamp(v,0,META[k].max); }
+  return { runes:Math.max(0,Math.floor(runes)), up:clean, best:j.rekord||j.best||{wave:0,kills:0,god:""}, bestLevel:j.besteStufe??j.bestLevel??0,
+    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2 };
+}
+function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; saveMeta(); }
 function readCode(code){
   const c=String(code||"").replace(/\s+/g,""); const m=/^GW1\.([A-Za-z0-9+/=]+)\.([a-z0-9]+)$/.exec(c);
   if(!m) throw new Error("Das ist kein gültiger Spielstand-Code. Er beginnt mit «GW1.».");
@@ -1575,14 +1598,18 @@ $("btn-save").addEventListener("click", openSave);
 $("btn-saveback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
 $("btn-copy").addEventListener("click", ()=>{ const t=$("save-code"); const done=()=>{ $("btn-copy").textContent="Kopiert"; setTimeout(()=>$("btn-copy").textContent="Code kopieren",1500); };
   try{ navigator.clipboard.writeText(t.value).then(done, ()=>{ t.select(); $("btn-copy").textContent="Markiert, jetzt kopieren"; }); }catch(e){ t.select(); } });
-$("btn-dl").addEventListener("click", ()=>{ const blob=new Blob([saveCode()],{type:"text/plain"}); const a=document.createElement("a"); const d=new Date();
-  a.href=URL.createObjectURL(blob); a.download=`Goetterwacht_Spielstand_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.gwsave`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); });
+$("btn-dl").addEventListener("click", ()=>{ const n=downloadSave(); $("load-msg").textContent=`Gespeichert als ${n}`; });
+const inClaude = !!(window.claude && window.claude.use);
+$("btn-quicksave").addEventListener("click", ()=>{ if(inClaude){ openSave(); return; } const n=downloadSave(); $("quick-msg").textContent=`Spielstand gespeichert: ${n} (im Download-Ordner)`; });
+$("quick-load").addEventListener("change", e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const m=readAny(r.result); applyLoaded(m); renderGods(); $("quick-msg").textContent=`Spielstand geladen: ${saveSummary(meta)}`; }catch(err){ $("quick-msg").textContent=err.message; } };
+  r.readAsText(f); e.target.value=""; });
 function tryLoad(code){
-  try{ const d=readCode(code); pendingLoad=d.meta; $("load-msg").textContent=`Gefunden: ${saveSummary(d.meta)}. Dein jetziger Stand wird ersetzt. Zum Bestätigen nochmals auf «Jetzt laden» tippen.`; $("btn-load").textContent="Jetzt laden"; }
+  try{ const m=readAny(code); pendingLoad=m; $("load-msg").textContent=`Gefunden: ${saveSummary(m)}. Dein jetziger Stand wird ersetzt. Zum Bestätigen nochmals auf «Jetzt laden» tippen.`; $("btn-load").textContent="Jetzt laden"; }
   catch(e){ pendingLoad=null; $("load-msg").textContent=e.message; $("btn-load").textContent="Code laden"; }
 }
 $("btn-load").addEventListener("click", ()=>{
-  if(pendingLoad){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true }, pendingLoad); for(const k in META) meta.up[k]=meta.up[k]||0; saveMeta(); pendingLoad=null;
+  if(pendingLoad){ applyLoaded(pendingLoad); pendingLoad=null;
     $("btn-load").textContent="Code laden"; $("load-msg").textContent="Spielstand geladen."; $("save-code").value=saveCode(); $("save-summary").textContent="Aktuell: "+saveSummary(meta); return; }
   tryLoad($("load-code").value); });
 $("load-file").addEventListener("change", e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $("load-code").value=String(r.result).trim(); tryLoad(r.result); }; r.readAsText(f); e.target.value=""; });
@@ -1616,7 +1643,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 11;
+const GAME_VERSION = 12;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 genDecor(); renderGods();
