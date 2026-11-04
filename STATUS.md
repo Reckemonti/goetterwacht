@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 9
+Stand: 04.11.2026, Version 10
 
 ## Zuletzt geändert
+- Version 10: Versionsanzeige im Titel; Steuerungshinweis passend zu Handy oder PC
 - Version 9: Wellen 1 bis 4 leichter, harter Anstieg ab Welle 5; alle Götter 5 % schneller; Runenmünzen; Bosse lassen Herzen fallen
 - Ulti neu: Donar erscheint am Himmel (Donars Zorn), Skadi Eiswellen von innen nach aussen, Ulfr Krater mit Lebensraub
 - Mehr Wucht: Kamera-Ruck, Treffer-Federn, Rebound-Druckwellen; kleinere Irrlicht-Kugeln
