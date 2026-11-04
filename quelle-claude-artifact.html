@@ -183,7 +183,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 19</div>
+    <div class="ver" id="ver">Version 20</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -625,21 +625,21 @@ const SKILLS = [
 const unlockedSkills = () => SKILLS.filter(k=>(meta.up[k.req]||0)>=k.lvl);
 // Runenschmiede: many small steps, rising costs. grp = section in the forge
 const META = {
-  hp:{ grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+5 Leben", tot:l=>`+${l*5} Leben`, cost:l=>30+l*18 },
-  armor:{ grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.5 Rüstung", tot:l=>`+${(l*.5).toFixed(1)} Rüstung`, cost:l=>60+l*35 },
-  regen:{ grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.15 Leben pro Sekunde", tot:l=>`+${(l*.15).toFixed(2)} Leben/s`, cost:l=>50+l*30 },
-  spd:{ grp:"Körper", name:"Flinkheit", rune:"ᛖ", max:15, d:"+2 % Tempo", tot:l=>`+${l*2} % Tempo`, cost:l=>35+l*20 },
-  dmg:{ grp:"Kampf", name:"Stärke", rune:"ᚢ", max:20, d:"+2 % Schaden", tot:l=>`+${l*2} % Schaden`, cost:l=>40+l*22 },
-  cd:{ grp:"Kampf", name:"Rastlosigkeit", rune:"ᚱ", max:15, d:"−1.5 % Abklingzeit", tot:l=>`−${(l*1.5).toFixed(1)} % Abklingzeit`, cost:l=>60+l*30 },
-  area:{ grp:"Kampf", name:"Weite", rune:"ᛞ", max:10, d:"+2 % Wirkungsbereich", tot:l=>`+${l*2} % Bereich`, cost:l=>50+l*28 },
-  ulti:{ grp:"Kampf", name:"Götterruf", rune:"ᚺ", max:10, d:"Ulti 3 % öfter", tot:l=>`Ulti −${l*3} % Abklingzeit`, cost:l=>70+l*35 },
-  luck:{ grp:"Glück", name:"Glück", rune:"ᛟ", max:15, d:"+1.5 % kritische Treffer, öfter Herzen und Münzen", tot:l=>`+${(l*1.5).toFixed(1)} % Krit, +${l*4} % Funde`, cost:l=>45+l*25 },
-  magnet:{ grp:"Glück", name:"Anziehung", rune:"ᚷ", max:15, d:"+6 % Sammelradius", tot:l=>`+${l*6} % Sammelradius`, cost:l=>25+l*15 },
-  greed:{ grp:"Glück", name:"Gier", rune:"ᚠ", max:15, d:"+5 % Runen", tot:l=>`+${l*5} % Runen`, cost:l=>50+l*25 },
-  xp:{ grp:"Glück", name:"Weisheit", rune:"ᚨ", max:15, d:"+3 % Erfahrung", tot:l=>`+${l*3} % Erfahrung`, cost:l=>40+l*20 },
-  reroll:{ grp:"Schicksal", name:"Schicksalsfaden", rune:"ᚾ", max:5, d:"+1 Mal Gaben neu würfeln pro Runde", tot:l=>`${l}× neu würfeln`, cost:l=>100+l*100 },
-  start:{ grp:"Schicksal", name:"Erbe der Ahnen", rune:"ᛜ", max:3, d:"Starte mit einer zusätzlichen Gabe", tot:l=>`${l} Gabe${l>1?"n":""} zum Start`, cost:l=>300+l*300 },
-  revive:{ grp:"Schicksal", name:"Zweites Leben", rune:"ᛇ", max:2, d:"Einmal pro Runde wiederauferstehen", tot:l=>`${l}× wiederauferstehen`, cost:l=>400+l*500 },
+  hp:{ grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+5 Leben", tot:l=>`+${l*5} Leben`, cost:l=>40+l*20 },
+  armor:{ grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.5 Rüstung", tot:l=>`+${(l*.5).toFixed(1)} Rüstung`, cost:l=>75+l*45 },
+  regen:{ grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.15 Leben pro Sekunde", tot:l=>`+${(l*.15).toFixed(2)} Leben/s`, cost:l=>60+l*40 },
+  spd:{ grp:"Körper", name:"Flinkheit", rune:"ᛖ", max:15, d:"+2 % Tempo", tot:l=>`+${l*2} % Tempo`, cost:l=>45+l*25 },
+  dmg:{ grp:"Kampf", name:"Stärke", rune:"ᚢ", max:20, d:"+2 % Schaden", tot:l=>`+${l*2} % Schaden`, cost:l=>50+l*30 },
+  cd:{ grp:"Kampf", name:"Rastlosigkeit", rune:"ᚱ", max:15, d:"−1.5 % Abklingzeit", tot:l=>`−${(l*1.5).toFixed(1)} % Abklingzeit`, cost:l=>75+l*40 },
+  area:{ grp:"Kampf", name:"Weite", rune:"ᛞ", max:10, d:"+2 % Wirkungsbereich", tot:l=>`+${l*2} % Bereich`, cost:l=>60+l*35 },
+  ulti:{ grp:"Kampf", name:"Götterruf", rune:"ᚺ", max:10, d:"Ulti 3 % öfter", tot:l=>`Ulti −${l*3} % Abklingzeit`, cost:l=>90+l*45 },
+  luck:{ grp:"Glück", name:"Glück", rune:"ᛟ", max:15, d:"+1.5 % kritische Treffer, öfter Herzen und Münzen", tot:l=>`+${(l*1.5).toFixed(1)} % Krit, +${l*4} % Funde`, cost:l=>55+l*30 },
+  magnet:{ grp:"Glück", name:"Anziehung", rune:"ᚷ", max:15, d:"+6 % Sammelradius", tot:l=>`+${l*6} % Sammelradius`, cost:l=>30+l*20 },
+  greed:{ grp:"Glück", name:"Gier", rune:"ᚠ", max:15, d:"+5 % Runen", tot:l=>`+${l*5} % Runen`, cost:l=>60+l*30 },
+  xp:{ grp:"Glück", name:"Weisheit", rune:"ᚨ", max:15, d:"+3 % Erfahrung", tot:l=>`+${l*3} % Erfahrung`, cost:l=>50+l*25 },
+  reroll:{ grp:"Schicksal", name:"Schicksalsfaden", rune:"ᚾ", max:5, d:"+1 Mal Gaben neu würfeln pro Runde", tot:l=>`${l}× neu würfeln`, cost:l=>125+l*125 },
+  start:{ grp:"Schicksal", name:"Erbe der Ahnen", rune:"ᛜ", max:3, d:"Starte mit einer zusätzlichen Gabe", tot:l=>`${l} Gabe${l>1?"n":""} zum Start`, cost:l=>375+l*375 },
+  revive:{ grp:"Schicksal", name:"Zweites Leben", rune:"ᛇ", max:2, d:"Einmal pro Runde wiederauferstehen", tot:l=>`${l}× wiederauferstehen`, cost:l=>500+l*625 },
 };
 
 /* ---------------- persistent meta ---------------- */
@@ -847,7 +847,7 @@ function kill(e){
   if(e.elite){ effects.push({k:"ring",x:e.x,y:e.y,r:e.r*3,l:.35,m:.35,c:"rgba(242,193,78,"}); burst(e.x,e.y,30,PIDX.gold,240,.6,4); kick=Math.max(kick,.2); }
   const lk=1+(G.luck||0)*.04;
   if(Math.random()<.004*lk) dropItem(e.x,e.y,"meat");
-  const cn = e.elite? ri(3,5)*(G.sk.andvari?2:1) : Math.random()<(.025+G.wave*.002)*lk ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
+  const cn = e.elite? (Math.random()<.5?1:0)*(G.sk.andvari?2:1) : Math.random()<(.0015+G.wave*.0001)*lk ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
   if(Math.random()<.0025) dropItem(e.x,e.y,"magnet");
   if(G.god==="ulfr"){ G.healAcc += .4; }
   G.healAcc += G.fate.steal;
@@ -1187,14 +1187,14 @@ function spawnOneBoss(big, a, n){
 }
 function bossDown(e){
   G.bosses=(G.bosses||[]).filter(b=>b!==e&&b.on);
-  for(let i=0;i<(8+G.wave)*(G.sk.andvari?2:1);i++) dropItem(e.x+rnd(-40,40),e.y+rnd(-40,40),"coin");
+  for(let i=0;i<(1+Math.floor(G.wave/5))*(G.sk.andvari?2:1);i++) dropItem(e.x+rnd(-40,40),e.y+rnd(-40,40),"coin");
   for(let i=0;i<(e.big?3:2);i++) dropItem(e.x+rnd(-30,30),e.y+rnd(-30,30),"meat");
-  if(G.bosses.length){ G.boss=G.bosses[0]; const r=Math.round((5+G.wave)*G.runeMul); G.runes+=r; text(e.x,e.y-40,`+${r} Runen`,2); 
+  if(G.bosses.length){ G.boss=G.bosses[0]; const r=Math.round((5+G.wave)*G.runeMul); G.runes+=r; if(BOT.on) BOT.rs.boss=(BOT.rs.boss||0)+r; text(e.x,e.y-40,`+${r} Runen`,2); 
     burst(e.x,e.y,40,PIDX.gold,300,.8,4); shake=Math.max(shake,10); banner(null, `Noch ${G.bosses.length} ${G.bosses.length===1?"Boss":"Bosse"}`); return; }
   G.boss=null; $("bossbar").hidden=true; G.wavesDone=G.wave; kick=Math.max(kick,1); G.hitstop=.4;
   effects.push({k:"rays",x:e.x,y:e.y,r:520,l:1.6,m:1.6,a0:Math.random()*TAU});
   dropItem(e.x,e.y,"chest");
-  const rr = Math.round((e.big? 60+G.wave*6 : 10+G.wave*2)*G.runeMul); G.runes += rr;
+  const rr = Math.round((e.big? 40+G.wave*4 : 6+G.wave)*G.runeMul); G.runes += rr; if(BOT.on) BOT.rs.wave=(BOT.rs.wave||0)+rr;
   shake=18; flash=.4; sfx("win");
   effects.push({k:"glow", x:e.x, y:e.y, r:300, l:.8, m:.8, img:GLOW.gold});
   G.phase="break"; G.breakT=4.5; setMusic("battle");
@@ -1302,7 +1302,7 @@ function pickupsUpdate(dt){
       if(g.k==="gem"){ gainXp(g.v); sfx("pick"); }
       else if(g.k==="meat"){ G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.3); text(G.x,G.y-30,`+${Math.round(G.maxHp*.3)} Leben`,4); burst(G.x,G.y,16,PIDX.green,160,.5,3); }
       else if(g.k==="magnet"){ for(const o of GM) if(o.on&&o.k==="gem") o.vac=true; }
-      else if(g.k==="coin"){ const v=Math.max(1,Math.round((1+Math.floor(G.wave/4))*G.runeMul)); G.runes+=v; G.coinFx=.35; sfx("coin"); text(G.x+rnd(-8,8),G.y-26,`+${v} ᚱ`,2); }
+      else if(g.k==="coin"){ const v=Math.max(1,Math.round((1+Math.floor(G.wave/6))*G.runeMul)); G.runes+=v; if(BOT.on) BOT.rs.coin=(BOT.rs.coin||0)+v; G.coinFx=.35; sfx("coin"); text(G.x+rnd(-8,8),G.y-26,`+${v} ᚱ`,2); }
       else if(g.k==="apple"){ G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.5); text(G.x,G.y-30,"Iduns Apfel",4); burst(G.x,G.y,24,PIDX.gold,180,.6,3); sfx("level"); }
       else if(g.k==="chest"){ G.pendingLv+=G.sk.freyja?2:1; G.chest=true; burst(G.x,G.y,40,PIDX.gold,260,.7,4); }
     }
@@ -1376,12 +1376,13 @@ function buildOffers(){
   for(const id in PASS){ const p=G.passives[id]||0; if(p<5 && (p>0 || nP<6)) opts.push({t:"p",id,wgt:p?2:1.4}); }
   const out=[]; const pool=opts.slice();
   while(out.length<(G.sk.mimir?4:3) && pool.length){ let s=pool.reduce((a,o)=>a+o.wgt,0), r=Math.random()*s; let k=0; for(;k<pool.length;k++){ r-=pool[k].wgt; if(r<=0) break; } out.push(pool.splice(Math.min(k,pool.length-1),1)[0]); }
-  if(!out.length){ out.push({t:"heal"}); out.push({t:"runes"}); }
+  if(!out.length){ out.push({t:"heal"}); out.push({t:"might"}); out.push({t:"runes"}); }
   return out;
 }
 function cardHtml(o,i){
   if(o.t==="heal") return `<button class="card" data-i="${i}"><div class="ic">ᛃ</div><div><h4>Met der Götter</h4><p>Heilt 40 % deines Lebens.</p></div></button>`;
-  if(o.t==="runes") return `<button class="card" data-i="${i}"><div class="ic">ᚱ</div><div><h4>Runenbeutel</h4><p>+25 Runen für die Runenschmiede.</p></div></button>`;
+  if(o.t==="runes") return `<button class="card" data-i="${i}"><div class="ic">ᚱ</div><div><h4>Runenbeutel</h4><p>+8 Runen für die Runenschmiede.</p></div></button>`;
+  if(o.t==="might") return `<button class="card" data-i="${i}"><div class="ic">ᚢ</div><div><h4>Kraftrune</h4><p>+4 % Schaden für diese Runde. Stapelbar.</p></div></button>`;
   if(o.t==="evo"){ const ev=EVO[o.id]; return `<button class="card evo" data-i="${i}"><div class="ic">${WEAP[o.id].rune}</div><div><div class="lvl">Verschmelzung</div><h4>${ev.name}</h4><p>${ev.d}</p></div></button>`; }
   if(o.t==="w"){ const w=G.weapons[o.id], l=w?w.lvl+1:1, D=WEAP[o.id];
     const cb=COMBOS.filter(c=>c.a===o.id||c.b===o.id).map(c=>{ const other=c.a===o.id?c.b:c.a; return `<p style="font-size:13px;color:var(--mute);margin-top:4px">Kombo mit ${WEAP[other].name} (beide Stufe 3): <span style="color:#ff9a7a">${c.name}</span>${G.weapons[other]?" ✓":""}</p>`; }).join("");
@@ -1405,7 +1406,7 @@ $("btn-reroll").addEventListener("click", ()=>{ if(G.rerolls<=0) return; G.rerol
 function choose(o){
   if(o.t==="w") addWeapon(o.id); else if(o.t==="p") addPassive(o.id);
   else if(o.t==="evo"){ G.weapons[o.id].evo=true; if(o.id==="valk") syncValk(); renderSlots(); banner(EVO[o.id].name,"Verschmelzung"); }
-  else if(o.t==="heal") G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.4); else if(o.t==="runes") G.runes+=25;
+  else if(o.t==="heal") G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.4); else if(o.t==="runes") { G.runes+=8; if(BOT.on) BOT.rs.card=(BOT.rs.card||0)+8; } else if(o.t==="might"){ G.fate.dmg*=1.04; applyPassives(); }
   G.pendingLv--; G.chest=false; checkCombos();
   hide("ov-level"); state="play"; lastT=performance.now();
 }
@@ -1809,7 +1810,7 @@ $("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventL
 
 function gameOver(){
   if(state==="over") return; state="over"; setMusic("title");
-  const waves = G.wavesDone, earned = G.runes + Math.round((waves*8 + Math.floor(G.kills/25))*G.runeMul);
+  const waves = G.wavesDone, earned = G.runes + Math.round((waves*5 + Math.floor(G.kills/150))*G.runeMul);
   meta.runes += earned;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
   let record=false; if(waves>meta.best.wave || (waves===meta.best.wave && G.kills>meta.best.kills)){ meta.best={wave:waves,kills:G.kills,god:G.god}; record=true; }
@@ -1952,7 +1953,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 19;
+const GAME_VERSION = 20;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2008,7 +2009,7 @@ function botThink(){
   BOT.wx+=rnd(-.2,.2); BOT.wy+=rnd(-.2,.2); BOT.wx*=.95; BOT.wy*=.95; fx+=BOT.wx*.3; fy+=BOT.wy*.3;
   const m=Math.hypot(fx,fy); if(m>.05){ BOT.mx=fx/m; BOT.my=fy/m; } else { BOT.mx=0; BOT.my=0; }
 }
-const PICKSCORE={ evo:200, heal:4, runes:3, p_ausdauer:34, p_macht:33, p_ruestung:31, p_eile:29, p_herz:24, p_weite:20, p_tempo:22, p_magnet:14, w_slam:30, w_valk:28, w_valkring:27, w_aura:26, w_barrel:22 };
+const PICKSCORE={ evo:200, heal:4, runes:3, might:5, p_ausdauer:34, p_macht:33, p_ruestung:31, p_eile:29, p_herz:24, p_weite:20, p_tempo:22, p_magnet:14, w_slam:30, w_valk:28, w_valkring:27, w_aura:26, w_barrel:22 };
 function botPick(list){ let best=list[0], bs=-1; for(const o of list){ let sc;
     if(o.t==="evo") sc=200; else if(o.t==="w"){ const own=WEAP[o.id].god===G.god; sc = own? 50 + (WEAP[o.id].base?6:0) : (PICKSCORE["w_"+o.id]||20); if(G.weapons[o.id]) sc+=8; }
     else if(o.t==="p") sc=PICKSCORE["p_"+o.id]||15; else sc=PICKSCORE[o.t]||1;
@@ -2016,7 +2017,7 @@ function botPick(list){ let best=list[0], bs=-1; for(const o of list){ let sc;
 function simRun(god, opt={}){
   const savedMeta=JSON.stringify(meta), maxWave=opt.maxWave||10, maxT=opt.maxTime||3000;
   if(opt.forge){ for(const k in META) meta.up[k]=0; Object.assign(meta.up,opt.forge); }
-  newRun(god); state="play"; BOT.on=true; BOT.dmg={}; BOT.human=!!opt.human; let t=0, minHp=1, hits=0; const waveT=[];
+  newRun(god); state="play"; BOT.on=true; BOT.dmg={}; BOT.rs={}; BOT.human=!!opt.human; let t=0, minHp=1, hits=0; const waveT=[];
   const hp0=G.hp; let lastW=1;
   while(state!=="over" && t<maxT && G.wavesDone<maxWave){
     update(STEP); t+=STEP; minHp=Math.min(minHp,G.hp/G.maxHp);
@@ -2025,7 +2026,7 @@ function simRun(god, opt={}){
     while(G.pendingLv>0){ offers=buildOffers(); choose(botPick(offers)); }
     if(state==="level"||state==="fate") state="play";
   }
-  const res={ god, died:state==="over", wave:G.wave, wavesDone:G.wavesDone, time:Math.round(t), level:G.level, kills:G.kills, minHp:Math.round(minHp*100), weapons:Object.entries(G.weapons).map(([k,v])=>k+v.lvl+(v.evo?"*":"")).join(","), waveT:waveT.join(" "), dmg:Object.entries(BOT.dmg).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+'='+Math.round(v)).join(' ') };
+  const res={ god, died:state==="over", wave:G.wave, wavesDone:G.wavesDone, time:Math.round(t), level:G.level, kills:G.kills, minHp:Math.round(minHp*100), weapons:Object.entries(G.weapons).map(([k,v])=>k+v.lvl+(v.evo?"*":"")).join(","), rs:JSON.stringify(BOT.rs), runes:G.runes + Math.round((G.wavesDone*5 + Math.floor(G.kills/150))*G.runeMul), waveT:waveT.join(" "), dmg:Object.entries(BOT.dmg).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+'='+Math.round(v)).join(' ') };
   BOT.on=false; meta=JSON.parse(savedMeta); saveMeta(); G=null; state="title"; only("ov-title"); $("hud").hidden=true; $("bossbar").hidden=true;
   return res;
 }

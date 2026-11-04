@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 19
+Stand: 04.11.2026, Version 20
 
 ## Zuletzt geändert
+- Version 20: Runen-Wirtschaft neu (vorher bis 3500 Runen pro Runde, jetzt ~300 bei Welle 6, ~800 bei Welle 10); Schmiede-Kosten +25 %; nach voll ausgebauten Gaben gibt es die stapelbare Kraftrune statt Runenbeutel-Flut
 - Version 19: Wächter am Anfang fairer (weniger Kontakt- und Schlagschaden), Schmiede-Fähigkeiten und Vidar abgeschwächt, Spätphase ab Welle 7 deutlich zäher; Simulation mit Mensch-Modus: frisch ~Welle 9, mittlere Schmiede ~Welle 17
 - Version 18: Test-Autopilot (Simulation) eingebaut; Balancing: weniger und langsamere Pfeile, schwächere Irrlicht-Kugeln, Geschoss-Obergrenze, langsamere Stufen, Ulfr/Skadi/Donar angeglichen
 - Version 17: Musik halb so laut; Ton startet schon beim ersten Tippen auf dem Startbildschirm
