@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 30
+Stand: 04.11.2026, Version 31
 
 ## Zuletzt geändert
+- Version 31: Wölfe laden auf und springen (rote Linie); alle Fähigkeiten und Gaben bis Stufe 10 (ab 6: +13 % Schaden pro Stufe, Gaben halb so stark); Walküren und Zirkel wechseln die Farbe (rot, violett, grün, blau, goldrot), Stufe 10 doppelte Schar; Fässer werden Frost-, Gift-, Donner- und Ragnarök-Fässer; Donars Blitzsturm abgeschwächt
 - Version 30: Abschluss-Test (Langläufe bis Welle 30 ohne Fehler oder Hänger, alle Menüs auf Handygrösse geprüft), Kill-Runenbonus gedeckelt, README und Test-Werkzeuge im Repo
 - Version 29: Vibration auf dem Handy bei Treffern, Ulti und Boss-Tod (folgt der Einstellung «Ton»)
 - Version 28: Bodenschlag grosser Bosse fair ausweichbar (kleiner, längere Vorwarnung), Spätphase etwas zäher, Schmiede-Werte für Leben/Rüstung/Regeneration leicht gesenkt; Simulation Mensch-Modus ohne Schmiede: Ø Welle 10-13, keine Wand mehr bei Welle 5
