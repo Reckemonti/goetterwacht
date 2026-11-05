@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 31
+Stand: 04.11.2026, Version 32
 
 ## Zuletzt geändert
+- Version 32: Meisterschaft sichtbar: Donnerhämmer, Äxte, Eisspeere, Runenkreis und Startangriffe leuchten ab Stufe 6 in der Farbstufe (rot bis goldrot) mit Funken und Schockring
 - Version 31: Wölfe laden auf und springen (rote Linie); alle Fähigkeiten und Gaben bis Stufe 10 (ab 6: +13 % Schaden pro Stufe, Gaben halb so stark); Walküren und Zirkel wechseln die Farbe (rot, violett, grün, blau, goldrot), Stufe 10 doppelte Schar; Fässer werden Frost-, Gift-, Donner- und Ragnarök-Fässer; Donars Blitzsturm abgeschwächt
 - Version 30: Abschluss-Test (Langläufe bis Welle 30 ohne Fehler oder Hänger, alle Menüs auf Handygrösse geprüft), Kill-Runenbonus gedeckelt, README und Test-Werkzeuge im Repo
 - Version 29: Vibration auf dem Handy bei Treffern, Ulti und Boss-Tod (folgt der Einstellung «Ton»)
