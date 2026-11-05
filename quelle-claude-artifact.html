@@ -190,7 +190,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 27</div>
+    <div class="ver" id="ver">Version 28</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -540,7 +540,7 @@ function genDecor(){
 
 /* ---------------- data: gods, weapons, passives ---------------- */
 const GODS = {
-  donar:{ name:"Donar", title:"Gott des Donners", color:"#7fd8ff", hp:160, speed:158, armor:2, dmg:1, start:"smash",
+  donar:{ name:"Donar", title:"Gott des Donners", color:"#7fd8ff", hp:150, speed:158, armor:2, dmg:1, start:"smash",
     desc:"Zäh und standfest. Er lädt den Donnerschlag auf und trifft alles im Kreis um sich. Später kreisen Donnerhämmer mit Kettenblitzen um ihn.",
     passive:"Donnergrollen: Gratis-Blitz alle 6 s" },
   ulfr:{ name:"Ulfr", title:"Der Berserker", color:"#ff5a48", hp:100, speed:181, armor:1, dmg:1.22, start:"cleave",
@@ -639,9 +639,9 @@ const SKILLS = [
 const unlockedSkills = () => SKILLS.filter(k=>(meta.up[k.req]||0)>=k.lvl);
 // Runenschmiede: many small steps, rising costs. grp = section in the forge
 const META = {
-  hp:{ grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+5 Leben", tot:l=>`+${l*5} Leben`, cost:l=>40+l*20 },
-  armor:{ grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.5 Rüstung", tot:l=>`+${(l*.5).toFixed(1)} Rüstung`, cost:l=>75+l*45 },
-  regen:{ grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.15 Leben pro Sekunde", tot:l=>`+${(l*.15).toFixed(2)} Leben/s`, cost:l=>60+l*40 },
+  hp:{ grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+4 Leben", tot:l=>`+${l*4} Leben`, cost:l=>40+l*20 },
+  armor:{ grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.4 Rüstung", tot:l=>`+${(l*.4).toFixed(1)} Rüstung`, cost:l=>75+l*45 },
+  regen:{ grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.12 Leben pro Sekunde", tot:l=>`+${(l*.12).toFixed(2)} Leben/s`, cost:l=>60+l*40 },
   spd:{ grp:"Körper", name:"Flinkheit", rune:"ᛖ", max:15, d:"+2 % Tempo", tot:l=>`+${l*2} % Tempo`, cost:l=>45+l*25 },
   dmg:{ grp:"Kampf", name:"Stärke", rune:"ᚢ", max:20, d:"+2 % Schaden", tot:l=>`+${l*2} % Schaden`, cost:l=>50+l*30 },
   cd:{ grp:"Kampf", name:"Rastlosigkeit", rune:"ᚱ", max:15, d:"−1.5 % Abklingzeit", tot:l=>`−${(l*1.5).toFixed(1)} % Abklingzeit`, cost:l=>75+l*40 },
@@ -796,7 +796,7 @@ function newRun(godId){
   const god = GODS[godId], u = meta.up;
   for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
   pt.l.fill(0); effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
-  const maxHp = god.hp + u.hp*5;
+  const maxHp = god.hp + u.hp*4;
   G = { god:godId, x:0, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor,
     dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
@@ -813,8 +813,8 @@ function newRun(godId){
 }
 const xpNeed = l => Math.floor(6 + l*5 + Math.pow(l,1.85));
 const waveLen = w => Math.min(26 + w*2.2, 52);
-function hpMul(w){ const k=w-1; return (1 + .22*k + .07*k*k) * Math.pow(1.05,k) * Math.pow(1.12,Math.max(0,k-5)); }
-function dmgMulE(w){ const k=w-1, l=Math.max(0,k-3); return 1 + .09*k + .022*l*l; }
+function hpMul(w){ const k=w-1; return (1 + .22*k + .07*k*k) * Math.pow(1.05,k) * Math.pow(1.14,Math.max(0,k-5)); }
+function dmgMulE(w){ const k=w-1, l=Math.max(0,k-3); return 1 + .09*k + .028*l*l; }
 
 /* ---------------- weapons ---------------- */
 function addWeapon(id){ if(G.weapons[id]) { G.weapons[id].lvl++; } else G.weapons[id] = { id, lvl:1, t:.5, evo:false, ang:0, cdh:0 }; if(id==="valk") syncValk(); renderSlots(); }
@@ -826,9 +826,9 @@ function applyPassives(id){
   G.cdMul = Math.pow(.93, p.eile||0)*F.cd*(1-u.cd*.015);
   G.speed = god.speed*(1+u.spd*.02)*(1+(p.tempo||0)*.08)*F.spd;
   G.magnet = 90*(1+(p.magnet||0)*.35)*F.magnet*(1+u.magnet*.06);
-  G.armor = Math.max(0, god.armor + (p.ruestung||0) + F.armor + u.armor*.5);
+  G.armor = Math.max(0, god.armor + (p.ruestung||0) + F.armor + u.armor*.4);
   G.area = (1+(p.weite||0)*.1)*F.area*(1+u.area*.02);
-  G.regen = (p.herz||0)*.6 + u.regen*.15;
+  G.regen = (p.herz||0)*.6 + u.regen*.12;
   if(id==="ausdauer"){ G.maxHp+=25; G.hp=Math.min(G.maxHp,G.hp+25); }
   if(G.weapons.valk) syncValk();
 }
@@ -1257,9 +1257,9 @@ function enemyAttack(e,dt){
     if(Math.random()<.5){ const px=G.x, py=G.y; teles.push({kind:"slam", x:px, y:py, r:90, t:1, m:1, enemy:true, fn:()=>{ pools.push({x:px,y:py,r:90,t:4,dps:e.dmg*.5,enemy:true,tick:0}); burst(px,py,30,PIDX.fire,200,.6,4); }}); }
     return; }
   // slam (jotunn, troll king, draugr lord)
-  e.atk = e.big?3.4:4; const px=G.x, py=G.y, R=e.big?150:e.kind==="knochen"?120:100;
-  teles.push({kind:"slam", x:px, y:py, r:R, t:1.05, m:1.05, enemy:true, fn:()=>{ effects.push({k:"ring",x:px,y:py,r:R,l:.4,m:.4,c:"rgba(170,220,255,"}); burst(px,py,40,PIDX.ice,R*2,.6,4); shake=Math.max(shake,10); sfx("boom");
-    if(Math.hypot(G.x-px,G.y-py)<R+G.r*.5) hitPlayer(e.dmg*1.35,"slam"); }});
+  e.atk = e.big?3.4:4; const px=G.x, py=G.y, R=e.big?118:e.kind==="knochen"?110:96, tt=e.big?1.25:1.05;
+  teles.push({kind:"slam", x:px, y:py, r:R, t:tt, m:tt, enemy:true, fn:()=>{ effects.push({k:"ring",x:px,y:py,r:R,l:.4,m:.4,c:"rgba(170,220,255,"}); burst(px,py,40,PIDX.ice,R*2,.6,4); shake=Math.max(shake,10); sfx("boom");
+    if(Math.hypot(G.x-px,G.y-py)<R+G.r*.5) hitPlayer(e.dmg*(e.big?1.2:1.35),"slam"); }});
   if((e.kind==="jotunn"||e.kind==="grab") && Math.random()<.55){ for(let i=0;i<6+G.wave/2;i++){ const a=Math.random()*TAU; spawnEnemy("draugr", e.x+Math.cos(a)*80, e.y+Math.sin(a)*80); } }
 }
 function eshoot(x,y,vx,vy,r,dmg,kind){ if(kind==="arrow"||kind==="frost"){ let n=0; for(const p of EP) if(p.on) n++; if(n>=Math.min(60,18+G.wave*2.5)) return; } for(const p of EP){ if(p.on) continue; p.on=true; p.x=x; p.y=y; p.vx=vx; p.vy=vy; p.r=r; p.dmg=dmg; p.kind=kind; p.l=4; return; } }
@@ -2042,7 +2042,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 27;
+const GAME_VERSION = 28;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio

@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 27
+Stand: 04.11.2026, Version 28
 
 ## Zuletzt geändert
+- Version 28: Bodenschlag grosser Bosse fair ausweichbar (kleiner, längere Vorwarnung), Spätphase etwas zäher, Schmiede-Werte für Leben/Rüstung/Regeneration leicht gesenkt; Simulation Mensch-Modus ohne Schmiede: Ø Welle 10-13, keine Wand mehr bei Welle 5
 - Version 27: Schadens-Statistik am Rundenende (Anteil jeder Fähigkeit), leere Ruhmeshalle ausserhalb von claude.ai ausgeblendet
 - Version 26: Wellen-Ereignisse: Blutmond (jede 7. Welle: schnellere Gegner, doppelte Erfahrung und Münzen, roter Mond) und Nebel (Welle 6, 14, 18 …: Sicht eingeschränkt, +50 % Erfahrung)
 - Version 25: 14 Erfolge mit Runen-Belohnung (Startbildschirm «Erfolge»), werden im JSON-Spielstand mitgespeichert
