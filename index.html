@@ -206,7 +206,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 28</div>
+    <div class="ver" id="ver">Version 29</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -1045,6 +1045,7 @@ function godSlam(x,y,R,dmg,gd){ const prevSrc=SRC; SRC="slam";
   if(gd){ const big=gd==="ulfr";
     if(gd!=="donar"){ craters.push({x,y,r:R*(big?1.15:.75),t:big?14:9,god:gd}); if(craters.length>8) craters.shift(); }
     G.hitstop=.2; flash=Math.max(flash,.55);
+    buzz(gd==="ulfr"?[80,30,160]:60);
     if(gd==="donar"){ G.hitstop=0; flash=.3; storms.push({x,y,t:3.6,m:3.6,acc:0,dmg:dmg*.34,R:R*2}); banner("Donars Zorn",null); kick=Math.max(kick,.5); return; }
     if(gd==="skadi"){ G.hitstop=0; flash=.15; icewaves.push({x,y,F:R*1.9,t:0,dur:.75,id:valkId++,rows:[]}); banner("Ewiger Winter",null); sfx("freeze"); kick=Math.max(kick,.6);
       const n=query(x,y,R); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,dmg*.7,0,0,0,1); } return; }
@@ -1229,7 +1230,7 @@ function bossDown(e){
   for(let i=0;i<(e.big?3:2);i++) dropItem(e.x+rnd(-30,30),e.y+rnd(-30,30),"meat");
   if(G.bosses.length){ G.boss=G.bosses[0]; const r=Math.round((5+G.wave)*G.runeMul); G.runes+=r; if(BOT.on) BOT.rs.boss=(BOT.rs.boss||0)+r; text(e.x,e.y-40,`+${r} Runen`,2); 
     burst(e.x,e.y,40,PIDX.gold,300,.8,4); shake=Math.max(shake,10); banner(null, `Noch ${G.bosses.length} ${G.bosses.length===1?"Boss":"Bosse"}`); return; }
-  if(e.big) G.bigKills=(G.bigKills||0)+1;
+  if(e.big) G.bigKills=(G.bigKills||0)+1; buzz([60,40,120]);
   G.boss=null; $("bossbar").hidden=true; G.wavesDone=G.wave; kick=Math.max(kick,1); G.hitstop=.4; if(BOT.on) BOT.bt.push((G.wave%5===0?"B":"")+Math.round(G.time-G.bossStart));
   effects.push({k:"rays",x:e.x,y:e.y,r:520,l:1.6,m:1.6,a0:Math.random()*TAU});
   dropItem(e.x,e.y,"chest");
@@ -1314,12 +1315,14 @@ function enemiesUpdate(dt){
     const dx=p.x-G.x, dy=p.y-G.y; if(dx*dx+dy*dy<(p.r+G.r)*(p.r+G.r)){ hitPlayer(p.dmg,"proj:"+p.kind); p.on=false; } }
 }
 function heal(v){ const t=Math.min(v,G.healBud); if(t<=0) return; G.healBud-=t; G.hp=Math.min(G.maxHp,G.hp+t); }
+function buzz(ms){ if(BOT.on||!meta.sound||meta.vib===false) return; try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
 function hitPlayer(dmg,src){
   if(G.inv>0 || state!=="play") return;
   if(G.shield){ G.shield=false; G.shieldT=0; G.inv=.45; effects.push({k:"ring",x:G.x,y:G.y,r:48,l:.35,m:.35,c:"rgba(255,215,120,"}); burst(G.x,G.y,14,PIDX.gold,180,.4,3); sfx("axe"); return; }
   if(G.sk.hermod) G.hasteT=1.5;
   const d=Math.max(1, Math.round((dmg - G.armor)*(G.bearT>0?.5:1))); G.hp-=d; if(BOT.on){ const k=(src||"?")+"@w"+(G.wave<=4?"1-4":G.wave<=8?"5-8":"9+"); BOT.dmg[k]=(BOT.dmg[k]||0)+d; }
   if(G.sk.baer && G.bearCd<=0 && G.hp>0 && G.hp<G.maxHp*.3){ G.bearT=5; G.bearCd=30; banner("Bärenhaut",null); burst(G.x,G.y,30,PIDX.rot,220,.5,4); } G.inv=.55; shake=Math.max(shake,6); G.hurtT=.25; sfx("hurt");
+  buzz(d>G.maxHp*.15?90:35);
   burst(G.x,G.y,10,PIDX.red,180,.4,3); G.hurtFx=Math.min(1,(G.hurtFx||0)+.35+d/G.maxHp*2);
   if(G.hp<=0){ if(G.revives>0){ G.revives--; G.revived=true; G.hp=G.maxHp*(G.sk.hel?1:.6); G.inv=2.5; godSlam(G.x,G.y,G.sk.hel?480:320,(G.sk.hel?900:400)*G.dmgMul*(G.sk.hel?hpMul(G.wave)*.5+1:1)); banner("Wiedergeboren","Die Götter geben dir eine zweite Chance"); } else gameOver(); }
 }
@@ -2058,7 +2061,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 28;
+const GAME_VERSION = 29;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio

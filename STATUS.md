@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 28
+Stand: 04.11.2026, Version 29
 
 ## Zuletzt geändert
+- Version 29: Vibration auf dem Handy bei Treffern, Ulti und Boss-Tod (folgt der Einstellung «Ton»)
 - Version 28: Bodenschlag grosser Bosse fair ausweichbar (kleiner, längere Vorwarnung), Spätphase etwas zäher, Schmiede-Werte für Leben/Rüstung/Regeneration leicht gesenkt; Simulation Mensch-Modus ohne Schmiede: Ø Welle 10-13, keine Wand mehr bei Welle 5
 - Version 27: Schadens-Statistik am Rundenende (Anteil jeder Fähigkeit), leere Ruhmeshalle ausserhalb von claude.ai ausgeblendet
 - Version 26: Wellen-Ereignisse: Blutmond (jede 7. Welle: schnellere Gegner, doppelte Erfahrung und Münzen, roter Mond) und Nebel (Welle 6, 14, 18 …: Sicht eingeschränkt, +50 % Erfahrung)
