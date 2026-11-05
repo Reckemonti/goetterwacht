@@ -118,6 +118,10 @@ h2.t{font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin
 .card.curse .ic{color:#ff7a6a}.card.curse .lvl{color:#ff7a6a}
 .die.cursed{border-color:#c2463a;color:#ff7a6a;box-shadow:0 0 0 1px #c2463a,0 0 30px rgba(194,70,58,.35)}
 .cards.fate .card:hover{transform:none;border-color:var(--gold)}
+.dmgbars{display:flex;flex-direction:column;gap:6px}
+.dmgrow{display:grid;grid-template-columns:24px minmax(0,140px) minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:15px}
+.dmgrow .r{font-family:var(--font-rune);color:var(--gold);text-align:center}.dmgrow .b{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.dmgrow .b i{display:block;height:100%;background:linear-gradient(90deg,#c08a1e,var(--gold))}
+.dmgrow .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--mute)}
 .panel{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%}
 .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%}
 @media (max-width:560px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -186,7 +190,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 26</div>
+    <div class="ver" id="ver">Version 27</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -227,6 +231,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
     <div class="sum"><b id="o-runes">0</b><span>Runen verdient</span></div>
   </div>
   <div class="hint" id="o-record"></div>
+  <div class="panel" id="o-dmgwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Schaden nach Fähigkeit</div><div id="o-dmg" class="dmgbars"></div></div>
   <div class="panel" id="o-boardwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Ruhmeshalle</div><ul class="board" id="o-board"></ul><div class="hint" id="o-boardnote" style="margin-top:8px"></div></div>
   <div class="row"><button class="btn gold" id="btn-again" type="button">Nochmals</button><button class="btn" id="btn-shop2" type="button">Runenschmiede</button><button class="btn" id="btn-menu" type="button">Götterwahl</button></div>
 </div></div>
@@ -769,7 +774,7 @@ const pt = { x:new Float32Array(MAXPT), y:new Float32Array(MAXPT), vx:new Float3
 const PCOL = ["#ffffff","#8ff4ff","#ffcf5a","#ff7a2a","#ff4d3d","#c08bff","#9fb59e","#6fa8d6","#59e39a","#d9eefb"];
 const PIDX = { white:0, frost:1, gold:2, fire:3, red:4, violet:5, rot:6, ice:7, green:8, snow:9 };
 let pHead=0;
-let QUAL=1, lowT=0, highT=0;   // adaptive quality: drops when the frame rate sags, recovers when it is smooth
+let QUAL=1, lowT=0, highT=0, SRC="other";   // adaptive quality: drops when the frame rate sags, recovers when it is smooth
 function particle(x,y,vx,vy,life,size,col){ if(QUAL<1 && Math.random()>QUAL) return; const i=pHead; pHead=(pHead+1)%MAXPT; pt.x[i]=x; pt.y[i]=y; pt.vx[i]=vx; pt.vy[i]=vy; pt.l[i]=life; pt.m[i]=life; pt.s[i]=size; pt.c[i]=col; }
 function burst(x,y,n,col,spd=160,life=.5,size=3){ for(let i=0;i<n;i++){ const a=Math.random()*TAU, s=rnd(.3,1)*spd; particle(x,y,Math.cos(a)*s,Math.sin(a)*s,rnd(.5,1)*life,rnd(.6,1.2)*size,col); } }
 
@@ -796,7 +801,7 @@ function newRun(godId){
     dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
-    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
+    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, dmgBy:{}, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
   addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
   Object.assign(G,{ shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
@@ -842,6 +847,7 @@ function hurt(e, dmg, kx=0, ky=0, kb=0, col=0){
   if(G.buffs.zorn>0) d*=1.5;
   const crit = Math.random()<.06+G.fate.crit+(G.luck||0)*.015; if(crit) d*=2;
   d = Math.round(d);
+  if(G.dmgBy){ const k=SRC||"other"; G.dmgBy[k]=(G.dmgBy[k]||0)+Math.min(d,Math.max(0,e.hp)); }
   e.hp -= d; e.fl = .09;
   if(kb && !e.boss){ const m=Math.hypot(kx,ky)||1; e.kx += kx/m*kb*e.kbm; e.ky += ky/m*kb*e.kbm; }
   if(e.boss) G.bossHit = .15;
@@ -867,13 +873,13 @@ function kill(e){
 }
 function text(x,y,v,col){ if(QUAL<.8 && col!==2 && col!==4 && Math.random()>QUAL) return; for(const t of TX){ if(!t.on){ t.on=true; t.x=x; t.y=y; t.v=v; t.l=.6; t.c=col; return; } } }
 
-function weaponsUpdate(dt){
+function weaponsUpdate(dt){ SRC="passive";
   const W=G.weapons, cdm=G.cdMul, A=G.area;
   // Donar innate thunder
   if(G.god==="donar"){ G.passiveT-=dt; if(G.passiveT<=0){ G.passiveT=6*cdm; const n=1+Math.floor(G.level/6); for(let i=0;i<n;i++){ const e=randomEnemyNear(G.x,G.y,520); if(e) strike(e.x,e.y,40*G.dmgMul,60*A,false); } } }
   if(G.god==="ulfr"){ G.warT-=dt; if(G.warT<=0){ G.warT=7*cdm; const R=115*A; effects.push({k:"ring",x:G.x,y:G.y,r:R,l:.35,m:.35,c:"rgba(255,70,50,"}); burst(G.x,G.y,30,PIDX.red,R*2.5,.4,3); shake=Math.max(shake,5); sfx("boom");
     const n=query(G.x,G.y,R); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,30*G.dmgMul,e.x-G.x,e.y-G.y,380,4); } } }
-  for(const id in W){ const w=W[id], l=w.lvl, D=WEAP[id];
+  for(const id in W){ SRC=id; const w=W[id], l=w.lvl, D=WEAP[id];
     if(id==="hammer"){
       const n=L(D.cnt,l), R=L(D.rad,l)*A, dmg=L(D.dmg,l)*G.dmgMul*(w.evo?1.2:1);
       w.ang += L(D.spin,l)*dt; w.cdh-=dt;
@@ -945,6 +951,7 @@ function weaponsUpdate(dt){
         if(w.evo) setTimeout(()=>{ if(G&&state!=="title") valkHost(a+Math.PI/2*(Math.random()<.5?1:-1), w); },450); }
     }
   }
+  SRC="valk";
   // valkyrie hosts in flight
   for(let i=allies.length-1;i>=0;i--){ const f=allies[i]; f.d += f.sp*dt;
     const fx=f.x0+f.dx*f.d, fy=f.y0+f.dy*f.d; f.fx=fx; f.fy=fy;
@@ -959,7 +966,7 @@ function weaponsUpdate(dt){
   }
 }
 let valkId=1; const spirals=[];
-function spiralsUpdate(dt){
+function spiralsUpdate(dt){ SRC="valkring";
   for(let i=spirals.length-1;i>=0;i--){ const s=spirals[i]; s.t+=dt; if(s.t>=s.dur){ spirals.splice(i,1); continue; }
     const k=s.t/s.dur, r=18+s.reach*k, spin=s.dir*(s.t*4.4);
     for(let j=0;j<s.n;j++){ const a=s.a0+j/s.n*TAU+spin, x=G.x+Math.cos(a)*r, y=G.y+Math.sin(a)*r;
@@ -1018,7 +1025,7 @@ const CRATER = mk(256,256,(g)=>{ g.translate(128,128);
   g.fillStyle="#3b3631"; for(let i=0;i<22;i++){ const a=rnd(0,TAU), r=rnd(70,110); g.beginPath(); g.arc(Math.cos(a)*r,Math.sin(a)*r,rnd(2,6),0,TAU); g.fill(); } });
 const CRATER_GLOW = { donar:"rgba(130,210,255,", ulfr:"rgba(255,70,50,", skadi:"rgba(190,240,255," };
 const storms=[];
-function godSlam(x,y,R,dmg,gd){
+function godSlam(x,y,R,dmg,gd){ const prevSrc=SRC; SRC="slam";
   if(gd){ const big=gd==="ulfr";
     if(gd!=="donar"){ craters.push({x,y,r:R*(big?1.15:.75),t:big?14:9,god:gd}); if(craters.length>8) craters.shift(); }
     G.hitstop=.2; flash=Math.max(flash,.55);
@@ -1037,9 +1044,10 @@ function godSlam(x,y,R,dmg,gd){
   burst(x,y,90,PIDX.gold,R*2.2,.8,4); burst(x,y,40,PIDX.white,R*1.4,.5,3);
   shake=Math.max(shake,16); flash=Math.max(flash,.35); sfx("big");
   const n=query(x,y,R); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,dmg,e.x-x,e.y-y,gd==="ulfr"?900:gd==="skadi"?60:420,2); }
+  SRC=prevSrc;
 }
 function stunAll(x,y,R,t){ const n=query(x,y,R); for(let q=0;q<n;q++){ const e=E[QR[q]]; e.stun=Math.max(e.stun||0, e.boss?t*.4:t); } }
-function skillsUpdate(dt){
+function skillsUpdate(dt){ SRC="skills";
   const S=G.sk, W8=1+G.wave*.12;
   if(G.hasteT>0) G.hasteT-=dt; if(G.bearT>0) G.bearT-=dt; if(G.bearCd>0) G.bearCd-=dt;
   if(S.schild && !G.shield){ G.shieldT+=dt; if(G.shieldT>=10){ G.shield=true; } }
@@ -1059,7 +1067,7 @@ function skillsUpdate(dt){
       h.hit-=dt; if(h.hit<=0){ h.hit=.45; const n=query(h.x,h.y,46); for(let q=0;q<n;q++) hurt(E[QR[q]],13*G.dmgMul*W8,E[QR[q]].x-h.x,E[QR[q]].y-h.y,120,1); if(n) effects.push({k:"slash",x:h.x,y:h.y,r:40,a:Math.random()*TAU,l:.2,m:.2}); } } }
   vidarUpdate(dt);
 }
-function vidarUpdate(dt){
+function vidarUpdate(dt){ SRC="vidar";
   const V=G.vidar; if(!V) return;
   if(V.st==="away"){ V.next-=dt; if(V.next<=0){ const a=Math.random()*TAU; Object.assign(V,{ st:"fight", x:clamp(G.x+Math.cos(a)*120,-WORLD,WORLD), y:clamp(G.y+Math.sin(a)*120,-WORLD,WORLD), max:G.maxHp/3, hp:G.maxHp/3, t:120, hit:0, hurtT:0, spin:0, face:1 });
       effects.push({k:"glow",x:V.x,y:V.y,r:220,l:.8,m:.8,img:GLOW.fire}); burst(V.x,V.y,80,PIDX.fire,400,.8,5); shake=Math.max(shake,14); kick=Math.max(kick,.8); sfx("big"); banner("Vidar erscheint","Der schweigende Rächer kämpft 2 Minuten für dich"); } return; }
@@ -1084,7 +1092,7 @@ function icewavesUpdate(dt){
       if(w.rows.length===0 || r-w.rows[w.rows.length-1].r>26) w.rows.push({r, born:w.t}); }
     if(w.t>w.dur+1.6) icewaves.splice(i,1); }
 }
-function stormsUpdate(dt){
+function stormsUpdate(dt){ SRC="slam";
   for(let i=storms.length-1;i>=0;i--){ const s=storms[i]; s.t-=dt; s.acc+=dt; if(s.t<=0){ storms.splice(i,1); continue; }
     while(s.acc>=.09){ s.acc-=.09; const e=randomEnemyNear(s.x,s.y,s.R); if(e) strike(e.x,e.y,s.dmg,48,false); else { const a=Math.random()*TAU, r=rnd(0,s.R); strike(s.x+Math.cos(a)*r,s.y+Math.sin(a)*r,s.dmg,48,false); } } }
 }
@@ -1097,8 +1105,9 @@ function explode(x,y,R,dmg,evo){
 }
 function shoot(kind,x,y,vx,vy,r,dmg,pierce,life,extra){ for(const p of PR){ if(p.on) continue; p.on=true; p.kind=kind; p.x=x; p.y=y; p.vx=vx; p.vy=vy; p.r=r; p.dmg=dmg; p.pierce=pierce; p.life=life; p.t=0; p.rot=0; p.hits.fill(-1); p.hn=0; Object.assign(p,{rad:0,evo:false},extra||{}); return p; } }
 
+const PSRC={axe:"axe",arrow:"arrows",shard:"arrows",barrel:"barrel"};
 function projUpdate(dt){
-  for(const p of PR){ if(!p.on) continue; p.t+=dt; p.life-=dt;
+  for(const p of PR){ if(!p.on) continue; SRC=PSRC[p.kind]||"other"; p.t+=dt; p.life-=dt;
     if(p.kind==="axe"){ // boomerang
       if(p.t>.48){ const dx=G.x-p.x, dy=G.y-p.y, d=Math.hypot(dx,dy)||1; const sp=Math.min(900, 300+p.t*700); p.vx+= (dx/d*sp-p.vx)*Math.min(1,dt*6); p.vy+=(dy/d*sp-p.vy)*Math.min(1,dt*6); if(d<24) { p.on=false; continue; } }
       p.rot+=dt*18;
@@ -1471,7 +1480,7 @@ function playerUpdate(dt){
   for(let i=craters.length-1;i>=0;i--){ craters[i].t-=dt; if(craters[i].t<=0) craters.splice(i,1); }
   for(let i=pools.length-1;i>=0;i--){ const p=pools[i]; p.t-=dt; p.tick-=dt; if(p.t<=0){ pools.splice(i,1); continue; }
     if(Math.random()<.5) particle(p.x+rnd(-p.r,p.r)*.7,p.y+rnd(-p.r,p.r)*.7,0,-40,.5,3,p.col==="green"?PIDX.green:PIDX.fire);
-    if(p.tick<=0){ p.tick=.4; if(p.enemy){ if(Math.hypot(G.x-p.x,G.y-p.y)<p.r) hitPlayer(p.dps*.4,"pool"); } else { const n=query(p.x,p.y,p.r); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,p.dps*.4,0,0,0,3); if(p.leech) for(let z=0;z<3;z++) particle(e.x,e.y,(G.x-e.x)*2.2,(G.y-e.y)*2.2,.45,3.5,PIDX.red); }
+    if(p.tick<=0){ p.tick=.4; if(p.enemy){ if(Math.hypot(G.x-p.x,G.y-p.y)<p.r) hitPlayer(p.dps*.4,"pool"); } else { SRC=p.leech?"slam":"barrel"; const n=query(p.x,p.y,p.r); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,p.dps*.4,0,0,0,3); if(p.leech) for(let z=0;z<3;z++) particle(e.x,e.y,(G.x-e.x)*2.2,(G.y-e.y)*2.2,.45,3.5,PIDX.red); }
       if(p.leech && n){ const h=Math.min(6, n*.8); G.hp=Math.min(G.maxHp,G.hp+h); text(G.x,G.y-34,`+${Math.round(h)}`,4); } } } }
   for(let i=teles.length-1;i>=0;i--){ const t=teles[i]; t.t-=dt; if(t.god && t.t<.25 && !t.warned){ t.warned=1; shake=Math.max(shake,4); } if(t.follow){ t.x=G.x; t.y=G.y; } if(t.t<=0){ teles.splice(i,1); t.fn&&t.fn(t.x,t.y); } }
 }
@@ -1872,9 +1881,13 @@ function gameOver(){
   $("over-title").textContent = `Gefallen in Welle ${G.wave}`;
   $("o-waves").textContent=waves; $("o-kills").textContent=G.kills; $("o-time").textContent=fmt(G.time); $("o-runes").textContent=earned;
   const na=(G.newAch||[]); $("o-record").textContent = (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord: ${meta.best.wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
+  { const NAMES={ passive:["Göttliche Eigenschaft","ᛝ"], skills:["Schmiede-Fähigkeiten","ᛜ"], vidar:["Vidar","ᚢ"], other:["Sonstiges","ᛝ"] }; const tot=Object.values(G.dmgBy).reduce((a,b)=>a+b,0)||1;
+    const rows=Object.entries(G.dmgBy).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v])=>{ const n=WEAP[k]?[WEAP[k].name,WEAP[k].rune]:(NAMES[k]||[k,"ᛝ"]); const pc=v/tot*100;
+      return `<div class="dmgrow"><span class="r">${n[1]}</span><span>${n[0]}</span><span class="b"><i style="width:${pc.toFixed(1)}%"></i></span><span class="v">${pc<1?"<1":Math.round(pc)} %</span></div>`; }).join("");
+    $("o-dmg").innerHTML = rows || '<div class="hint">Kein Schaden verursacht</div>'; }
   $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
   submitScore({wave:waves,kills:G.kills,god:G.god,time:Math.round(G.time),level:G.level});
-  renderBoard("o-board","o-boardnote");
+  renderBoard("o-board","o-boardnote"); $("o-boardwrap").hidden = !db;
 }
 $("btn-again").addEventListener("click", ()=>startGame(lastGod));
 $("btn-menu").addEventListener("click", toTitle);
@@ -2029,7 +2042,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 26;
+const GAME_VERSION = 27;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio

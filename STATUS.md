@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 26
+Stand: 04.11.2026, Version 27
 
 ## Zuletzt geändert
+- Version 27: Schadens-Statistik am Rundenende (Anteil jeder Fähigkeit), leere Ruhmeshalle ausserhalb von claude.ai ausgeblendet
 - Version 26: Wellen-Ereignisse: Blutmond (jede 7. Welle: schnellere Gegner, doppelte Erfahrung und Münzen, roter Mond) und Nebel (Welle 6, 14, 18 …: Sicht eingeschränkt, +50 % Erfahrung)
 - Version 25: 14 Erfolge mit Runen-Belohnung (Startbildschirm «Erfolge»), werden im JSON-Spielstand mitgespeichert
 - Version 24: gegnerische Pfeile hell mit roter Spur, Kugeln mit rotem Warnring; roter Bildschirmrand bei Treffern
