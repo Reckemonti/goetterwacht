@@ -186,7 +186,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 25</div>
+    <div class="ver" id="ver">Version 26</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -796,7 +796,7 @@ function newRun(godId){
     dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
-    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
+    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
   addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
   Object.assign(G,{ shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
@@ -859,7 +859,7 @@ function kill(e){
   if(e.elite){ effects.push({k:"ring",x:e.x,y:e.y,r:e.r*3,l:.35,m:.35,c:"rgba(242,193,78,"}); burst(e.x,e.y,30,PIDX.gold,240,.6,4); kick=Math.max(kick,.2); }
   const lk=1+(G.luck||0)*.04;
   if(Math.random()<.004*lk) dropItem(e.x,e.y,"meat");
-  const cn = e.elite? (Math.random()<.5?1:0)*(G.sk.andvari?2:1) : Math.random()<(.0015+G.wave*.0001)*lk ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
+  const cn = e.elite? (Math.random()<.5?1:0)*(G.sk.andvari?2:1) : Math.random()<(.0015+G.wave*.0001)*lk*(G.event==="blutmond"?2:1) ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
   if(Math.random()<.0025) dropItem(e.x,e.y,"magnet");
   if(G.god==="ulfr"){ G.healAcc += .4; }
   G.healAcc += G.fate.steal;
@@ -1161,6 +1161,7 @@ function spawner(dt){
   const rate = (6 + w*2.6 + late*1.8) * (G.phase==="boss"?.6:1);
   G.spawnAcc += rate*dt;
   while(G.spawnAcc>=1){ G.spawnAcc-=1; if(alive>=cap) { G.spawnAcc=0; break; } const [x,y]=spawnRing(); const e=spawnEnemy(pickKind(w),x,y); if(e && !BOT.on && QUAL<1){ const f=1/(.55+.45*QUAL); e.hp*=f; e.maxHp*=f; e.xp*=f; }
+    if(e && G.event==="blutmond"){ e.sp*=1.25; }
     if(e && w>=5 && Math.random()<.004+w*.004){ e.elite=true; e.hp*=4; e.maxHp*=4; e.r*=1.4; e.scale*=1.4; e.xp*=8; e.dmg*=1.5; e.kbm*=.4; } }
   // wolf horde storms in from one side, mid-wave from wave 4
   if(w>=5 && G.phase==="fight" && !G.hordeDone && G.waveT<waveLen(w)*.5){ G.hordeDone=true; const a=Math.random()*TAU, R=Math.hypot(VW,VH)/2/ZOOM+40, n=20+w*5;
@@ -1321,7 +1322,7 @@ function pickupsUpdate(dt){
     }
   }
 }
-function gainXp(v){ G.xp += v*G.xpMul*(G.buffs.gier>0?2:1); while(G.xp>=G.xpNeed){ G.xp-=G.xpNeed; G.level++; G.xpNeed=xpNeed(G.level); G.pendingLv++; if(G.level%9===0) G.pendingFate++; } }
+function gainXp(v){ G.xp += v*G.xpMul*(G.buffs.gier>0?2:1)*(G.event==="blutmond"?2:G.event==="nebel"?1.5:1); while(G.xp>=G.xpNeed){ G.xp-=G.xpNeed; G.level++; G.xpNeed=xpNeed(G.level); G.pendingLv++; if(G.level%9===0) G.pendingFate++; } }
 /* ---- Schicksalswurf: two random boons every 10 levels ---- */
 const FATE = [
   { k:"dmg", name:"Zorn der Ahnen", rune:"ᚢ", roll:()=>ri(10,25), txt:v=>`+${v} % Schaden`, apply:v=>G.fate.dmg*=1+v/100 },
@@ -1437,7 +1438,9 @@ function renderSlots(){
 /* ---------------- waves ---------------- */
 function waveUpdate(dt){
   if(G.phase==="fight"){ G.waveT-=dt; if(G.waveT<=0){ G.phase="boss"; spawnBoss(); } }
-  else if(G.phase==="break"){ G.breakT-=dt; if(G.breakT<=0){ G.wave++; G.waveT=waveLen(G.wave); G.phase="fight"; G.hordeDone=false; G.bossFix=false; const tc=tierOf(G.wave)!==tierOf(G.wave-1); banner(`Welle ${G.wave}`, tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); } }
+  else if(G.phase==="break"){ G.breakT-=dt; if(G.breakT<=0){ G.wave++; G.waveT=waveLen(G.wave); G.phase="fight"; G.hordeDone=false; G.bossFix=false; const tc=tierOf(G.wave)!==tierOf(G.wave-1);
+      G.event = G.wave%7===0 ? "blutmond" : (G.wave>=6 && G.wave%5!==0 && G.wave%4===2) ? "nebel" : null;
+      banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); } }
   else if(G.phase==="boss"){ G.bosses=(G.bosses||[]).filter(b=>b.on);
     if(!G.bosses.length && G.boss===null && !G.bossFix){ G.bossFix=true; G.phase="break"; G.breakT=3; G.wavesDone=G.wave; $("bossbar").hidden=true; }
     let best=null, bd=1e12; for(const b of G.bosses){ const d=(b.x-G.x)**2+(b.y-G.y)**2; if(d<bd){bd=d;best=b;} } G.boss=best; }
@@ -1734,6 +1737,10 @@ function render(dt){
   const low = G.hp/G.maxHp; if(low<.35){ c.fillStyle=`rgba(180,0,0,${(.35-low)*.6*(.7+.3*Math.sin(T*6))})`; c.fillRect(0,0,VW,VH); }
   if(G.ultiDim>0){ c.fillStyle=`rgba(2,4,12,${Math.min(.5,G.ultiDim*.6)})`; c.fillRect(0,0,VW,VH); }
   drawWeather(c,dt);
+  if(G.event==="blutmond"){ c.fillStyle="rgba(140,0,0,.13)"; c.fillRect(0,0,VW,VH); const mx2=VW-110, my2=110; c.globalCompositeOperation="lighter"; c.globalAlpha=.6; c.drawImage(GLOW.red,mx2-90,my2-90,180,180); c.globalAlpha=1; c.globalCompositeOperation="source-over";
+    c.fillStyle="#b3121c"; c.beginPath(); c.arc(mx2,my2,34,0,TAU); c.fill(); c.fillStyle="rgba(0,0,0,.25)"; c.beginPath(); c.arc(mx2-9,my2-6,8,0,TAU); c.arc(mx2+10,my2+9,6,0,TAU); c.fill(); }
+  if(G.event==="nebel"){ const px=(G.x-camX)*ZOOM+VW/2, py=(G.y-camY)*ZOOM+VH/2, r0=Math.min(VW,VH)*.32, r1=Math.max(VW,VH)*.62;
+    const gr=c.createRadialGradient(px,py,r0*.6,px,py,r1); gr.addColorStop(0,"rgba(150,160,170,0)"); gr.addColorStop(.45,"rgba(120,130,140,.55)"); gr.addColorStop(1,"rgba(90,100,110,.9)"); c.fillStyle=gr; c.fillRect(0,0,VW,VH); }
   if(G.cine>0){ const k=Math.min(1,G.cine/.4, (2-G.cine)/.35+0), bh=VH*.09*Math.min(1,Math.min(G.cine,2-G.cine)/.3); c.fillStyle="#000"; c.fillRect(0,0,VW,bh); c.fillRect(0,VH-bh,VW,bh); }
   if(flash>0){ c.fillStyle=`rgba(220,240,255,${flash*.5})`; c.fillRect(0,0,VW,VH); }
   // boss pointer
@@ -2022,7 +2029,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 25;
+const GAME_VERSION = 26;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio

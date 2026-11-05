@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 25
+Stand: 04.11.2026, Version 26
 
 ## Zuletzt geändert
+- Version 26: Wellen-Ereignisse: Blutmond (jede 7. Welle: schnellere Gegner, doppelte Erfahrung und Münzen, roter Mond) und Nebel (Welle 6, 14, 18 …: Sicht eingeschränkt, +50 % Erfahrung)
 - Version 25: 14 Erfolge mit Runen-Belohnung (Startbildschirm «Erfolge»), werden im JSON-Spielstand mitgespeichert
 - Version 24: gegnerische Pfeile hell mit roter Spur, Kugeln mit rotem Warnring; roter Bildschirmrand bei Treffern
 - Version 23: grosse Bosse doppelt so zäh (Kampf ~15-25 s statt 5-8 s), Wellen mit mehreren Wächtern etwas leichter, Berührung mit Bossen stösst zurück statt Dauerschaden, Donar stärker
