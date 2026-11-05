@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 29
+Stand: 04.11.2026, Version 30
 
 ## Zuletzt geändert
+- Version 30: Abschluss-Test (Langläufe bis Welle 30 ohne Fehler oder Hänger, alle Menüs auf Handygrösse geprüft), Kill-Runenbonus gedeckelt, README und Test-Werkzeuge im Repo
 - Version 29: Vibration auf dem Handy bei Treffern, Ulti und Boss-Tod (folgt der Einstellung «Ton»)
 - Version 28: Bodenschlag grosser Bosse fair ausweichbar (kleiner, längere Vorwarnung), Spätphase etwas zäher, Schmiede-Werte für Leben/Rüstung/Regeneration leicht gesenkt; Simulation Mensch-Modus ohne Schmiede: Ø Welle 10-13, keine Wand mehr bei Welle 5
 - Version 27: Schadens-Statistik am Rundenende (Anteil jeder Fähigkeit), leere Ruhmeshalle ausserhalb von claude.ai ausgeblendet
@@ -29,6 +30,11 @@ Stand: 04.11.2026, Version 29
 - Mehrere Bosse pro Welle (bis 5), Wolfshorden ab Welle 4, Elite-Gegner
 - Stärkere Skalierung von Leben, Schaden und Gegnerzahl
 - Schicksalswurf alle 9 Stufen, härtere Flüche, ab Welle 5 Fluch «Vergessen» (Fähigkeit −1 Stufe)
+
+## Balancing-Stand (Simulation, Mensch-Modus)
+- Ohne Schmiede: Ø Welle 10-13 (echte Spieler eher 5-8)
+- Mittlere Schmiede (alle Upgrades Stufe 5): Ø Welle 17-19
+- Volle Schmiede: Ø Welle 22-26
 
 ## Offen
 - Balancing nach Spieltests von Nico feinjustieren

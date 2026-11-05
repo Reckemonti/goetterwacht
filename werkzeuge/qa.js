@@ -1,0 +1,25 @@
+const {chromium,devices}=require('playwright');
+(async()=>{
+const b=await chromium.launch(); const ctx=await b.newContext({...devices['iPhone 13'],acceptDownloads:true}); const p=await ctx.newPage();
+let err=0; p.on('pageerror',e=>{err++;console.log('ERR',e.message)});
+await p.goto('file:///home/user/goetterwacht/Goetterwacht_v30.html'); await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(600);
+const ok=(n,c)=>console.log((c?'OK  ':'FAIL')+' '+n);
+ok('version shown', (await p.textContent('#ver'))==='Version 30');
+ok('touch hint', !(await p.isHidden('#keys-touch')));
+await p.tap('#ver'); await p.waitForTimeout(300); ok('audio running', await p.evaluate(()=>__gw.ac().state==='running'));
+await p.tap('#btn-music'); ok('music off label', (await p.textContent('#btn-music')).includes('aus')); await p.tap('#btn-music');
+await p.evaluate(()=>{ const m=JSON.parse(localStorage.getItem('gw-meta')); m.runes=500; localStorage.setItem('gw-meta',JSON.stringify(m)); }); await p.reload(); await p.waitForTimeout(400);
+await p.tap('#btn-shop'); await p.tap('[data-up=hp]'); ok('forge buy', (await p.textContent('#runes-shop')).includes('460')); await p.tap('#btn-shopback');
+const [dl]=await Promise.all([p.waitForEvent('download'), p.tap('#btn-quicksave')]); await dl.saveAs('qa.json');
+ok('json save', JSON.parse(require('fs').readFileSync('qa.json','utf8')).runenschmiede.hp===1);
+await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(300); await p.setInputFiles('#quick-load','qa.json'); await p.waitForTimeout(200);
+ok('json load', (await p.textContent('#quick-msg')).includes('geladen'));
+await p.tap('#btn-ach'); ok('achievements', (await p.$$('#ach-list .card')).length===14); await p.tap('#btn-achback');
+await p.tap('[data-god=skadi]'); await p.waitForTimeout(1500); ok('game running', await p.evaluate(()=>__gw.state==='play'));
+await p.tap('#pausebtn'); ok('pause', !(await p.isHidden('#ov-pause'))); await p.tap('#btn-resume');
+await p.evaluate(()=>{ __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('level-up cards', (await p.$$('#cards .card')).length>=3); await p.tap('#cards .card');
+await p.evaluate(()=>{ __gw.G.pendingFate=1; }); await p.waitForTimeout(1900); ok('fate', !(await p.isHidden('#btn-fate'))); await p.tap('#btn-fate');
+await p.tap('#pausebtn'); await p.tap('#btn-quit'); await p.waitForTimeout(400); ok('game over screen', !(await p.isHidden('#ov-over'))); await p.screenshot({path:'qa_over.png'});
+await p.tap('#btn-again'); await p.waitForTimeout(500); ok('again', await p.evaluate(()=>__gw.state==='play'));
+console.log('errors',err); await b.close();
+})();
