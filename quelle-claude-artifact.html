@@ -186,12 +186,13 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 24</div>
+    <div class="ver" id="ver">Version 25</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
       <button class="btn" id="btn-shop" type="button">Runenschmiede <span class="runesTotal" id="runes-title"></span></button>
       <button class="btn" id="btn-board" type="button">Ruhmeshalle</button>
+      <button class="btn" id="btn-ach" type="button">Erfolge <span class="runesTotal" id="ach-count"></span></button>
       <button class="btn" id="btn-save" type="button">Spielstand</button>
     </div>
     <div class="row">
@@ -254,6 +255,11 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
     <div class="hint" style="text-align:left" id="load-msg" role="status"></div>
   </div>
   <div class="row"><button class="btn gold" id="btn-saveback" type="button">Zurück</button></div>
+</div></div>
+<div class="ov" id="ov-ach" hidden><div class="ov-in">
+  <h2 class="t">Erfolge</h2><div class="hint">Jeder Erfolg bringt einmalig Runen für die Runenschmiede.</div>
+  <div class="shop" id="ach-list"></div>
+  <div class="row"><button class="btn gold" id="btn-achback" type="button">Zurück</button></div>
 </div></div>
 <div class="ov" id="ov-board" hidden><div class="ov-in">
   <h2 class="t">Ruhmeshalle</h2>
@@ -1197,6 +1203,7 @@ function bossDown(e){
   for(let i=0;i<(e.big?3:2);i++) dropItem(e.x+rnd(-30,30),e.y+rnd(-30,30),"meat");
   if(G.bosses.length){ G.boss=G.bosses[0]; const r=Math.round((5+G.wave)*G.runeMul); G.runes+=r; if(BOT.on) BOT.rs.boss=(BOT.rs.boss||0)+r; text(e.x,e.y-40,`+${r} Runen`,2); 
     burst(e.x,e.y,40,PIDX.gold,300,.8,4); shake=Math.max(shake,10); banner(null, `Noch ${G.bosses.length} ${G.bosses.length===1?"Boss":"Bosse"}`); return; }
+  if(e.big) G.bigKills=(G.bigKills||0)+1;
   G.boss=null; $("bossbar").hidden=true; G.wavesDone=G.wave; kick=Math.max(kick,1); G.hitstop=.4; if(BOT.on) BOT.bt.push((G.wave%5===0?"B":"")+Math.round(G.time-G.bossStart));
   effects.push({k:"rays",x:e.x,y:e.y,r:520,l:1.6,m:1.6,a0:Math.random()*TAU});
   dropItem(e.x,e.y,"chest");
@@ -1288,7 +1295,7 @@ function hitPlayer(dmg,src){
   const d=Math.max(1, Math.round((dmg - G.armor)*(G.bearT>0?.5:1))); G.hp-=d; if(BOT.on){ const k=(src||"?")+"@w"+(G.wave<=4?"1-4":G.wave<=8?"5-8":"9+"); BOT.dmg[k]=(BOT.dmg[k]||0)+d; }
   if(G.sk.baer && G.bearCd<=0 && G.hp>0 && G.hp<G.maxHp*.3){ G.bearT=5; G.bearCd=30; banner("Bärenhaut",null); burst(G.x,G.y,30,PIDX.rot,220,.5,4); } G.inv=.55; shake=Math.max(shake,6); G.hurtT=.25; sfx("hurt");
   burst(G.x,G.y,10,PIDX.red,180,.4,3); G.hurtFx=Math.min(1,(G.hurtFx||0)+.35+d/G.maxHp*2);
-  if(G.hp<=0){ if(G.revives>0){ G.revives--; G.hp=G.maxHp*(G.sk.hel?1:.6); G.inv=2.5; godSlam(G.x,G.y,G.sk.hel?480:320,(G.sk.hel?900:400)*G.dmgMul*(G.sk.hel?hpMul(G.wave)*.5+1:1)); banner("Wiedergeboren","Die Götter geben dir eine zweite Chance"); } else gameOver(); }
+  if(G.hp<=0){ if(G.revives>0){ G.revives--; G.revived=true; G.hp=G.maxHp*(G.sk.hel?1:.6); G.inv=2.5; godSlam(G.x,G.y,G.sk.hel?480:320,(G.sk.hel?900:400)*G.dmgMul*(G.sk.hel?hpMul(G.wave)*.5+1:1)); banner("Wiedergeboren","Die Götter geben dir eine zweite Chance"); } else gameOver(); }
 }
 
 /* ---------------- pickups ---------------- */
@@ -1368,7 +1375,7 @@ function openFate(){
     $("fate-sub").textContent= fateRes.some(r=>r.curse)? `Stufe ${G.level-G.pendingLv+1}: Ein Fluch, doch dafür ein starker Segen` : `Stufe ${G.level-G.pendingLv+1}: Das Schicksal ist dir gnädig`; $("btn-fate").hidden=false; $("btn-fate").focus({preventScroll:true}); sfx("win");
   }, reduce?50:1500);
 }
-$("btn-fate").addEventListener("click", ()=>{ fateRes.forEach(r=>r.f.apply(r.v)); applyPassives(); hide("ov-fate"); state="play"; lastT=performance.now(); renderSlots(); });
+$("btn-fate").addEventListener("click", ()=>{ if(fateRes.some(r=>r.curse)) G.cursed=true; fateRes.forEach(r=>r.f.apply(r.v)); applyPassives(); hide("ov-fate"); state="play"; lastT=performance.now(); renderSlots(); });
 
 /* ---------------- level-up cards ---------------- */
 function buildOffers(){
@@ -1497,7 +1504,7 @@ function shrinesUpdate(dt){
     G.shrines.push({ ...sh, x:clamp(G.x+Math.cos(a)*r,-WORLD+80,WORLD-80), y:clamp(G.y+Math.sin(a)*r,-WORLD+80,WORLD-80), prog:0, life:40 }); }
   for(let i=G.shrines.length-1;i>=0;i--){ const h=G.shrines[i]; h.life-=dt; if(h.life<=0){ G.shrines.splice(i,1); continue; }
     const d=Math.hypot(G.x-h.x,G.y-h.y); h.prog = d<46 ? h.prog+dt/1.0 : Math.max(0,h.prog-dt);
-    if(h.prog>=1){ G.shrines.splice(i,1); if(h.id==="leben") G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.4); else G.buffs[h.id]=h.dur;
+    if(h.prog>=1){ G.shrines.splice(i,1); G.shrinesUsed=(G.shrinesUsed||0)+1; if(h.id==="leben") G.hp=Math.min(G.maxHp,G.hp+G.maxHp*.4); else G.buffs[h.id]=h.dur;
       effects.push({k:"ring",x:h.x,y:h.y,r:160,l:.5,m:.5,c:h.id==="zorn"?"rgba(255,100,70,":h.id==="eile"?"rgba(127,216,255,":h.id==="leben"?"rgba(125,255,176,":"rgba(242,193,78,"});
       burst(h.x,h.y,40,h.id==="zorn"?PIDX.red:h.id==="eile"?PIDX.frost:h.id==="leben"?PIDX.green:PIDX.gold,260,.7,4); sfx("level"); kick=Math.max(kick,.3);
       if(!BOT.on) banner(h.name, h.d); } }
@@ -1519,7 +1526,7 @@ function update(dt){
   skillsUpdate(dt);
   icewavesUpdate(dt);
   pickupsUpdate(dt);
-  waveUpdate(dt); tipsUpdate(); shrinesUpdate(dt);
+  waveUpdate(dt); tipsUpdate(); shrinesUpdate(dt); if((G.achT=(G.achT||0)-dt)<=0){ G.achT=1; achCheck(); }
   // particles
   for(let i=0;i<MAXPT;i++){ if(pt.l[i]<=0) continue; pt.l[i]-=dt; pt.x[i]+=pt.vx[i]*dt; pt.y[i]+=pt.vy[i]*dt; pt.vx[i]*=.92; pt.vy[i]*=.92; }
   for(const t of TX){ if(!t.on) continue; t.l-=dt; t.y-=40*dt; if(t.l<=0) t.on=false; }
@@ -1823,7 +1830,7 @@ function hud(){
 }
 
 /* ---------------- overlays & flow ---------------- */
-const OVS=["ov-title","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save"];
+const OVS=["ov-ach","ov-title","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save"];
 function show(id){ $(id).hidden=false; }
 function hide(id){ $(id).hidden=true; }
 function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
@@ -1831,7 +1838,7 @@ function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
 function renderGods(){
   $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god" type="button" data-god="${id}" style="--c:${g.color}"><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div></div></button>`).join("");
   document.querySelectorAll("[data-portrait]").forEach(cv=>{ const g=cv.getContext("2d"); g.drawImage(GSPR[cv.dataset.portrait].img,0,0,192,192); });
-  $("runes-title").textContent = `ᚱ ${meta.runes}`;
+  $("runes-title").textContent = `ᚱ ${meta.runes}`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
   $("best-title").textContent = meta.best.wave? `Dein Rekord: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "";
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`;
 }
@@ -1849,7 +1856,7 @@ function toggleMusic(){ meta.music = meta.music===false; saveMeta(); unlockAudio
 $("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventListener("click", toggleMusic); musicLabel();
 
 function gameOver(){
-  if(state==="over") return; state="over"; setMusic("title");
+  if(state==="over") return; achCheck(); state="over"; setMusic("title");
   const waves = G.wavesDone, earned = G.runes + Math.round((waves*5 + Math.floor(G.kills/150))*G.runeMul);
   meta.runes += earned;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
@@ -1857,7 +1864,7 @@ function gameOver(){
   saveMeta();
   $("over-title").textContent = `Gefallen in Welle ${G.wave}`;
   $("o-waves").textContent=waves; $("o-kills").textContent=G.kills; $("o-time").textContent=fmt(G.time); $("o-runes").textContent=earned;
-  $("o-record").textContent = (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord: ${meta.best.wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
+  const na=(G.newAch||[]); $("o-record").textContent = (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord: ${meta.best.wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
   $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
   submitScore({wave:waves,kills:G.kills,god:G.god,time:Math.round(G.time),level:G.level});
   renderBoard("o-board","o-boardnote");
@@ -1917,7 +1924,7 @@ function sum32(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.cha
 function saveCode(){ const j=JSON.stringify({v:1, at:Date.now(), meta}); const b=btoa(unescape(encodeURIComponent(j))); return "GW1."+b+"."+sum32(b); }
 function saveJSON(){ const d=new Date();
   return JSON.stringify({ spiel:"Götterwacht", format:2, version:GAME_VERSION, gespeichert:d.toISOString(), name:meta.nick||"",
-    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound }, null, 2); }
+    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{} }, null, 2); }
 function downloadSave(){ const d=new Date(), name=`Goetterwacht_Spielstand_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const blob=new Blob([saveJSON()],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); return name; }
 function readAny(text){
@@ -1929,7 +1936,7 @@ function readAny(text){
   if(!up || typeof up!=="object" || typeof runes!=="number") throw new Error("In der Datei fehlen Runen oder Runenschmiede.");
   const clean={}; for(const k in META){ const v=Math.floor(Number(up[k])||0); clean[k]=clamp(v,0,META[k].max); }
   return { runes:Math.max(0,Math.floor(runes)), up:clean, best:j.rekord||j.best||{wave:0,kills:0,god:""}, bestLevel:j.besteStufe??j.bestLevel??0,
-    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2 };
+    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2, ach:j.erfolge||j.ach||{}, godW:j.goetterWelle5||j.godW||{} };
 }
 function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; saveMeta(); }
 function readCode(code){
@@ -1963,6 +1970,28 @@ $("btn-load").addEventListener("click", ()=>{
     $("btn-load").textContent="Code laden"; $("load-msg").textContent="Spielstand geladen."; $("save-code").value=saveCode(); $("save-summary").textContent="Aktuell: "+saveSummary(meta); return; }
   tryLoad($("load-code").value); });
 $("load-file").addEventListener("change", e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $("load-code").value=String(r.result).trim(); tryLoad(r.result); }; r.readAsText(f); e.target.value=""; });
+/* ---------------- Erfolge ---------------- */
+const ACH = [
+  { id:"w5", rune:"ᚹ", name:"Standhaft", d:"Überlebe Welle 5", r:60, test:()=>G.wavesDone>=5 },
+  { id:"w10", rune:"ᚹ", name:"Unbeugsam", d:"Überlebe Welle 10", r:200, test:()=>G.wavesDone>=10 },
+  { id:"w15", rune:"ᚹ", name:"Götterwacht", d:"Überlebe Welle 15", r:500, test:()=>G.wavesDone>=15 },
+  { id:"w20", rune:"ᚹ", name:"Ragnarök überstanden", d:"Überlebe Welle 20", r:1000, test:()=>G.wavesDone>=20 },
+  { id:"big", rune:"ᛉ", name:"Riesentöter", d:"Besiege einen grossen Boss", r:80, test:()=>G.bigKills>0 },
+  { id:"k1", rune:"ᛏ", name:"Schlachtfeld", d:"1000 Kills in einer Runde", r:60, test:()=>G.kills>=1000 },
+  { id:"k10", rune:"ᛏ", name:"Totenacker", d:"10000 Kills in einer Runde", r:300, test:()=>G.kills>=10000 },
+  { id:"evo", rune:"ᛟ", name:"Verschmolzen", d:"Verschmelze eine Waffe", r:80, test:()=>Object.values(G.weapons).some(w=>w.evo) },
+  { id:"combo", rune:"ᛜ", name:"Kombiniert", d:"Aktiviere eine Kombo", r:80, test:()=>Object.keys(G.combos||{}).length>0 },
+  { id:"shrine", rune:"ᚠ", name:"Pilger", d:"Nutze einen Schrein", r:40, test:()=>G.shrinesUsed>0 },
+  { id:"lv30", rune:"ᚨ", name:"Erleuchtet", d:"Erreiche Stufe 30", r:150, test:()=>G.level>=30 },
+  { id:"pure", rune:"ᛒ", name:"Ohne zweites Leben", d:"Überlebe Welle 10 ohne Wiederauferstehung", r:250, test:()=>G.wavesDone>=10 && !G.revived },
+  { id:"gods", rune:"ᚷ", name:"Pantheon", d:"Erreiche mit jedem Gott Welle 5", r:200, test:()=>{ if(G.wavesDone>=5){ meta.godW=meta.godW||{}; meta.godW[G.god]=1; } return meta.godW && meta.godW.donar && meta.godW.ulfr && meta.godW.skadi; } },
+  { id:"curse", rune:"ᚾ", name:"Verflucht und trotzdem", d:"Überlebe Welle 8 mit mindestens einem Fluch", r:120, test:()=>G.wavesDone>=8 && G.cursed },
+];
+function achCheck(){ if(!G || BOT.on) return; meta.ach=meta.ach||{}; for(const a of ACH){ if(!meta.ach[a.id] && a.test()){ meta.ach[a.id]=Date.now(); meta.runes+=a.r; G.newAch=(G.newAch||[]); G.newAch.push(a); saveMeta(); banner("Erfolg: "+a.name, `+${a.r} Runen`); sfx("win"); } } }
+function renderAch(){ meta.ach=meta.ach||{}; const n=ACH.filter(a=>meta.ach[a.id]).length; $("ach-count").textContent=`${n}/${ACH.length}`;
+  $("ach-list").innerHTML = ACH.map(a=>{ const on=!!meta.ach[a.id]; return `<div class="card ${on?"evo":""}" style="${on?"":"opacity:.6"}"><div class="ic">${a.rune}</div><div><h4>${a.name}</h4><p>${a.d}</p><div class="cost">${on?"Erreicht":`ᚱ ${a.r}`}</div></div></div>`; }).join(""); }
+$("btn-ach").addEventListener("click", ()=>{ renderAch(); only("ov-ach"); });
+$("btn-achback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
 function forgePct(){ let a=0,b=0; for(const k in META){ a+=meta.up[k]; b+=META[k].max; } return Math.round(a/b*100); }
 $("btn-board").addEventListener("click", ()=>{ $("nick").value=meta.nick||""; renderBoard("board","boardnote"); only("ov-board"); });
 $("btn-boardback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
@@ -1993,7 +2022,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 24;
+const GAME_VERSION = 25;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
