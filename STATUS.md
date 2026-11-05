@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 22
+Stand: 04.11.2026, Version 23
 
 ## Zuletzt geändert
+- Version 23: grosse Bosse doppelt so zäh (Kampf ~15-25 s statt 5-8 s), Wellen mit mehreren Wächtern etwas leichter, Berührung mit Bossen stösst zurück statt Dauerschaden, Donar stärker
 - Version 22: Schreine auf der Karte (Zorn +50 % Schaden, Eile +40 % Tempo, Leben, Gier doppelte Beute), mit Pfeil am Bildschirmrand, Minikarte und Anzeige unter dem Lebensbalken
 - Version 21: automatische Qualitätsanpassung (bei Ruckeln weniger Partikel und Gegner, dafür zähere Gegner), schärfere Handy-Darstellung mit weniger Last, Tipps für die ersten 3 Runden
 - Version 20: Runen-Wirtschaft neu (vorher bis 3500 Runen pro Runde, jetzt ~300 bei Welle 6, ~800 bei Welle 10); Schmiede-Kosten +25 %; nach voll ausgebauten Gaben gibt es die stapelbare Kraftrune statt Runenbeutel-Flut
