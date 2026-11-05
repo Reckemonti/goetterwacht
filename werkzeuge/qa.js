@@ -2,9 +2,9 @@ const {chromium,devices}=require('playwright');
 (async()=>{
 const b=await chromium.launch(); const ctx=await b.newContext({...devices['iPhone 13'],acceptDownloads:true}); const p=await ctx.newPage();
 let err=0; p.on('pageerror',e=>{err++;console.log('ERR',e.message)});
-await p.goto('file:///home/user/goetterwacht/Goetterwacht_v30.html'); await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(600);
+await p.goto('file:///home/user/goetterwacht/Goetterwacht_v33.html'); await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(600);
 const ok=(n,c)=>console.log((c?'OK  ':'FAIL')+' '+n);
-ok('version shown', (await p.textContent('#ver'))==='Version 30');
+ok('version shown', (await p.textContent('#ver'))==='Version 33');
 ok('touch hint', !(await p.isHidden('#keys-touch')));
 await p.tap('#ver'); await p.waitForTimeout(300); ok('audio running', await p.evaluate(()=>__gw.ac().state==='running'));
 await p.tap('#btn-music'); ok('music off label', (await p.textContent('#btn-music')).includes('aus')); await p.tap('#btn-music');

@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 32
+Stand: 04.11.2026, Version 33
 
 ## Zuletzt geändert
+- Version 33: Abschluss-Test der Stufen 6-10: Langläufe mit voller Schmiede bis Welle 30 ohne Fehler, Handy-Klicktest bestanden
 - Version 32: Meisterschaft sichtbar: Donnerhämmer, Äxte, Eisspeere, Runenkreis und Startangriffe leuchten ab Stufe 6 in der Farbstufe (rot bis goldrot) mit Funken und Schockring
 - Version 31: Wölfe laden auf und springen (rote Linie); alle Fähigkeiten und Gaben bis Stufe 10 (ab 6: +13 % Schaden pro Stufe, Gaben halb so stark); Walküren und Zirkel wechseln die Farbe (rot, violett, grün, blau, goldrot), Stufe 10 doppelte Schar; Fässer werden Frost-, Gift-, Donner- und Ragnarök-Fässer; Donars Blitzsturm abgeschwächt
 - Version 30: Abschluss-Test (Langläufe bis Welle 30 ohne Fehler oder Hänger, alle Menüs auf Handygrösse geprüft), Kill-Runenbonus gedeckelt, README und Test-Werkzeuge im Repo
@@ -34,8 +35,8 @@ Stand: 04.11.2026, Version 32
 - Schicksalswurf alle 9 Stufen, härtere Flüche, ab Welle 5 Fluch «Vergessen» (Fähigkeit −1 Stufe)
 
 ## Balancing-Stand (Simulation, Mensch-Modus)
-- Ohne Schmiede: Ø Welle 10-13 (echte Spieler eher 5-8)
-- Mittlere Schmiede (alle Upgrades Stufe 5): Ø Welle 17-19
+- Ohne Schmiede: Ø Welle 7-10 (mit springenden Wölfen)
+- Mittlere Schmiede (alle Upgrades Stufe 5): Ø Welle 18-21
 - Volle Schmiede: Ø Welle 22-26
 
 ## Offen
