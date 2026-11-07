@@ -90,7 +90,7 @@ test('A version 33 JSON save loads with defaults for all forge fields', () => {
   assert.ok(metaEnd > 0);
   const metaDecl = script.slice(metaStart, metaEnd).replace(/^const META/, 'const META');
   const c = context(`${metaDecl}\n${fnSource('readAny')}`, {
-    clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m, cleanIce: () => ({}),
+    clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m, cleanIce: () => ({}), cleanHeroes: () => ({}),
   });
   const loaded = c.readAny(JSON.stringify({ version: 33, runen: 120, runenschmiede: { hp: 2 }, rekord: { wave: 8, kills: 15, god: 'donar' } }));
   assert.equal(loaded.runes, 120);

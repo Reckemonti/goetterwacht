@@ -200,7 +200,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 36</div>
+    <div class="ver" id="ver">Version 37</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" disabled title="Kommt in einer späteren Version">Spiel starten · Koop <span class="tag">bald</span></button></div>
@@ -299,6 +299,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 </div></div>
 <div class="ov" id="ov-board" hidden><div class="ov-in">
   <h2 class="t">Ruhmeshalle</h2>
+  <div class="panel"><div class="hint" style="text-align:left;margin-bottom:8px">Heldenhalle · <span id="souls-hall" style="color:var(--gold)"></span> · Seelen bekommst du am Ende jeder Runde</div><div class="cards" id="hero-hall"></div><div class="hint" id="hero-msg" role="status" style="margin-top:8px"></div></div>
   <div class="panel"><ul class="board" id="board"></ul><div class="hint" id="boardnote" style="margin-top:8px"></div></div>
   <div class="row"><label class="hint" for="nick">Dein Name</label><input class="nick" id="nick" maxlength="16" autocomplete="off"></div>
   <div class="row"><button class="btn gold" id="btn-boardback" type="button">Zurück</button></div>
@@ -522,7 +523,18 @@ function frostTint(src, a, snow){ const S=src.width; return mk(S,S,(g)=>{ g.draw
 function iceSpr(kind){ if(ESPR_ICE[kind]) return ESPR_ICE[kind]; const sq=ESPR[kind]||ESPR.draugr, base=Array.isArray(sq)?sq[0]:sq;
   if(kind==="golem") return ESPR_ICE[kind]=base; const c=frostTint(base.img,.36,70); return ESPR_ICE[kind]={ img:c, flash:flashOf(c) }; }
 const GSPR_ICE = {};
-function iceGod(id){ if(GSPR_ICE[id]) return GSPR_ICE[id]; const c=frostTint(GSPR[id].img,.16,55); return GSPR_ICE[id]={ img:c, flash:GSPR[id].flash }; }
+const GSPR_HERO = {};
+function heroSpr(id, st){ if(!st) return GSPR[id]; const k=id+st; if(GSPR_HERO[k]) return GSPR_HERO[k]; const col=GODS[id].color;
+  const c=mk(128,128,(g)=>{ g.translate(64,64); g.scale(2,2);
+    if(st>=3){ const gr=g.createRadialGradient(0,2,4,0,2,31); gr.addColorStop(0,col); gr.addColorStop(1,"rgba(0,0,0,0)"); g.globalAlpha=st>=4?.75:.5; g.fillStyle=gr; g.beginPath(); g.arc(0,2,31,0,TAU); g.fill(); g.globalAlpha=1; }
+    g.drawImage(GSPR[id].img,-32,-32,64,64);
+    g.strokeStyle="#f2c14e"; g.lineWidth=1.6; g.beginPath(); g.ellipse(0,22,17,5.5,0,0,TAU); g.stroke(); g.fillStyle="#f2c14e"; g.fillRect(-9,13,18,2.2);
+    if(st>=2) for(const sd of [-1,1]){ circle(g,sd*14,1,6,radial(g,sd*14,1,6,"#f4f7fb","#6c7a8e"),"#f2c14e",1.2); g.fillStyle="#f2c14e"; g.beginPath(); g.moveTo(sd*12,-4); g.lineTo(sd*18,-11); g.lineTo(sd*16,-3); g.closePath(); g.fill(); }
+    if(st>=3){ g.fillStyle="#fff6d8"; g.font="8px 'Noto Sans Runic', serif"; g.textAlign="center"; g.textBaseline="middle"; g.fillText("ᛟ",0,8); }
+    if(st>=4){ g.fillStyle="#ffd34d"; g.strokeStyle="#9a6b14"; g.lineWidth=.8; g.beginPath(); g.moveTo(-8,-21); g.lineTo(-8,-28); g.lineTo(-4,-24.5); g.lineTo(0,-31); g.lineTo(4,-24.5); g.lineTo(8,-28); g.lineTo(8,-21); g.closePath(); g.fill(); g.stroke(); circle(g,0,-25,1.5,"#ff4d3d"); }
+  });
+  return GSPR_HERO[k]={ img:c, flash:flashOf(c) }; }
+function iceGod(id){ const st=heroStage((G&&G.hl)||0), k=id+st; if(GSPR_ICE[k]) return GSPR_ICE[k]; const b=heroSpr(id,st), c=frostTint(b.img,.16,55); return GSPR_ICE[k]={ img:c, flash:b.flash }; }
 const TIERTXT = ["","Die Toten verrotten","Die Fäulnis frisst sich tiefer","Ihnen wachsen Hörner","Die Dunkelheit erwacht"];
 const tierOf = w => Math.min(4, Math.floor((w-1)/3));
 const GSPR = { donar:godSprite("donar"), ulfr:godSprite("ulfr"), skadi:godSprite("skadi") };
@@ -786,6 +798,21 @@ for(const k in META) meta.up[k] = meta.up[k]||0;
 meta.ice = cleanIce(meta.ice);
 const saveMeta = ()=>store.set("gw-meta", meta);
 const metaMax = id => META[id].max + (worldOpen("eis") ? (META[id].ext||0) : 0);   // Niflheim-Stufen nach Welle 20
+// Heldenhalle (GW-6): jeder Gott einzeln bis Stufe 10, bezahlt mit Seelen aus den Runden; sichtbar mächtiger bei Stufe 1, 4, 7 und 10
+const HERO_MAX = 10;
+const HERO = {
+  donar:{ hp:.06, dmg:.04, spd:.01, sp:"Donnergrollen öfter, ab Stufe 4 und 7 je ein Blitz mehr" },
+  ulfr:{ hp:.05, dmg:.08, spd:.02, sp:"Kills heilen mehr, grösserer Kriegsschrei" },
+  skadi:{ hp:.05, dmg:.07, spd:.015, sp:"Frostbiss +3 % pro Stufe" },
+};
+const HERO_STAGE = ["Sterblich","Erwählt","Gerüstet","Runengezeichnet","Göttlich"];
+const heroStage = l => l>=10?4 : l>=7?3 : l>=4?2 : l>=1?1 : 0;
+const heroCost = l => 40 + 40*l + 10*l*l;   // Seelen für den Schritt von Stufe l auf l+1
+const cleanHeroes = o => { const r={}; for(const id in GODS){ const v=Math.floor(Number(o&&o[id])||0); r[id]=Math.max(0,Math.min(HERO_MAX,v)); } return r; };
+const heroLv = id => cleanHeroes(meta.heroLv)[id]||0;
+const soulsForRun = (kills, waves) => Math.floor(kills/100) + waves*2;
+function buyHero(id){ const l=heroLv(id); if(!GODS[id] || l>=HERO_MAX || (meta.souls||0)<heroCost(l)) return false; meta.souls-=heroCost(l); meta.heroLv=cleanHeroes(meta.heroLv); meta.heroLv[id]=l+1; saveMeta(); return true; }
+meta.heroLv = cleanHeroes(meta.heroLv); meta.souls = Math.max(0, Math.floor(meta.souls||0));
 
 /* ---------------- audio ---------------- */
 let AC=null, master=null, noiseBuf=null; const lastSfx={};
@@ -918,13 +945,13 @@ function newRun(godId, world){
   const god = GODS[godId], u = meta.up;
   for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
   pt.l.fill(0); effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
-  const maxHp = god.hp + u.hp*4;
+  const hl=heroLv(godId), maxHp = Math.round((god.hp + u.hp*4)*(1+hl*HERO[godId].hp));
   G = { god:godId, x:0, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor,
     dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
     bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, coinOffered:{}, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, dmgBy:{}, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
-  G.ice={}; for(const k of ICE_SKILLS) if(iceOwned(k.id)) G.ice[k.id]=true;
+  G.hl=hl; G.ice={}; for(const k of ICE_SKILLS) if(iceOwned(k.id)) G.ice[k.id]=true;
   Object.assign(G,{ world:world==="eis"?"eis":"mittgard", chillT:0, funkeT:10, ymirT:25, kroneCd:0, pack:[] }); if(decorWorld!==G.world) genDecor(G.world);
   addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
@@ -997,9 +1024,9 @@ function addPassive(id){ G.passives[id]=(G.passives[id]||0)+1; applyPassives(id)
 function applyPassives(id){
   const god=GODS[G.god], u=meta.up, p=G.passives;
   const F=G.fate;
-  G.dmgMul = god.dmg*(1+u.dmg*.02)*(1+PE(p.macht||0)*.12)*F.dmg;
+  G.dmgMul = god.dmg*(1+(G.hl||0)*HERO[G.god].dmg)*(1+u.dmg*.02)*(1+PE(p.macht||0)*.12)*F.dmg;
   G.cdMul = Math.pow(.93, PE(p.eile||0))*F.cd*(1-u.cd*.015);
-  G.speed = god.speed*(1+u.spd*.02)*(1+PE(p.tempo||0)*.08)*F.spd;
+  G.speed = god.speed*(1+(G.hl||0)*HERO[G.god].spd)*(1+u.spd*.02)*(1+PE(p.tempo||0)*.08)*F.spd;
   G.magnet = 90*(1+PE(p.magnet||0)*.35)*F.magnet*(1+u.magnet*.06);
   G.armor = Math.max(0, god.armor + PE(p.ruestung||0) + F.armor + u.armor*.4);
   G.area = (1+PE(p.weite||0)*.1)*F.area*(1+u.area*.02);
@@ -1017,7 +1044,7 @@ function hurt(e, dmg, kx=0, ky=0, kb=0, col=0){
   if(!e.on) return;
   let d = dmg;
   if(G.god==="ulfr"){ d *= 1 + .6*(1-G.hp/G.maxHp); }
-  if(G.god==="skadi" && e.slow>0){ d *= 1.25; }
+  if(G.god==="skadi" && e.slow>0){ d *= 1.25+.03*(G.hl||0); }
   if(e.frozen>0) d*=1.5;
   if(e.mark>0) d*=1.2;
   if(G.buffs.zorn>0) d*=1.5;
@@ -1044,7 +1071,7 @@ function kill(e){
   if(Math.random()<.004*lk) dropItem(e.x,e.y,"meat");
   const cn = e.elite? (Math.random()<.5?1:0)*(G.sk.andvari?2:1) : Math.random()<(.0015+G.wave*.0001)*lk*(G.event==="blutmond"?2:1) ? 1 : 0; for(let i=0;i<cn;i++) dropItem(e.x+rnd(-14,14),e.y+rnd(-14,14),"coin");
   if(Math.random()<.0025) dropItem(e.x,e.y,"magnet");
-  if(G.god==="ulfr"){ G.healAcc += .4; }
+  if(G.god==="ulfr"){ G.healAcc += .4+.08*(G.hl||0); }
   G.healAcc += G.fate.steal;
   if(G.god==="ulfr"){ G.kt.push(T); while(G.kt.length && T-G.kt[0]>1) G.kt.shift(); if(G.kt.length>=6 && G.frenzyT<=0){ G.frenzyT=4; banner("Blutrausch","Mehrfach-Kill"); G.kt.length=0; } else if(G.kt.length>=6) G.frenzyT=Math.max(G.frenzyT,4); }
 }
@@ -1053,8 +1080,8 @@ function text(x,y,v,col){ if(QUAL<.8 && col!==2 && col!==4 && Math.random()>QUAL
 function weaponsUpdate(dt){ SRC="passive";
   const W=G.weapons, cdm=G.cdMul, A=G.area;
   // Donar innate thunder
-  if(G.god==="donar"){ G.passiveT-=dt; if(G.passiveT<=0){ G.passiveT=6*cdm; const n=1+Math.floor(G.level/6); for(let i=0;i<n;i++){ const e=randomEnemyNear(G.x,G.y,520); if(e) strike(e.x,e.y,40*G.dmgMul,60*A,false); } } }
-  if(G.god==="ulfr"){ G.warT-=dt; if(G.warT<=0){ G.warT=7*cdm; const R=115*A; effects.push({k:"ring",x:G.x,y:G.y,r:R,l:.35,m:.35,c:"rgba(255,70,50,"}); burst(G.x,G.y,30,PIDX.red,R*2.5,.4,3); shake=Math.max(shake,5); sfx("boom");
+  if(G.god==="donar"){ G.passiveT-=dt; if(G.passiveT<=0){ G.passiveT=(6-.25*(G.hl||0))*cdm; const n=1+Math.floor(G.level/6)+((G.hl||0)>=4?1:0)+((G.hl||0)>=7?1:0); for(let i=0;i<n;i++){ const e=randomEnemyNear(G.x,G.y,520); if(e) strike(e.x,e.y,40*G.dmgMul,60*A,false); } } }
+  if(G.god==="ulfr"){ G.warT-=dt; if(G.warT<=0){ G.warT=7*cdm; const R=115*A*(1+.03*(G.hl||0)); effects.push({k:"ring",x:G.x,y:G.y,r:R,l:.35,m:.35,c:"rgba(255,70,50,"}); burst(G.x,G.y,30,PIDX.red,R*2.5,.4,3); shake=Math.max(shake,5); sfx("boom");
     const n=query(G.x,G.y,R); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,30*G.dmgMul,e.x-G.x,e.y-G.y,380,4); } } }
   for(const id in W){ SRC=id; const w=W[id], l=w.lvl, D=WEAP[id];
     if(id==="hammer"){
@@ -1694,6 +1721,7 @@ function playerUpdate(dt){
   const cold=G.world==="eis" && !G.ice.pelz && G.god!=="skadi"; const spd=G.speed*(G.hasteT>0?1.5:1)*(G.buffs.eile>0?1.4:1)*(cold&&G.chillT>0?.8:1)*(cold&&G.event==="schneesturm"?.88:1); G.x=clamp(G.x+mx*spd*dt,-WORLD+20,WORLD-20); G.y=clamp(G.y+my*spd*dt,-WORLD+20,WORLD-20);
   if(G.inv>0) G.inv-=dt; if(G.hurtT>0) G.hurtT-=dt;
   G.hp=Math.min(G.maxHp, G.hp + G.regen*dt);
+  if((G.hl||0)>=10 && Math.random()<dt*14) particle(G.x+rnd(-16,16),G.y+rnd(-8,14),rnd(-10,10),-rnd(40,90),.6,3,PIDX.gold);
   G.healBud=Math.min(G.maxHp*.05, (G.healBud||0)+G.maxHp*.025*dt);
   if(G.healAcc>=1){ const h=Math.floor(G.healAcc); G.healAcc-=h; heal(h); }
   if(G.god==="ulfr"){ if(G.frenzyT>0) G.frenzyT-=dt;
@@ -1839,7 +1867,7 @@ function render(dt){
     if(e.slow>0 && !e.big){ c.fillStyle="rgba(140,220,255,.25)"; c.beginPath(); c.arc(e.x,e.y,e.r+3,0,TAU); c.fill(); }
     if(e.elite){ c.strokeStyle="rgba(242,193,78,.85)"; c.lineWidth=2; c.beginPath(); c.arc(e.x,e.y+e.r*.6,e.r*1.1,0,TAU); c.stroke(); } }
   // player
-  const gs=G.world==="eis"?iceGod(G.god):GSPR[G.god], ps=58, pb=G.moving?Math.abs(Math.sin(G.walk))*3:Math.sin(T*3)*1;
+  const gs=G.world==="eis"?iceGod(G.god):heroSpr(G.god,heroStage(G.hl||0)), ps=58, pb=G.moving?Math.abs(Math.sin(G.walk))*3:Math.sin(T*3)*1;
   c.globalCompositeOperation="lighter"; c.globalAlpha=.35; c.drawImage(G.god==="ulfr"?GLOW.red:GLOW.frost,G.x-50,G.y-50,100,100); c.globalAlpha=1; c.globalCompositeOperation="source-over";
   if(!(G.inv>0 && Math.floor(T*20)%2)){ c.save(); c.translate(G.x,G.y-pb); if(G.facing<0) c.scale(-1,1); c.drawImage(G.hurtT>0?gs.flash:gs.img,-ps/2,-ps/2,ps,ps); c.restore(); }
   const W=G.weapons;
@@ -2089,8 +2117,8 @@ function renderGods(){
   if(!selGod && meta.lastGod && GODS[meta.lastGod]) selGod=meta.lastGod;
   $("btn-start").disabled=!selGod; $("runes-heroes").textContent=`ᚱ ${meta.runes}`;
   const Bh = selWorld==="eis"? meta.bestEis : meta.best; $("best-heroes").textContent = Bh&&Bh.wave? `Rekord in ${WORLDS[selWorld].name}: ${Bh.wave} Wellen mit ${GODS[Bh.god]?.name||"?"}` : "";
-  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div></div></button>`).join("");
-  document.querySelectorAll("[data-portrait]").forEach(cv=>{ const g=cv.getContext("2d"); g.drawImage(GSPR[cv.dataset.portrait].img,0,0,192,192); });
+  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div>${heroLv(id)?`<div class="st" style="margin-top:2px"><span>Heldenstufe <b>${heroLv(id)}/${HERO_MAX}</b> · ${HERO_STAGE[heroStage(heroLv(id))]}</span></div>`:""}</div></button>`).join("");
+  document.querySelectorAll("[data-portrait]").forEach(cv=>{ const g=cv.getContext("2d"); g.clearRect(0,0,192,192); g.drawImage(heroSpr(cv.dataset.portrait,heroStage(heroLv(cv.dataset.portrait))).img,0,0,192,192); });
   $("runes-title").textContent = `ᚱ ${meta.runes}`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
   $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`;
@@ -2127,13 +2155,13 @@ $("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventL
 function gameOver(){
   if(state==="over") return; achCheck(); state="over"; setMusic("title");
   const waves = G.wavesDone, earned = G.runes + Math.round((waves*5 + Math.min(150,Math.floor(G.kills/150)))*G.runeMul);
-  meta.runes += earned;
+  meta.runes += earned; const souls=soulsForRun(G.kills,waves); meta.souls=(meta.souls||0)+souls;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
   const ice=G.world==="eis"; meta.bestEis=meta.bestEis||{wave:0,kills:0,god:""}; const B=ice?meta.bestEis:meta.best; let record=false; if(waves>B.wave || (waves===B.wave && G.kills>B.kills)){ const nb={wave:waves,kills:G.kills,god:G.god}; if(ice) meta.bestEis=nb; else meta.best=nb; record=true; }
   saveMeta();
   $("over-title").textContent = `Gefallen in ${WORLDS[G.world].name}, Welle ${G.wave}`;
   $("o-waves").textContent=waves; $("o-kills").textContent=G.kills; $("o-time").textContent=fmt(G.time); $("o-runes").textContent=earned;
-  const na=(G.newAch||[]); const nowOpen=!G.world||G.world==="mittgard" ? (worldOpen("eis") && !meta.eisNotified) : false; if(nowOpen){ meta.eisNotified=true; saveMeta(); } $("o-record").textContent = (nowOpen? "Niflheim ist jetzt offen: Wähle die Eiswelt im Solo-Menü. Die Runenschmiede hat 10 Stufen mehr pro Upgrade. " : "") + (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord in ${WORLDS[G.world].name}: ${(ice?meta.bestEis:meta.best).wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
+  const na=(G.newAch||[]); const nowOpen=!G.world||G.world==="mittgard" ? (worldOpen("eis") && !meta.eisNotified) : false; if(nowOpen){ meta.eisNotified=true; saveMeta(); } $("o-record").textContent = `+${souls} Seelen für die Heldenhalle (Ruhmeshalle). ` + (nowOpen? "Niflheim ist jetzt offen: Wähle die Eiswelt im Solo-Menü. Die Runenschmiede hat 10 Stufen mehr pro Upgrade. " : "") + (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord in ${WORLDS[G.world].name}: ${(ice?meta.bestEis:meta.best).wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
   { const NAMES={ passive:["Göttliche Eigenschaft","ᛝ"], skills:["Schmiede-Fähigkeiten","ᛜ"], vidar:["Vidar","ᚢ"], eispfad:["Pfad nach Niflheim","ᛁ"], other:["Sonstiges","ᛝ"] }; const tot=Object.values(G.dmgBy).reduce((a,b)=>a+b,0)||1;
     const rows=Object.entries(G.dmgBy).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v])=>{ const n=WEAP[k]?[WEAP[k].name,WEAP[k].rune]:(NAMES[k]||[k,"ᛝ"]); const pc=v/tot*100;
       return `<div class="dmgrow"><span class="r">${n[1]}</span><span>${n[0]}</span><span class="b"><i style="width:${pc.toFixed(1)}%"></i></span><span class="v">${pc<1?"<1":Math.round(pc)} %</span></div>`; }).join("");
@@ -2207,7 +2235,7 @@ function sum32(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.cha
 function saveCode(){ const j=JSON.stringify({v:1, at:Date.now(), meta}); const b=btoa(unescape(encodeURIComponent(j))); return "GW1."+b+"."+sum32(b); }
 function saveJSON(){ const d=new Date();
   return JSON.stringify({ spiel:"Götterwacht", format:2, version:GAME_VERSION, gespeichert:d.toISOString(), name:meta.nick||"",
-    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{}, eispfad:cleanIce(meta.ice), rekordNiflheim:meta.bestEis||{wave:0,kills:0,god:""} }, null, 2); }
+    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{}, eispfad:cleanIce(meta.ice), rekordNiflheim:meta.bestEis||{wave:0,kills:0,god:""}, seelen:meta.souls||0, helden:cleanHeroes(meta.heroLv) }, null, 2); }
 function downloadSave(){ const d=new Date(), name=`Goetterwacht_Spielstand_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const blob=new Blob([saveJSON()],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); return name; }
 function readAny(text){
@@ -2219,9 +2247,9 @@ function readAny(text){
   if(!up || typeof up!=="object" || typeof runes!=="number") throw new Error("In der Datei fehlen Runen oder Runenschmiede.");
   const clean={}; for(const k in META){ const v=Math.floor(Number(up[k])||0); clean[k]=clamp(v,0,META[k].max+(META[k].ext||0)); }
   return { runes:Math.max(0,Math.floor(runes)), up:clean, best:j.rekord||j.best||{wave:0,kills:0,god:""}, bestLevel:j.besteStufe??j.bestLevel??0,
-    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2, ach:j.erfolge||j.ach||{}, godW:j.goetterWelle5||j.godW||{}, ice:cleanIce(j.eispfad||j.ice), bestEis:j.rekordNiflheim||j.bestEis||{wave:0,kills:0,god:""} };
+    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2, ach:j.erfolge||j.ach||{}, godW:j.goetterWelle5||j.godW||{}, ice:cleanIce(j.eispfad||j.ice), bestEis:j.rekordNiflheim||j.bestEis||{wave:0,kills:0,god:""}, souls:Math.max(0,Math.floor(Number(j.seelen??j.souls)||0)), heroLv:cleanHeroes(j.helden||j.heroLv) };
 }
-function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; meta.ice=cleanIce(meta.ice); saveMeta(); }
+function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; meta.ice=cleanIce(meta.ice); meta.heroLv=cleanHeroes(meta.heroLv); meta.souls=Math.max(0,Math.floor(meta.souls||0)); saveMeta(); }
 function readCode(code){
   const c=String(code||"").replace(/\s+/g,""); const m=/^GW1\.([A-Za-z0-9+/=]+)\.([a-z0-9]+)$/.exec(c);
   if(!m) throw new Error("Das ist kein gültiger Spielstand-Code. Er beginnt mit «GW1.».");
@@ -2278,7 +2306,14 @@ function renderAch(){ meta.ach=meta.ach||{}; const n=ACH.filter(a=>meta.ach[a.id
 $("btn-ach").addEventListener("click", ()=>{ renderAch(); only("ov-ach"); });
 $("btn-achback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
 function forgePct(){ let a=0,b=0; for(const k in META){ a+=meta.up[k]; b+=META[k].max+(META[k].ext||0); } return Math.round(a/b*100); }
-$("btn-board").addEventListener("click", ()=>{ $("nick").value=meta.nick||""; renderBoard("board","boardnote"); only("ov-board"); });
+function renderHall(){ $("souls-hall").textContent=`${meta.souls||0} Seelen`;
+  $("hero-hall").innerHTML = Object.entries(GODS).map(([id,g])=>{ const l=heroLv(id), H=HERO[id], max=l>=HERO_MAX, cost=heroCost(l), can=!max&&(meta.souls||0)>=cost;
+    return `<div class="card" style="cursor:default;transform:none"><canvas width="108" height="108" data-hero="${id}" style="width:54px;height:54px"></canvas><div><h4 style="color:${g.color}">${g.name} <span class="lvl-n">Stufe ${l}/${HERO_MAX}</span></h4><div class="lvl">${HERO_STAGE[heroStage(l)]}</div><p>Pro Stufe: +${Math.round(H.hp*100)} % Leben, +${Math.round(H.dmg*100)} % Schaden, +${String(+(H.spd*100).toFixed(1))} % Tempo. ${H.sp}.</p><div class="bar"><i style="width:${l/HERO_MAX*100}%"></i></div><p style="font-size:13px;color:var(--mute)">Sichtbar mächtiger bei Stufe 1, 4, 7 und 10</p><button class="btn${can?" gold":""}" type="button" data-hero-up="${id}" ${can?"":"disabled"} style="margin-top:8px">${max?"Höchste Stufe":`Aufsteigen · ${cost} Seelen`}</button></div></div>`; }).join("");
+  document.querySelectorAll("[data-hero]").forEach(cv=>{ const g=cv.getContext("2d"); g.clearRect(0,0,108,108); g.drawImage(heroSpr(cv.dataset.hero,heroStage(heroLv(cv.dataset.hero))).img,0,0,108,108); }); }
+$("hero-hall").addEventListener("click", e=>{ const b=e.target.closest("[data-hero-up]"); if(!b||b.disabled) return; const id=b.dataset.heroUp, st0=heroStage(heroLv(id));
+  if(!buyHero(id)) return; const st=heroStage(heroLv(id)); audioInit(); sfx(st>st0?"win":"level"); renderHall();
+  $("hero-msg").textContent = st>st0? `${GODS[id].name} wird sichtbar mächtiger: ${HERO_STAGE[st]}` : `${GODS[id].name} steigt auf Stufe ${heroLv(id)}`; });
+$("btn-board").addEventListener("click", ()=>{ renderHall(); $("nick").value=meta.nick||""; renderBoard("board","boardnote"); only("ov-board"); });
 $("btn-boardback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
 $("nick").addEventListener("change", async ()=>{ meta.nick=$("nick").value.trim().slice(0,16); saveMeta();
   const mine=boardDocs.find(d=>d.id===uid); if(db&&uid&&mine&&canWrite!==false){ try{ await db.collection("scores").doc(uid).update({nick:meta.nick||"Namenlos"}); }catch(e){} } });
@@ -2307,7 +2342,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 36;
+const GAME_VERSION = 37;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2375,6 +2410,7 @@ function simRun(god, opt={}){
   if(opt.forge){ for(const k in META) meta.up[k]=0; Object.assign(meta.up,opt.forge); }
   if(opt.world==='eis'){ meta.ach=meta.ach||{}; meta.ach.w20=meta.ach.w20||1; }
   if(opt.forge || opt.ice) meta.ice = opt.ice==="all" ? Object.fromEntries(ICE_SKILLS.map(k=>[k.id,true])) : cleanIce(opt.ice||{});
+  if(opt.hero!=null) meta.heroLv={donar:opt.hero,ulfr:opt.hero,skadi:opt.hero};
   newRun(god, opt.world); state="play"; BOT.on=true; BOT.dmg={}; BOT.rs={}; BOT.bt=[]; BOT.human=!!opt.human; let t=0, minHp=1, hits=0; const waveT=[];
   const hp0=G.hp; let lastW=1;
   while(state!=="over" && t<maxT && G.wavesDone<maxWave){
@@ -2388,6 +2424,6 @@ function simRun(god, opt={}){
   BOT.on=false; meta=JSON.parse(savedMeta); saveMeta(); G=null; state="title"; only("ov-title"); $("hud").hidden=true; $("bossbar").hidden=true;
   return res;
 }
-window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, buyHero, heroLv, heroCost, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
 })();
 </script>

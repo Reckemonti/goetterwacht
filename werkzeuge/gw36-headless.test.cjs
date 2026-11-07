@@ -30,9 +30,10 @@ const iceData = [line(/const WORLDS = \{/) && block('const WORLDS = {'), line(/c
   line(/const iceOwned = [^\n]+/), line(/const cleanIce = [^\n]+/),
   'Object.assign(globalThis, { WORLDS, worldOpen, ICE_SKILLS, iceOwned, cleanIce });'].join('\n');
 
-test('Version 36 with credit', () => {
-  assert.match(html, /const GAME_VERSION = 36;/);
-  assert.match(html, /id="ver">Version 36<\/div>/);
+test("Version 36 or later with credit", () => {
+  const v = +html.match(/const GAME_VERSION = (\d+);/)[1];
+  assert.ok(v >= 36);
+  assert.match(html, new RegExp(`id="ver">Version ${v}<\\/div>`));
   assert.match(html, /id="credit">Made by a Legend NMO<\/div>/);
 });
 
@@ -106,7 +107,7 @@ test('Buying follows the tree and costs runes', () => {
 test('v34 save loads, v36 save keeps the ice path, unknown ids are dropped', () => {
   const metaDecl = block('const META = {');
   const c = context(`${metaDecl}\n${iceData}\n${fnSource('readAny')}`, {
-    meta: {}, clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m,
+    meta: {}, cleanHeroes: () => ({}), clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m,
   });
   const v34 = { spiel: 'Götterwacht', format: 2, version: 34, runen: 500, runenschmiede: { hp: 3, revive: 1 }, rekord: { wave: 17, kills: 900, god: 'skadi' }, erfolge: { w5: 1 } };
   const a = c.readAny(JSON.stringify(v34));

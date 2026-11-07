@@ -14,6 +14,7 @@ const [dl]=await Promise.all([p.waitForEvent('download'), p.tap('#btn-quicksave'
 ok('json save', JSON.parse(require('fs').readFileSync('qa.json','utf8')).runenschmiede.hp===1); ok('json save ice', JSON.parse(require('fs').readFileSync('qa.json','utf8')).eispfad.pelz===true);
 await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(300); await p.setInputFiles('#quick-load','qa.json'); await p.waitForTimeout(200);
 ok('json load', (await p.textContent('#quick-msg')).includes('geladen')); ok('json load ice', await p.evaluate(()=>!!__gw.meta.ice.pelz));
+await p.evaluate(()=>{ __gw.meta.souls=200; }); await p.tap('#btn-board'); ok('hero hall', (await p.$$('#hero-hall .card')).length===3); await p.tap('[data-hero-up=skadi]'); ok('hero level up', await p.evaluate(()=>__gw.heroLv('skadi')===1 && __gw.meta.souls===160)); ok('hero msg', (await p.textContent('#hero-msg')).includes('Skadi')); await p.screenshot({path:'qa_hall.png'}); await p.tap('#btn-boardback');
 await p.tap('#btn-ach'); ok('achievements', (await p.$$('#ach-list .card')).length===16); await p.tap('#btn-achback');
 await p.tap('#btn-solo'); ok('world choice', !(await p.isHidden('#ov-worlds'))); ok('Niflheim locked', await p.isDisabled('[data-world=eis]')); ok('Koop disabled', await p.evaluate(()=>document.getElementById('btn-koop').disabled));
 await p.tap('[data-world=mittgard]'); ok('hero choice', !(await p.isHidden('#ov-heroes')));

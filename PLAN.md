@@ -17,7 +17,7 @@ Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Um
 | GW-3 | ✅ v35: Eiswelt nach Welle 20: neue Karte, Gegner in Gestalt, Charakter und Fähigkeiten angepasst, Schneestürme statt Nebel | GW-1 |
 | GW-4 | ✅ v35: Zehn neue freischaltbare Fähigkeiten im Skilltree für das Überleben in der Eiswelt | GW-3 |
 | GW-5 | ✅ v35: Weitere wählbare Fähigkeiten beim Seelen-Levelaufstieg | GW-4 |
-| GW-6 | Helden einzeln in der Ruhmeshalle leveln (passend zu ihren Fähigkeiten), Helden optisch überarbeiten, mit dem Level sichtbar mächtiger | GW-1 |
+| GW-6 | ✅ v37: Helden einzeln in der Ruhmeshalle leveln (passend zu ihren Fähigkeiten), Helden optisch überarbeiten, mit dem Level sichtbar mächtiger | GW-1 |
 
 Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
 
@@ -33,4 +33,4 @@ Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
 - Neue Gaben (v35, Claude): Waffen Frostnova und Eiszapfenregen (für alle Götter, in der Eiswelt öfter angeboten), Gaben Zähigkeit, Runenwissen, Scharfblick. Zwei neue Erfolge (Niflheim betreten, Welle 20 in Niflheim).
 
 ## Nächster Schritt
-GW-6 (Helden in der Ruhmeshalle leveln) als Version 37. Danach: Koop-Modus (eigene grosse Aufgabe).
+Koop-Modus (eigene grosse Aufgabe). Offen: Versionen 35-37 ins claude.ai-Artifact veröffentlichen.
