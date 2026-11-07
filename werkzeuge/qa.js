@@ -32,7 +32,7 @@ ok('ice world', await p.evaluate(()=>__gw.G.world==='eis' && __gw.G.wave===1)); 
 await p.tap('#pausebtn'); await p.tap('#btn-quit'); await p.waitForTimeout(400); ok('ice game over', (await p.textContent('#over-title')).includes('Niflheim'));
 await p.tap('#btn-menu'); await p.tap('#btn-shop3'); ok('forge extended', (await p.textContent('[data-up=armor] .lvl-n')).endsWith('/20')); await p.tap('#btn-shopback'); ok('shop back to heroes', !(await p.isHidden('#ov-heroes'))); await p.tap('#btn-heroes-menu'); ok('main menu', !(await p.isHidden('#ov-title')));
 // Koop (v38): world, two gods, shared waves, own HP bars, card turns, revive, game over when both are down
-await p.tap('#btn-koop'); ok('koop world choice', !(await p.isHidden('#ov-worlds'))); await p.tap('[data-world=mittgard]');
+await p.tap('#btn-koop'); ok('koop mode choice', !(await p.isHidden('#ov-koop'))); await p.tap('#btn-koop-local'); ok('koop world choice', !(await p.isHidden('#ov-worlds'))); await p.tap('[data-world=mittgard]');
 ok('koop step player 1', (await p.textContent('#heroes-sub')).includes('Spieler 1') && (await p.textContent('#heroes-title')).includes('Koop'));
 await p.tap('[data-god=ulfr]'); await p.tap('#btn-start'); ok('koop step player 2', (await p.textContent('#heroes-sub')).includes('Spieler 2') && (await p.textContent('#btn-start')).includes('Ragnarök'));
 await p.tap('[data-god=skadi]'); await p.tap('#btn-start'); await p.waitForTimeout(1200);

@@ -15,12 +15,13 @@ Nordisches Wellen-Überlebensspiel im Browser. Eine einzige HTML-Datei, keine In
 - Runenschmiede: 15 Upgrades mit 180 Stufen (ab Niflheim +10 Stufen pro Kraft-Upgrade, zusammen 300), 15 freischaltbare Fähigkeiten, danach Vidar als Verbündeter; dazu der **Pfad nach Niflheim** (Skilltree mit 10 Fähigkeiten für die Eiswelt)
 - Gaben beim Stufenaufstieg: dazu Frostnova, Eiszapfenregen, Zähigkeit, Runenwissen, Scharfblick
 - **Heldenhalle** in der Ruhmeshalle: jeden Gott einzeln mit Seelen bis Stufe 10 leveln (mehr Leben, Schaden, Tempo und eine eigene Stärke); sichtbar mächtiger bei Stufe 1, 4, 7 und 10 (goldener Ring, Schulterpanzer, Runenleuchten, Krone)
+- **Online-Koop mit Link:** «Koop» → «Online mit Link», Welt und Gott wählen, Link schicken; der Mitspieler öffnet ihn auf seinem eigenen Handy oder PC, nimmt einen anderen Gott, und ihr kämpft zusammen auf derselben Karte
 - **Koop zu zweit an einem Gerät:** gemeinsame Wellen, jeder mit eigenem Gott, eigener Lebensleiste und eigenen Waffen; abwechselnd Karten wählen; wer fällt, wird vom anderen wiederbelebt (3 Sekunden danebenstehen); vorbei erst, wenn beide liegen. Gegner sind zu zweit zahlreicher und zäher
 - 16 Erfolge, Schadens-Statistik, eigene Musik (Start, Kampf, Bosskampf), Vibration auf dem Handy
 
 ## Steuerung
 PC: `W` `A` `S` `D` oder Pfeiltasten, `Esc` Pause. Handy: Daumen aufs Feld und ziehen.
-Koop: Spieler 1 `W` `A` `S` `D`, Spieler 2 Pfeiltasten. Auf Handy oder Tablet steuert die linke Bildhälfte Spieler 1, die rechte Spieler 2.
+Online-Koop: jeder steuert normal auf seinem Gerät. Koop am gleichen Gerät: Spieler 1 `W` `A` `S` `D`, Spieler 2 Pfeiltasten. Auf Handy oder Tablet steuert die linke Bildhälfte Spieler 1, die rechte Spieler 2.
 
 ## Spielstand
 Automatisch im Browser. **⬇ Spielstand speichern** lädt eine JSON-Datei herunter, **⬆ Spielstand laden** stellt alles wieder her.
@@ -34,8 +35,9 @@ Automatisch im Browser. **⬇ Spielstand speichern** lädt eine JSON-Datei herun
 | `werkzeuge/build.sh` | Baut `index.html` aus dem Quellcode |
 | `werkzeuge/sim.js` | Autopilot-Simulation fürs Balancing (`node sim.js <html-datei\|-> <runden> <maxWelle> [schmiede-json\|-] [h\|-] [eis: all\|json\|-]`, mit `PW_CHANNEL=msedge` für das installierte Edge, `WORLD=eis` für Niflheim, `HERO=0..10` für die Heldenstufe, `COOP=1` für zwei Bots zusammen, `SEED=<zahl>` für wiederholbare Läufe) |
 | `werkzeuge/qa.js` | Klick-Test aller Menüs auf Handygrösse, inklusive Koop |
+| `werkzeuge/online-qa.js` | Online-Koop-Test mit zwei Fenstern (ohne Internet; `NETZ=echt` über PeerJS) |
 | `STATUS.md` | Stand und Änderungen |
-| `PLAN.md` | Offene Aufgaben (GW-1 bis GW-7) und Routine-Entscheide |
+| `PLAN.md` | Offene Aufgaben (GW-1 bis GW-8) und Routine-Entscheide |
 | `werkzeuge/gw34-headless.test.cjs` | Test Münzwurf und Credit (`node werkzeuge/gw34-headless.test.cjs`) |
 | `werkzeuge/gw37-headless.test.cjs` | Test Heldenhalle (`node werkzeuge/gw37-headless.test.cjs`) |
 | `werkzeuge/gw38-headless.test.cjs` | Test Koop: Spielertausch, Kartenreihenfolge, Wiederbeleben, Leine, Gegner zu zweit, Solo unverändert, Spielstand (`node werkzeuge/gw38-headless.test.cjs`) |

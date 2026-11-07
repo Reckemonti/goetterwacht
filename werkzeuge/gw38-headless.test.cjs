@@ -30,16 +30,16 @@ const coopCore = [line(/const PK = [^\n]+/), line(/const COOP = [^\n]+/), line(/
   fnSource('eachP'), fnSource('allP'), fnSource('ctr'), fnSource('nearP'), fnSource('levelTurn'), fnSource('tether'), fnSource('reviveUpdate'),
   'Object.assign(globalThis, { PK, COOP, REV_R, REV_T, swapP, PL1, PL2, eachP, allP, ctr, nearP, levelTurn, tether, reviveUpdate, setG:g=>{ G=g; } });'].join('\n');
 const stubs = () => ({ G: null, state: 'play', VW: 1280, VH: 800, ZOOM: 1.15, CZMIN: .62, BOT: { on: true }, GODS: { donar: { name: 'Donar' }, skadi: { name: 'Skadi' } },
-  particle() {}, burst() {}, sfx() {}, banner() {}, rnd: (a, b) => (a + b) / 2, PIDX: { gold: 2 } });
+  NET: { lost: false, host: false, guest: false }, particle() {}, burst() {}, sfx() {}, banner() {}, rnd: (a, b) => (a + b) / 2, PIDX: { gold: 2 } });
 const player = (pid, extra = {}) => { const p = {}; for (const k of context(coopCore, stubs()).PK) p[k] = 0; return Object.assign(p, { pid, god: pid ? 'skadi' : 'donar', x: pid ? 40 : -40, y: 0, hp: 100, maxHp: 100, down: false, revT: 0, weapons: {}, buffs: {} }, extra); };
 
-test('Version 38, Koop button is open in the main menu', () => {
-  assert.match(html, /const GAME_VERSION = 38;/);
-  assert.match(html, /id="ver">Version 38<\/div>/);
+test('Version 38 or later, Koop button is open in the main menu', () => {
+  assert.match(html, /const GAME_VERSION = (3[89]|[4-9]\d);/);
+  assert.match(html, /id="ver">Version (3[89]|[4-9]\d)<\/div>/);
   assert.match(html, /id="credit">Made by a Legend NMO<\/div>/);
   assert.match(html, /<button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop<\/button>/);
   assert.doesNotMatch(html, /id="btn-koop"[^>]*disabled/);
-  assert.match(script, /\$\("btn-koop"\)\.addEventListener\("click", \(\)=>\{ audioInit\(\); koop=true; openWorlds\(\); \}\);/);
+  assert.match(script, /\$\("btn-koop-local"\)\.addEventListener\("click", \(\)=>\{ koop=true; koopNet=false; openWorlds\(\); \}\);/);
   assert.match(html, /id="hp2" hidden/);
 });
 
@@ -121,21 +121,22 @@ test('Solo path unchanged: same update order, same input', () => {
   const up = fnSource('update');
   assert.match(up, /if\(G\.coop\) coopUpdate\(dt\);\s+else \{\s+playerUpdate\(dt\);\s+worldUpdate\(dt\);\s+spawner\(dt\);\s+enemiesUpdate\(dt\);\s+weaponsUpdate\(dt\);\s+projUpdate\(dt\);\s+spiralsUpdate\(dt\);\s+stormsUpdate\(dt\);\s+skillsUpdate\(dt\);\s+iceUpdate\(dt\);\s+icewavesUpdate\(dt\);\s+pickupsUpdate\(dt\);/);
   const pu = fnSource('playerUpdate');
-  assert.match(pu, /if\(kp<0\)\{ if\(keys\.ArrowLeft\|\|keys\.KeyA\) mx-=1;/);
+  assert.match(pu, /if\(kp<0( \|\| \(kp===0 && NET\.host\))?\)\{ if\(keys\.ArrowLeft\|\|keys\.KeyA\) mx-=1;/);
   assert.match(pu, /else if\(kp===0\)\{ if\(keys\.KeyA\) mx-=1;/); assert.match(pu, /else \{ if\(keys\.ArrowLeft\) mx-=1;/);
-  assert.match(pu, /const J=kp===1\?joy2:joy;/);
-  assert.match(script, /const J=\(G&&G\.coop&&e\.clientX>VW\/2\)\?joy2:joy;/);
+  assert.match(pu, /const J=kp===1\?(joy2|\(NET\.host\?null:joy2\)):joy;/);
+  assert.match(script, /const J=\(G&&G\.coop&&(!NET\.host&&!NET\.guest&&)?e\.clientX>VW\/2\)\?joy2:joy;/);
   assert.match(fnSource('render'), /const Z=ZOOM\*CZ\*\(1\+kick\*\.06\);/);
 });
 
-test('Menu: world, then player 1 and player 2 pick a god (same god allowed)', () => {
+test('Menu: world, then player 1 and player 2 pick a god (not the same one)', () => {
   const ps = fnSource('pickStart');
   assert.match(ps, /if\(!koop\)\{ startGame\(id\); return; \}/);
-  assert.match(ps, /if\(koopStep===0\)\{ koopGod1=id; koopStep=1; heroSub\(\); return; \} startGame\(koopGod1, id\);/);
-  assert.match(fnSource('startGame'), /newRun\(god, selWorld, god2\|\|null\)/);
-  assert.match(fnSource('newRun'), /if\(god2\)\{ G\.coop=true; makeP2\(god2\); \}/);
+  assert.match(ps, /if\(koopStep===0\)\{ koopGod1=id; koopStep=1; blockGod=id;[^}]*renderGods\(\); heroSub\(\); return; \} startGame\(koopGod1, id\);/);
+  assert.match(ps, /if\(id===blockGod\) return;/, 'v39: no same god twice');
+  assert.match(fnSource('startGame'), /newRun\(god, selWorld, god2\|\|null/);
+  assert.match(fnSource('newRun'), /if\(god2\)\{ G\.coop=true; makeP2\(god2(, m2)?\); \}/);
   assert.match(fnSource('openHeroes'), /koopStep=0;/);
-  assert.match(script, /\$\("btn-again"\)\.addEventListener\("click", \(\)=>startGame\(lastGod, lastGod2\)\);/);
+  assert.match(script, /startGame\(lastGod, lastGod2\)/);
 });
 
 test('Saves: Koop record is separate, old saves load without it', () => {

@@ -18,6 +18,7 @@ Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Um
 | GW-4 | ✅ v35: Zehn neue freischaltbare Fähigkeiten im Skilltree für das Überleben in der Eiswelt | GW-3 |
 | GW-5 | ✅ v35: Weitere wählbare Fähigkeiten beim Seelen-Levelaufstieg | GW-4 |
 | GW-7 | ✅ v38: Koop-Modus (lokal zu zweit an einem Gerät) | GW-6 |
+| GW-8 | ✅ v39: Online-Koop mit Einladungslink, jeder auf seinem Gerät, nicht derselbe Gott | GW-7 |
 | GW-6 | ✅ v37: Helden einzeln in der Ruhmeshalle leveln (passend zu ihren Fähigkeiten), Helden optisch überarbeiten, mit dem Level sichtbar mächtiger | GW-1 |
 
 Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
@@ -43,5 +44,13 @@ Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
   - Schwierigkeit zu zweit: Gegner-Leben ×1.6, Bosse ×1.8, Nachschub ×1.45, Gegner gleichzeitig ×1.35, Erfahrung ÷1.25. Simulation: etwa gleich schwer wie Solo.
   - Rekorde: Koop hat einen eigenen Rekord pro Welt (`koopRekord` im Spielstand), Solo-Rekord und Ruhmeshalle bleiben Solo. Runen, Seelen und Erfolge zählen auch im Koop (Erfolg «Welle 20» öffnet also auch hier Niflheim).
 
+- Online-Koop (v39, Nico 07.11.: «Link senden, gemeinsam in der Sitzung, nicht am gleichen Bildschirm»):
+  - Verbindung: PeerJS 1.5.4 (von cdnjs, wird erst beim Online-Koop geladen) über den kostenlosen öffentlichen PeerJS-Vermittler; danach WebRTC direkt zwischen den Geräten. Kein eigener Server. Einladungscode 6 Zeichen, Link `…/goetterwacht/?koop=CODE`. Ohne TURN-Server klappt es in seltenen Netzen nicht (dann WLAN).
+  - Spieler 1 ist Gastgeber und rechnet alles (gleicher Koop-Code wie v38). Spieler 2 schickt Steuerung, Kartenwahl, Pause; bekommt 20-mal pro Sekunde den Stand (Gegner, Geschosse, Effekte, Partikel, Töne, Banner) und bewegt die eigene Figur sofort selbst (danach sanft angeglichen).
+  - Spieler 2 nutzt seine eigene Runenschmiede und Heldenstufe; Runen und Seelen am Ende gehen in seinen Spielstand, Koop-Rekord auch. Pfad nach Niflheim und Schmiede-Fähigkeiten kommen vom Gastgeber.
+  - Nicht derselbe Gott (online und lokal). Welt wählt Spieler 1; Niflheim darf der Gast auch ohne eigene Freischaltung mitspielen.
+  - Verbindung weg: Gast landet im Menü, Gastgeber spielt allein weiter (Partner bleibt am Boden). 20 Sekunden ohne Nachricht gelten als Abbruch.
+  - Test: `werkzeuge/online-qa.js` (zwei Fenster, ohne Internet über BroadcastChannel, mit `NETZ=echt` über PeerJS).
+
 ## Nächster Schritt
-Koop zu zweit testen und feinjustieren. Offen: Versionen 35-38 ins claude.ai-Artifact veröffentlichen.
+Online-Koop mit zwei echten Geräten testen, dann Koop feinjustieren. Offen: Versionen 35-39 ins claude.ai-Artifact veröffentlichen.

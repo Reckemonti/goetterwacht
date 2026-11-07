@@ -54,7 +54,7 @@ test('Menu flow: Solo/Koop, world choice, hero choice, Ragnarök starten', () =>
     assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, /id="btn-koop" type="button"/); // v38: Koop ist offen
   assert.match(html, />Ragnarök starten</);
-  assert.match(script, /\$\("btn-menu"\)\.addEventListener\("click", toHeroes\)/, 'after a run back to hero choice');
+  assert.match(script, /\$\("btn-menu"\)\.addEventListener\("click", (toHeroes\)|\(\)=>\{ if\(NET\.guest\|\|NET\.host\) netLeave\(\); else toHeroes\(\); \}\))/, 'after a run back to hero choice');
 });
 
 test('Snowstorms replace fog in Niflheim, Midgard events unchanged', () => {

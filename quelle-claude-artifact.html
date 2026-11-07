@@ -42,6 +42,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 #hp2{margin-top:4px}#hp2 .hp-top{font-size:14px}.hp-top span{white-space:nowrap}#hp2 .lv{color:#7fd8ff}
 #hpbar2{height:9px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:3px;overflow:hidden;margin-top:2px}
 #hp2fill{height:100%;width:100%;background:linear-gradient(180deg,#9fe4ff,#3b9fd8 60%,#1f5f8a);transform-origin:left}
+.lobby-link{width:min(520px,82vw);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:inherit;font-size:15px;-webkit-user-select:text;user-select:text}
+.god:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 #weapons .pltag{align-self:center;font-weight:800;font-size:12px;letter-spacing:.06em;color:var(--gold);margin-left:4px}#weapons .pltag.p2{color:#7fd8ff}
 .wave{text-align:center;flex:none}
 .wave b{display:block;font-family:var(--font-display);font-weight:800;font-size:clamp(20px,3.4vw,28px);letter-spacing:.06em;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.8)}
@@ -205,7 +207,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 38</div>
+    <div class="ver" id="ver">Version 39</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -257,6 +259,22 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 </div></div>
 <div class="ov" id="ov-pause" hidden><div class="ov-in"><h2 class="t">Pause</h2><div class="build" id="pause-build"></div>
   <div class="row"><button class="btn gold" id="btn-resume" type="button">Weiter</button><button class="btn" id="btn-sound2" type="button">Ton: an</button><button class="btn" id="btn-music2" type="button">Musik: an</button><button class="btn" id="btn-quit" type="button">Aufgeben</button></div></div></div>
+
+<div class="ov" id="ov-koop" hidden><div class="ov-in">
+  <div class="runes" aria-hidden="true">ᚷᛖᛗᛖᛁᚾ</div><h2 class="t">Koop</h2>
+  <div class="row"><button class="btn gold big" id="btn-koop-net" type="button">Online mit Link</button><button class="btn big" id="btn-koop-local" type="button">Am gleichen Gerät</button></div>
+  <div class="hint">Online: Du wählst Welt und Gott und schickst den Link. Dein Mitspieler öffnet ihn auf seinem Handy oder PC und nimmt einen anderen Gott.</div>
+  <div class="hint">Am gleichen Gerät: Spieler 1 W A S D, Spieler 2 Pfeiltasten. Auf dem Handy linke und rechte Bildhälfte.</div>
+  <div class="row"><button class="btn" id="btn-koop-back" type="button">Hauptmenü</button></div>
+</div></div>
+<div class="ov" id="ov-lobby" hidden><div class="ov-in">
+  <div class="runes" aria-hidden="true">ᚷᛖᛗᛖᛁᚾ</div><h2 class="t" id="lobby-title">Online-Koop</h2>
+  <div class="hint" id="lobby-msg" role="status"></div>
+  <div class="row" id="lobby-linkrow" hidden><input class="lobby-link" id="lobby-link" readonly aria-label="Einladungslink"><button class="btn" id="btn-lobby-copy" type="button">Link kopieren</button><button class="btn" id="btn-lobby-share" type="button">Teilen</button></div>
+  <div class="row"><button class="btn gold big" id="btn-lobby-start" type="button" hidden>Ragnarök starten</button><button class="btn" id="btn-lobby-leave" type="button">Abbrechen</button></div>
+</div></div>
+<div class="ov" id="ov-wait" hidden><div class="ov-in"><h2 class="t" id="wait-title">Kurz warten</h2><div class="hint" id="wait-msg" role="status"></div>
+  <div class="row"><button class="btn gold" id="btn-wait-resume" type="button" hidden>Weiter</button><button class="btn" id="btn-wait-leave" type="button">Runde verlassen</button></div></div></div>
 
 <div class="ov" id="ov-over" hidden><div class="ov-in">
   <h2 class="t" id="over-title">Gefallen in Welle 7</h2>
@@ -893,6 +911,7 @@ function playStep(theme, st, t){
   }
 }
 function sfx(name){
+  if(NET.host && NET.conn && NET.snd.length<12 && !NET.snd.includes(name)) NET.snd.push(name);
   if(!AC||!meta.sound) return; const now=AC.currentTime;
   const gap={coin:.05,hit:.045,pick:.03,zap:.06,boom:.08,axe:.08,shoot:.07}[name]||0;
   if(gap && lastSfx[name] && now-lastSfx[name]<gap) return; lastSfx[name]=now;
@@ -949,7 +968,7 @@ const keys = {}; const joy = { on:false, id:null, ox:0, oy:0, x:0, y:0 };
 const joy2 = { on:false, id:null, ox:0, oy:0, x:0, y:0 };   // Koop: rechte Bildhälfte steuert Spieler 2
 let CZ = 1; const CZMIN = .62;                               // Koop: Kamera zoomt heraus, damit beide sichtbar bleiben
 
-function newRun(godId, world, god2){
+function newRun(godId, world, god2, m2){
   const god = GODS[godId], u = meta.up;
   for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
   pt.l.fill(0); effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
@@ -966,7 +985,7 @@ function newRun(godId, world, god2){
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
   Object.assign(G,{ shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
     vidar: G.sk.vidar? {st:"away", next:rnd(60,150)} : null });
-  if(god2){ G.coop=true; makeP2(god2); }
+  if(god2){ G.coop=true; makeP2(god2, m2); }
   if(G.world==="eis") enterIce();
   T=0; shake=0; flash=0;
   for(let i=0;i<14;i++){ const a=i/14*TAU+rnd(-.1,.1); spawnEnemy("draugr", Math.cos(a)*rnd(380,460), Math.sin(a)*rnd(380,460)); }
@@ -977,7 +996,7 @@ function newRun(godId, world, god2){
 /* ---------------- Koop (v38): zwei Spieler an einem Gerät ----------------
    Der Spielzustand G gehört immer dem «aktiven» Spieler; der andere liegt in G.p2.
    swapP() tauscht die Felder eines Spielers, so laufen alle Spieler-Funktionen unverändert für beide. */
-const PK = "god x y r hp maxHp speed armor dmgMul cdMul area magnet regen xpMul runeMul luck inv facing moving dirx diry walk weapons passives revives rerolls fate warT slamGod buffs healBud combos frenzyT kt lowFr passiveT healAcc hl chillT funkeT ymirT kroneCd pack shield shieldT bearT bearCd hasteT idunT heimT rootT sogT einT einh ravens vidar hurtT hurtFx revived pid down revT bk bmx bmy".split(" ");
+const PK = "up god x y r hp maxHp speed armor dmgMul cdMul area magnet regen xpMul runeMul luck inv facing moving dirx diry walk weapons passives revives rerolls fate warT slamGod buffs healBud combos frenzyT kt lowFr passiveT healAcc hl chillT funkeT ymirT kroneCd pack shield shieldT bearT bearCd hasteT idunT heimT rootT sogT einT einh ravens vidar hurtT hurtFx revived pid down revT bk bmx bmy".split(" ");
 const COOP = { hp:1.6, boss:1.8, cap:1.35, rate:1.45, xp:1.25 };   // Gegner zu zweit: mehr Leben, mehr Gegner; Erfahrung langsamer, weil beide wählen
 const REV_R = 70, REV_T = 3;                                       // Wiederbeleben: so nah und so lange danebenstehen
 function swapP(){ const o=G.p2; for(const k of PK){ const v=G[k]; G[k]=o[k]; o[k]=v; } }
@@ -986,11 +1005,11 @@ function eachP(fn){ if(!G.coop){ fn(); return; } for(let k=0;k<2;k++){ if(k) swa
 function allP(fn){ fn(); if(G.coop){ swapP(); fn(); swapP(); } }                                                                                   // für beide, auch am Boden
 function ctr(){ if(!G.coop) return G; const o=G.p2; return { x:(G.x+o.x)/2, y:(G.y+o.y)/2 }; }
 function nearP(x,y){ if(!G.coop) return G; const o=G.p2; if(G.down) return o; if(o.down) return G; return (G.x-x)**2+(G.y-y)**2 <= (o.x-x)**2+(o.y-y)**2 ? G : o; }
-function makeP2(godId){
+function makeP2(godId, m2){
   Object.assign(G,{ down:false, revT:0, bk:0, bmx:0, bmy:0, hurtT:0, hurtFx:0, revived:false });
   const s1={}; for(const k of PK) s1[k]=G[k];
-  const god=GODS[godId], u=meta.up, hl=heroLv(godId), maxHp=Math.round((god.hp + u.hp*4)*(1+hl*HERO[godId].hp));
-  Object.assign(G,{ god:godId, x:40, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor, dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
+  const god=GODS[godId], u=m2?m2.up:meta.up, hl=m2?(m2.heroLv[godId]||0):heroLv(godId), maxHp=Math.round((god.hp + u.hp*4)*(1+hl*HERO[godId].hp));
+  Object.assign(G,{ up:m2?u:undefined, god:godId, x:40, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor, dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     inv:0, facing:-1, moving:0, dirx:-1, diry:0, walk:0, weapons:{}, passives:{}, revives:u.revive, rerolls:u.reroll, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0,
     buffs:{}, healBud:0, combos:{}, frenzyT:0, kt:[], lowFr:false, passiveT:0, healAcc:0, hl, chillT:0, funkeT:10, ymirT:25, kroneCd:0, pack:[],
     shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
@@ -1018,7 +1037,7 @@ function playerDown(){
   if(!BOT.on) banner(`${GODS[G.god].name} ist gefallen`, "Bleib 3 Sekunden daneben stehen, um wiederzubeleben");
 }
 function reviveUpdate(dt){
-  for(let k=0;k<2;k++){ const a=k?G.p2:G, b=k?G:G.p2; if(!a.down) continue;
+  for(let k=0;k<2;k++){ const a=k?G.p2:G, b=k?G:G.p2; if(!a.down || (a.pid===1 && NET.lost)) continue;
     if(!b.down && Math.hypot(a.x-b.x,a.y-b.y)<REV_R){ a.revT=(a.revT||0)+dt; if(Math.random()<dt*20) particle(a.x+rnd(-14,14),a.y+rnd(-10,10),0,-60,.6,3,PIDX.gold);
       if(a.revT>=REV_T){ a.down=false; a.revT=0; a.hp=a.maxHp*.4; a.inv=2; burst(a.x,a.y,40,PIDX.gold,260,.7,4); sfx("level"); if(!BOT.on) banner(`${GODS[a.god].name} steht wieder`,"Wiederbelebt mit 40 % Leben"); } }
     else a.revT=Math.max(0,(a.revT||0)-dt*.5); }
@@ -1088,7 +1107,7 @@ function dmgMulE(w){ const k=w-1, l=Math.max(0,k-3); return 1 + .09*k + .028*l*l
 function addWeapon(id){ if(G.weapons[id]) { G.weapons[id].lvl++; } else G.weapons[id] = { id, lvl:1, t:.5, evo:false, ang:0, cdh:0 }; if(id==="valk") syncValk(); renderSlots(); }
 function addPassive(id){ G.passives[id]=(G.passives[id]||0)+1; applyPassives(id); renderSlots(); }
 function applyPassives(id){
-  const god=GODS[G.god], u=meta.up, p=G.passives;
+  const god=GODS[G.god], u=G.up||meta.up, p=G.passives;   // Online-Koop: Spieler 2 bringt seine eigene Runenschmiede mit
   const F=G.fate;
   G.dmgMul = god.dmg*(1+(G.hl||0)*HERO[G.god].dmg)*(1+u.dmg*.02)*(1+PE(p.macht||0)*.12)*F.dmg;
   G.cdMul = Math.pow(.93, PE(p.eile||0))*F.cd*(1-u.cd*.015);
@@ -1732,14 +1751,19 @@ let offers=[];
 function openLevel(){
   if(G.coop && !levelTurn()) return;
   state="level"; offers=buildOffers();
+  if(NET.host && G.coop && G.pid===1){ // Online: Spieler 2 wählt auf seinem Gerät
+    if(!NET.conn){ G.lvTurn=0; swapP(); G.pendingLv--; G.chest=false; state="play"; return; }
+    const lt = G.chest? "Schatz des Wächters" : `Stufe ${G.level - G.pendingLv + 1}`;
+    NET.conn.send({ t:"cards", title:`${GODS[G.god].name}: ${lt}`, html:offers.map(cardHtml).join(""), rerolls:G.rerolls });
+    showWait("Stufenaufstieg", `${GODS[G.god].name} (Spieler 2) wählt eine Gabe …`, false); return; }
   { const lt = G.chest? "Schatz des Wächters" : `Stufe ${G.level - G.pendingLv + 1}`; $("level-title").textContent = G.coop? `Spieler ${G.pid+1} · ${GODS[G.god].name}: ${lt}` : lt; }
   $("cards").innerHTML = offers.map(cardHtml).join("");
   $("btn-reroll").hidden = !(G.rerolls>0); $("btn-reroll").textContent=`Neu würfeln (${G.rerolls})`;
   show("ov-level"); sfx("level");
   setTimeout(()=>{ const b=$("cards").querySelector("button"); b&&b.focus({preventScroll:true}); },50);
 }
-$("cards").addEventListener("click", e=>{ const b=e.target.closest("[data-i]"); if(!b||state!=="level") return; choose(offers[+b.dataset.i]); });
-$("btn-reroll").addEventListener("click", ()=>{ if(G.rerolls<=0) return; G.rerolls--; openLevel(); });
+$("cards").addEventListener("click", e=>{ const b=e.target.closest("[data-i]"); if(!b||state!=="level") return; if(NET.guest){ netCard(+b.dataset.i); return; } choose(offers[+b.dataset.i]); });
+$("btn-reroll").addEventListener("click", ()=>{ if(NET.guest){ NET.conn&&NET.conn.send({t:"reroll"}); return; } if(G.rerolls<=0) return; G.rerolls--; openLevel(); });
 function choose(o){
   if(o.t==="w") addWeapon(o.id); else if(o.t==="p") addPassive(o.id);
   else if(o.t==="evo"){ G.weapons[o.id].evo=true; if(o.id==="valk") syncValk(); renderSlots(); banner(EVO[o.id].name,"Verschmelzung"); }
@@ -1747,7 +1771,7 @@ function choose(o){
   checkCombos();
   if(G.coop && G.lvTurn===0) G.lvTurn=1;   // Koop: zuerst Spieler 1, dann Spieler 2
   else { if(G.coop){ G.lvTurn=0; if(G.pid===1) swapP(); renderSlots(); } G.pendingLv--; G.chest=false; }
-  hide("ov-level"); state="play"; lastT=performance.now();
+  hide("ov-level"); if(NET.host) hide("ov-wait"); state="play"; lastT=performance.now();
 }
 function slotsHtml(P){ let h="";
   for(const id in P.weapons){ const w=P.weapons[id]; h+=`<div class="wslot${w.evo?" evo":""}" title="${WEAP[id].name}">${WEAP[id].rune}<i>${w.lvl}${w.evo?"★":""}</i></div>`; }
@@ -1782,17 +1806,18 @@ function enterIce(){
 
 /* ---------------- banner ---------------- */
 let bannerTimer=0;
-function banner(title, sub){ const b=$("banner"); b.innerHTML = (title?`${title}`:"") + (sub?`<small>${sub}</small>`:""); b.classList.add("show"); clearTimeout(bannerTimer); bannerTimer=setTimeout(()=>b.classList.remove("show"), 2300); }
+function banner(title, sub){ if(NET.host && NET.conn && G) NET.q.push([title||"",sub||""]); const b=$("banner"); b.innerHTML = (title?`${title}`:"") + (sub?`<small>${sub}</small>`:""); b.classList.add("show"); clearTimeout(bannerTimer); bannerTimer=setTimeout(()=>b.classList.remove("show"), 2300); }
 
 /* ---------------- player ---------------- */
 function playerUpdate(dt){
   let mx=0,my=0;
   const kp=G.coop?G.pid:-1;   // Koop: Spieler 1 WASD + linke Hälfte, Spieler 2 Pfeile + rechte Hälfte
-  if(kp<0){ if(keys.ArrowLeft||keys.KeyA) mx-=1; if(keys.ArrowRight||keys.KeyD) mx+=1; if(keys.ArrowUp||keys.KeyW) my-=1; if(keys.ArrowDown||keys.KeyS) my+=1; }
+  if(kp<0 || (kp===0 && NET.host)){ if(keys.ArrowLeft||keys.KeyA) mx-=1; if(keys.ArrowRight||keys.KeyD) mx+=1; if(keys.ArrowUp||keys.KeyW) my-=1; if(keys.ArrowDown||keys.KeyS) my+=1; }
   else if(kp===0){ if(keys.KeyA) mx-=1; if(keys.KeyD) mx+=1; if(keys.KeyW) my-=1; if(keys.KeyS) my+=1; }
+  else if(NET.host){ mx=NET.in.mx; my=NET.in.my; }
   else { if(keys.ArrowLeft) mx-=1; if(keys.ArrowRight) mx+=1; if(keys.ArrowUp) my-=1; if(keys.ArrowDown) my+=1; }
-  const J=kp===1?joy2:joy;
-  if(J.on){ const dx=J.x-J.ox, dy=J.y-J.oy, d=Math.hypot(dx,dy); if(d>6){ const m=Math.min(1,d/50); mx=dx/d*m; my=dy/d*m; } }
+  const J=kp===1?(NET.host?null:joy2):joy;
+  if(J && J.on){ const dx=J.x-J.ox, dy=J.y-J.oy, d=Math.hypot(dx,dy); if(d>6){ const m=Math.min(1,d/50); mx=dx/d*m; my=dy/d*m; } }
   if(BOT.on){ if(G.coop){ if(--G.bk<=0){ G.bk=3; botThink(); G.bmx=BOT.mx; G.bmy=BOT.my; } mx=G.bmx; my=G.bmy; }
     else { if(--BOT.k<=0){ BOT.k=BOT.human?11:3; botThink(); if(BOT.human && Math.random()<.18){ const a=Math.random()*TAU; BOT.mx=Math.cos(a); BOT.my=Math.sin(a); } } mx=BOT.mx; my=BOT.my; } }
   const m=Math.hypot(mx,my); if(m>1){ mx/=m; my/=m; }
@@ -1826,13 +1851,15 @@ function frame(now){
   let dt=(now-lastT)/1000; lastT=now; if(dt>.25) dt=.25;
   fpsAcc+=dt; fpsN++; if(fpsAcc>=1){ fps=fpsN/fpsAcc; fpsAcc=0; fpsN=0;
     if(state==="play"){ if(fps<46){ lowT++; highT=0; if(lowT>=2){ QUAL=Math.max(.45,QUAL-.15); lowT=0; } } else if(fps>57){ highT++; lowT=0; if(highT>=4){ QUAL=Math.min(1,QUAL+.1); highT=0; } } } }
-  if(state==="play"){
+  if(state==="play" && NET.guest){ if(G) guestTick(dt); }
+  else if(state==="play"){
     acc+=dt; let steps=0;
     while(acc>=STEP && steps<4){ update(STEP); acc-=STEP; steps++; if(state!=="play") break; }
     if(steps===4) acc=0;
     if(state==="play" && G.pendingFate>0) openFate();
     else if(state==="play" && G.pendingLv>0) openLevel();
   }
+  if(NET.conn) netTick(dt);
   render(dt);
   hudT-=dt; if(hudT<=0 && G){ hudT=.1; hud(); }
 }
@@ -2213,17 +2240,17 @@ function hud(){
 }
 
 /* ---------------- overlays & flow ---------------- */
-const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin"];
+const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin","ov-koop","ov-lobby","ov-wait"];
 function show(id){ $(id).hidden=false; }
 function hide(id){ $(id).hidden=true; }
 function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
 
 function renderGods(){
-  if(!selGod && meta.lastGod && GODS[meta.lastGod]) selGod=meta.lastGod;
+  if(!selGod && meta.lastGod && GODS[meta.lastGod] && meta.lastGod!==blockGod) selGod=meta.lastGod;
   $("btn-start").disabled=!selGod; $("runes-heroes").textContent=`ᚱ ${meta.runes}`;
   const Bh = selWorld==="eis"? meta.bestEis : meta.best; $("best-heroes").textContent = Bh&&Bh.wave? `Rekord in ${WORLDS[selWorld].name}: ${Bh.wave} Wellen mit ${GODS[Bh.god]?.name||"?"}` : "";
   if(typeof koop!=="undefined" && koop){ const K=(meta.bestKoop||{})[selWorld]; $("best-heroes").textContent = K&&K.wave? `Koop-Rekord in ${WORLDS[selWorld].name}: ${K.wave} Wellen (${(K.gods||[]).map(g=>GODS[g]?.name||"?").join(" + ")})` : `Noch kein Koop-Rekord in ${WORLDS[selWorld].name}`; }
-  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div>${heroLv(id)?`<div class="st" style="margin-top:2px"><span>Heldenstufe <b>${heroLv(id)}/${HERO_MAX}</b> · ${HERO_STAGE[heroStage(heroLv(id))]}</span></div>`:""}</div></button>`).join("");
+  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"${id===blockGod?" disabled title=\"Schon von Spieler 1 gewählt\"":""}><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div>${heroLv(id)?`<div class="st" style="margin-top:2px"><span>Heldenstufe <b>${heroLv(id)}/${HERO_MAX}</b> · ${HERO_STAGE[heroStage(heroLv(id))]}</span></div>`:""}</div></button>`).join("");
   document.querySelectorAll("[data-portrait]").forEach(cv=>{ const g=cv.getContext("2d"); g.clearRect(0,0,192,192); g.drawImage(heroSpr(cv.dataset.portrait,heroStage(heroLv(cv.dataset.portrait))).img,0,0,192,192); });
   $("runes-title").textContent = `ᚱ ${meta.runes}`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
   $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
@@ -2235,28 +2262,35 @@ function renderWorlds(){
     return `<button class="god${id===selWorld&&open?" sel":""}" type="button" data-world="${id}" style="--c:${w.col}" ${open?"":"disabled"}><div class="wic">${open?w.rune:"🔒"}</div><div><h3>${w.name}</h3><div class="ti">${open?"Welle 1 bis endlos":"Gesperrt"}</div><p>${w.d}</p><div class="st">${open?(B&&B.wave?`<span>Rekord <b>${B.wave} Wellen</b></span>`:"<span>Noch kein Rekord</span>"):`<span style="color:var(--c)">${w.lock}</span>`}</div></div></button>`; }).join("");
 }
 function openWorlds(){ renderWorlds(); only("ov-worlds"); }
-function openHeroes(){ if(!worldOpen(selWorld)) selWorld="mittgard"; koopStep=0; renderGods(); $("heroes-title").textContent = WORLDS[selWorld].name + (koop?" · Koop":""); heroSub(); only("ov-heroes"); }
-let koop=false, koopStep=0, koopGod1=null;   // Koop-Menü: erst Spieler 1, dann Spieler 2 wählt
+function openHeroes(){ if(!NET.guest && !worldOpen(selWorld)) selWorld="mittgard"; koopStep=0; blockGod=NET.guest?NET.hostGod:null; if(selGod&&selGod===blockGod) selGod=null; renderGods(); $("heroes-title").textContent = WORLDS[selWorld].name + (NET.guest||koopNet?" · Online-Koop":koop?" · Koop":""); $("btn-heroes-worlds").hidden=NET.guest; heroSub(); only("ov-heroes"); }
+let koop=false, koopNet=false, koopStep=0, koopGod1=null, blockGod=null;   // Koop-Menü: erst Spieler 1, dann Spieler 2 wählt
 function heroSub(){ const touch=!$("keys-touch").hidden;
+  if(NET.guest){ $("heroes-sub").textContent=`Online-Koop · ${GODS[NET.hostGod]?.name||"Spieler 1"} ist schon dabei. Wähle einen anderen Gott`; $("btn-start").textContent="Bereit"; return; }
+  if(koopNet){ $("heroes-sub").textContent="Online-Koop · wähle deinen Gott. Dein Mitspieler nimmt einen anderen"; $("btn-start").textContent="Einladung erstellen"; return; }
   if(!koop){ $("heroes-sub").textContent="Wähle deinen Gott"; $("btn-start").textContent="Ragnarök starten"; return; }
   $("heroes-sub").textContent = koopStep===0 ? `Koop · Spieler 1 (${touch?"linke Bildhälfte":"W A S D"}): wähle deinen Gott` : `Koop · Spieler 2 (${touch?"rechte Bildhälfte":"Pfeiltasten"}): wähle deinen Gott. Spieler 1 spielt ${GODS[koopGod1].name}`;
   $("btn-start").textContent = koopStep===0 ? "Weiter zu Spieler 2" : "Ragnarök starten"; }
-function pickStart(id){ if(!koop){ startGame(id); return; } if(koopStep===0){ koopGod1=id; koopStep=1; heroSub(); return; } startGame(koopGod1, id); }
-$("btn-solo").addEventListener("click", ()=>{ audioInit(); koop=false; openWorlds(); });
-$("btn-koop").addEventListener("click", ()=>{ audioInit(); koop=true; openWorlds(); });
+function pickStart(id){ if(id===blockGod) return;
+  if(NET.guest){ netPick(id); return; } if(koopNet){ netHost(id); return; }
+  if(!koop){ startGame(id); return; } if(koopStep===0){ koopGod1=id; koopStep=1; blockGod=id; if(selGod===id) selGod=null; renderGods(); heroSub(); return; } startGame(koopGod1, id); }
+$("btn-solo").addEventListener("click", ()=>{ audioInit(); koop=false; koopNet=false; openWorlds(); });
+$("btn-koop").addEventListener("click", ()=>{ audioInit(); only("ov-koop"); });
+$("btn-koop-local").addEventListener("click", ()=>{ koop=true; koopNet=false; openWorlds(); });
+$("btn-koop-net").addEventListener("click", ()=>{ koop=true; koopNet=true; openWorlds(); });
+$("btn-koop-back").addEventListener("click", toTitle);
 $("btn-worldsback").addEventListener("click", toTitle);
 $("worlds").addEventListener("click", e=>{ const b=e.target.closest("[data-world]"); if(!b||b.disabled) return; selWorld=b.dataset.world; meta.lastWorld=selWorld; saveMeta(); openHeroes(); });
-$("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b) return; const id=b.dataset.god;
+$("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b||b.disabled) return; const id=b.dataset.god;
   if(selGod===id){ pickStart(id); return; }
   selGod=id; meta.lastGod=id; saveMeta(); document.querySelectorAll("#gods .god").forEach(x=>x.classList.toggle("sel", x.dataset.god===id)); $("btn-start").disabled=false; });
 $("btn-start").addEventListener("click", ()=>{ if(selGod) pickStart(selGod); });
 $("btn-heroes-worlds").addEventListener("click", openWorlds);
-$("btn-heroes-menu").addEventListener("click", toTitle);
+$("btn-heroes-menu").addEventListener("click", ()=>{ if(NET.guest||NET.host) netLeave(); else toTitle(); });
 $("btn-shop3").addEventListener("click", ()=>{ shopFrom="ov-heroes"; renderShop(); only("ov-shop"); });
-function startGame(god, god2){ unlockAudio(); setMusic("battle"); lastGod=god; lastGod2=god2||null; CZ=1; newRun(god, selWorld, god2||null); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
+function startGame(god, god2, m2){ unlockAudio(); setMusic("battle"); lastGod=god; lastGod2=god2||null; CZ=1; newRun(god, selWorld, god2||null, m2||null); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
 let lastGod="donar", lastGod2=null;
-function pause(){ if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
-function resume(){ if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
+function pause(){ if(NET.guest){ if(state==="play" && NET.conn) NET.conn.send({t:"pause"}); return; } if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
+function resume(){ if(NET.guest){ NET.conn&&NET.conn.send({t:"resume"}); return; } if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
 $("pausebtn").addEventListener("click", pause); $("btn-resume").addEventListener("click", resume);
 $("btn-quit").addEventListener("click", ()=>{ hide("ov-pause"); state="play"; gameOver(); });
 function toggleSound(){ unlockAudio(); meta.sound=!meta.sound; saveMeta(); if(master) master.gain.value=meta.sound?.5:0; $("btn-sound").textContent=$("btn-sound2").textContent=`Ton: ${meta.sound?"an":"aus"}`; }
@@ -2284,9 +2318,10 @@ function gameOver(){
   $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
   if(!ice && !G.coop) submitScore({wave:waves,kills:G.kills,god:G.god,time:Math.round(G.time),level:G.level});
   renderBoard("o-board","o-boardnote"); $("o-boardwrap").hidden = !db;
+  if(NET.host && NET.conn) NET.conn.send({ t:"over", title:$("over-title").textContent, waves, kills:G.kills, time:fmt(G.time), earned, souls, world:G.world, gods:[PL1().god,PL2().god], dmg:$("o-dmg").innerHTML });
 }
-$("btn-again").addEventListener("click", ()=>startGame(lastGod, lastGod2));
-$("btn-menu").addEventListener("click", toHeroes);
+$("btn-again").addEventListener("click", ()=>{ if(NET.guest) return; if(NET.host) netStart(); else startGame(lastGod, lastGod2); });
+$("btn-menu").addEventListener("click", ()=>{ if(NET.guest||NET.host) netLeave(); else toHeroes(); });
 function toTitle(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; renderGods(); only("ov-title"); }
 function toHeroes(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; openHeroes(); }
 
@@ -2442,22 +2477,210 @@ async function initShared(){
   }catch(e){ db=null; }
 }
 
+
+/* ---------------- Online-Koop (v39): Einladung per Link ----------------
+   Spieler 1 (Gastgeber) rechnet das ganze Spiel. Spieler 2 schickt nur seine Steuerung und Kartenwahl
+   und zeichnet den Stand, den Spieler 1 etwa 20-mal pro Sekunde schickt. Verbindung: PeerJS (WebRTC, Gerät zu Gerät);
+   der öffentliche PeerJS-Vermittler hilft nur beim Verbinden. Mit ?netz=lokal läuft es über BroadcastChannel (Tests). */
+const NET = { host:false, guest:false, conn:null, peer:null, code:"", in:{mx:0,my:0}, q:[], snd:[], t:0, hostGod:null, world:null, guestInfo:null, lost:false, sendT:0, lastIn:"", seen:0, ph:0, p1:null, wsig:"" };
+const PEER_JS = "https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js";
+const URLP = new URLSearchParams(location.search), NET_LOCAL = URLP.get("netz")==="lokal";
+const GLOWN = new Map(Object.entries(GLOW).map(([k,v])=>[v,k]));
+const EKIND = Object.keys(ETYPES).concat(BOSSES), EST = ["walk","melee","aim","wind","dash","breath"], NE = 18, EBUF = new Float32Array(MAXE*NE);
+function netLink(code){ const own=/^https?:$/.test(location.protocol) && !/claude/.test(location.host); return `${own?location.origin+location.pathname:"https://reckemonti.github.io/goetterwacht/"}?koop=${code}${NET_LOCAL?"&netz=lokal":""}`; }
+function loadPeer(){ return window.Peer ? Promise.resolve() : new Promise((ok,no)=>{ const sc=document.createElement("script"); sc.src=PEER_JS; sc.onload=()=>ok(); sc.onerror=()=>no(new Error("peerjs")); document.head.appendChild(sc); }); }
+function wrapPeer(c){ const w={ send:o=>{ try{ if(!c.open) return; if(o.t==="s" && c.dataChannel && c.dataChannel.bufferedAmount>4e5) return; c.send(o); }catch(e){} }, close:()=>{ try{ c.close(); }catch(e){} }, onData:null, onClose:null };
+  c.on("data", d=>w.onData&&w.onData(d)); c.on("close", ()=>w.onClose&&w.onClose()); c.on("error", ()=>w.onClose&&w.onClose()); return w; }
+function wrapBC(code, me){ const bc=new BroadcastChannel("gw-"+code), w={ send:o=>{ try{ bc.postMessage({from:me,o}); }catch(e){} }, close:()=>{ try{ bc.postMessage({from:me,o:{t:"bye"}}); bc.close(); }catch(e){} }, onData:null, onClose:null };
+  bc.onmessage=ev=>{ const m=ev.data; if(!m||m.from===me) return; if(m.o.t==="bye"){ w.onClose&&w.onClose(); return; } w.onData&&w.onData(m.o); }; return w; }
+function attach(w){ NET.conn=w; NET.seen=performance.now(); w.onData=netMsg; w.onClose=netClosed; }
+function lobby(title, msg){ only("ov-lobby"); $("lobby-title").textContent=title; $("lobby-msg").textContent=msg; $("lobby-linkrow").hidden=true; $("btn-lobby-start").hidden=true; $("btn-lobby-leave").textContent="Abbrechen"; }
+function showWait(title, msg, resumable){ $("wait-title").textContent=title; $("wait-msg").textContent=msg; $("btn-wait-resume").hidden=!resumable; show("ov-wait"); }
+function netReset(){ try{ NET.conn&&NET.conn.close(); }catch(e){} try{ NET.peer&&NET.peer.destroy(); }catch(e){} Object.assign(NET,{ host:false, guest:false, conn:null, peer:null, guestInfo:null, lost:false, p1:null, q:[], snd:[], in:{mx:0,my:0} }); $("btn-again").disabled=false; $("btn-again").textContent="Nochmals";
+  if(URLP.get("koop")) try{ history.replaceState(null,"",location.pathname+(NET_LOCAL?"?netz=lokal":"")); }catch(e){} }
+function netFail(msg){ const g=NET.guest; netReset(); G=null; state="title"; $("hud").hidden=true; $("bossbar").hidden=true; setMusic("title"); lobby("Online-Koop", msg); $("btn-lobby-leave").textContent="Hauptmenü"; }
+function netLeave(){ netReset(); koop=false; koopNet=false; toTitle(); }
+const cleanGuest = m => { const up={}; for(const k in META) up[k]=clamp(Math.floor(Number(m&&m.up&&m.up[k])||0),0,META[k].max+(META[k].ext||0)); return { god:m.god, up, heroLv:cleanHeroes(m&&m.heroLv) }; };
+
+async function netHost(god){
+  netReset(); NET.host=true; NET.hostGod=god; NET.world=selWorld; meta.lastGod=god; saveMeta();
+  const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; NET.code=Array.from({length:6},()=>A[Math.floor(Math.random()*A.length)]).join("");
+  lobby("Online-Koop · Einladung", "Einladung wird erstellt …");
+  const ready=()=>{ $("lobby-linkrow").hidden=false; $("btn-lobby-share").hidden=!navigator.share; $("lobby-link").value=netLink(NET.code);
+    $("lobby-msg").textContent=`Schick diesen Link deinem Mitspieler. Du spielst ${GODS[god].name} in ${WORLDS[NET.world].name}. Bleib auf dieser Seite, bis er da ist …`; };
+  if(NET_LOCAL){ attach(wrapBC(NET.code,"h")); ready(); return; }
+  try{ await loadPeer(); }catch(e){ netFail("Die Verbindungs-Bibliothek konnte nicht geladen werden. Prüfe das Internet."); return; }
+  if(!NET.host) return;
+  const peer=new Peer("gwacht-"+NET.code.toLowerCase()); NET.peer=peer;
+  peer.on("open", ready);
+  peer.on("connection", c=>{ c.on("open", ()=>{ if(NET.conn){ try{ c.send({t:"full"}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },500); return; } attach(wrapPeer(c)); }); });
+  peer.on("error", e=>{ if(!NET.conn) netFail(`Online-Koop geht hier nicht (${e.type}). Öffne das Spiel unter reckemonti.github.io/goetterwacht und versuch es nochmals.`); });
+}
+async function netJoin(code){
+  netReset(); NET.guest=true; NET.code=code; lobby("Online-Koop", "Verbinde mit Spieler 1 …");
+  if(NET_LOCAL){ attach(wrapBC(code,"g")); NET.conn.send({t:"hello", v:GAME_VERSION}); return; }
+  try{ await loadPeer(); }catch(e){ netFail("Die Verbindungs-Bibliothek konnte nicht geladen werden. Prüfe das Internet."); return; }
+  const peer=new Peer(); NET.peer=peer;
+  peer.on("open", ()=>{ const c=peer.connect("gwacht-"+code.toLowerCase(), {reliable:true});
+    c.on("open", ()=>{ attach(wrapPeer(c)); NET.conn.send({t:"hello", v:GAME_VERSION}); });
+    setTimeout(()=>{ if(NET.guest && !NET.conn) netFail("Keine Verbindung. Spieler 1 muss mit der Einladung warten. Sonst um einen neuen Link bitten."); },20000); });
+  peer.on("error", e=>{ if(!NET.guest) return; netFail(e.type==="peer-unavailable" ? "Diese Einladung ist nicht mehr offen. Bitte um einen neuen Link." : `Verbindung fehlgeschlagen (${e.type}).`); });
+}
+function netPick(id){ if(!NET.conn) return; meta.lastGod=id; saveMeta(); NET.conn.send({t:"pick", god:id, up:meta.up, heroLv:meta.heroLv}); lobby("Online-Koop", `Bereit mit ${GODS[id].name}. Warte, bis Spieler 1 startet …`); $("btn-lobby-leave").textContent="Verlassen"; }
+function netCard(i){ if(!NET.conn) return; NET.conn.send({t:"card", i}); hide("ov-level"); state="wait"; }
+function netStart(){ if(!NET.host||!NET.conn||!NET.guestInfo) return; selWorld=NET.world; koop=true; koopNet=true; NET.lost=false; NET.in={mx:0,my:0};
+  startGame(NET.hostGod, NET.guestInfo.god, NET.guestInfo);
+  NET.conn.send({ t:"start", world:NET.world, g1:NET.hostGod, g2:NET.guestInfo.god, decor:DECOR }); }
+function netMsg(m){
+  if(!m || typeof m!=="object") return; NET.seen=performance.now();
+  if(NET.host){
+    if(m.t==="hello"){ NET.conn.send({t:"lobby", world:NET.world, god:NET.hostGod, v:GAME_VERSION}); $("lobby-msg").textContent="Mitspieler ist verbunden und wählt seinen Gott …"; return; }
+    if(m.t==="pick"){ if(!GODS[m.god] || m.god===NET.hostGod){ NET.conn.send({t:"lobby", world:NET.world, god:NET.hostGod, v:GAME_VERSION, taken:1}); return; }
+      NET.guestInfo=cleanGuest(m); if(G && state!=="over") return;
+      $("lobby-msg").textContent=`${GODS[m.god].name} ist bereit. Du spielst ${GODS[NET.hostGod].name} in ${WORLDS[NET.world].name}.`; $("btn-lobby-start").hidden=false; $("btn-lobby-start").focus({preventScroll:true}); return; }
+    if(m.t==="in"){ NET.in={ mx:clamp(+m.mx||0,-1,1), my:clamp(+m.my||0,-1,1) }; return; }
+    if(m.t==="card"){ if(G && state==="level" && G.coop && G.pid===1 && offers[m.i|0]) choose(offers[m.i|0]); return; }
+    if(m.t==="reroll"){ if(G && state==="level" && G.pid===1 && G.rerolls>0){ G.rerolls--; state="play"; openLevel(); } return; }
+    if(m.t==="pause"){ pause(); return; } if(m.t==="resume"){ resume(); return; }
+    return; }
+  if(NET.guest){
+    if(m.t==="lobby"){ if(m.v!==GAME_VERSION){ netFail(`Ihr habt verschiedene Versionen (${m.v} und ${GAME_VERSION}). Beide die Seite neu laden.`); return; }
+      NET.hostGod=m.god; NET.world=m.world; selWorld=m.world; koop=true; koopNet=false; openHeroes(); if(m.taken) $("heroes-sub").textContent="Diesen Gott spielt schon Spieler 1. Wähle einen anderen"; return; }
+    if(m.t==="start"){ guestStart(m); return; }
+    if(m.t==="s"){ applySnap(m); return; }
+    if(m.t==="cards"){ if(!G) return; hide("ov-wait"); $("level-title").textContent=m.title; $("cards").innerHTML=m.html; $("btn-reroll").hidden=!(m.rerolls>0); $("btn-reroll").textContent=`Neu würfeln (${m.rerolls})`; show("ov-level"); state="level"; sfx("level"); return; }
+    if(m.t==="over"){ guestOver(m); return; }
+    if(m.t==="full"){ netFail("Diese Einladung ist schon besetzt."); return; }
+  }
+}
+function netClosed(){
+  if(!NET.conn) return; NET.conn=null;
+  if(NET.guest){ netFail("Die Verbindung zu Spieler 1 ist abgebrochen."); return; }
+  if(!NET.host) return;
+  if(G && state!=="over" && G.coop){ NET.lost=true; const p=PL2(); p.down=true; p.hp=0;
+    if(state==="level" && G.pid===1){ G.lvTurn=0; swapP(); G.pendingLv--; G.chest=false; state="play"; lastT=performance.now(); }
+    hide("ov-wait"); banner("Mitspieler getrennt","Du kämpfst allein weiter"); if(PL1().down) gameOver(); }
+  else if(!G){ NET.guestInfo=null; $("btn-lobby-start").hidden=true; $("lobby-msg").textContent="Der Mitspieler hat die Verbindung getrennt. Schick den Link nochmals."; if(NET_LOCAL) attach(wrapBC(NET.code,"h")); }
+}
+function plainFx(o){ const r={}; for(const k in o){ const v=o[k]; if(typeof v==="function") continue; if(v && typeof v==="object"){ if(v.getContext){ const n=GLOWN.get(v); if(n) r[k]="@"+n; continue; } if("on" in v && "kind" in v) continue; } r[k]=v; } return r; }
+function unFx(o){ for(const k in o){ const v=o[k]; if(typeof v==="string" && v[0]==="@" && GLOW[v.slice(1)]) o[k]=GLOW[v.slice(1)]; } return o; }
+function plainP(P){ const o={}; for(const k of PK){ if(k==="up") continue; let v=P[k];
+  if(k==="weapons"){ const w={}; for(const id in v){ const x=v[id]; w[id]={ id, lvl:x.lvl, evo:x.evo, ang:x.ang||0, curR:x.curR||0, c:x.c||0 }; } v=w; }
+  else if(k==="ravens") v=(v||[]).map(r=>({ a:r.a, x:r.x, y:r.y, dive:r.dive, sx:r.sx||0, sy:r.sy||0, tx:r.tx||0, ty:r.ty||0 }));
+  else if(k==="kt") continue;
+  o[k]=v; } return o; }
+function packE(cx,cy){ let n=0; for(let i=0;i<MAXE;i++){ const e=E[i]; if(!e.on) continue; if(!e.boss && (Math.abs(e.x-cx)>1500 || Math.abs(e.y-cy)>1100)) continue; const b=n*NE;
+    EBUF[b]=i; EBUF[b+1]=EKIND.indexOf(e.kind); EBUF[b+2]=e.x; EBUF[b+3]=e.y; EBUF[b+4]=e.r; EBUF[b+5]=e.scale; EBUF[b+6]=e.bob; EBUF[b+7]=e.face; EBUF[b+8]=e.fl;
+    EBUF[b+9]=(e.boss?1:0)|(e.big?2:0)|(e.elite?4:0)|(e.ice?8:0)|(e.frozen>0?16:0)|(e.slow>0?32:0); EBUF[b+10]=e.tier||0; EBUF[b+11]=Math.max(0,EST.indexOf(e.st));
+    EBUF[b+12]=e.stT||0; EBUF[b+13]=e.stM||1; EBUF[b+14]=e.mx||0; EBUF[b+15]=e.my||0; EBUF[b+16]=e.mr||0; EBUF[b+17]=e.aimA||0; n++; }
+  return EBUF.slice(0,n*NE).buffer; }
+function packPt(){ let n=(pHead-NET.ph+MAXPT)%MAXPT; NET.ph=pHead; n=Math.min(n,500); const a=new Float32Array(n*8);
+  for(let j=0;j<n;j++){ const i=(pHead-n+j+MAXPT)%MAXPT, b=j*8; a[b]=pt.x[i]; a[b+1]=pt.y[i]; a[b+2]=pt.vx[i]; a[b+3]=pt.vy[i]; a[b+4]=pt.l[i]; a[b+5]=pt.m[i]; a[b+6]=pt.s[i]; a[b+7]=pt.c[i]; } return a.buffer; }
+function snap(){ const C=ctr();
+  return { t:"s", st:state, g:{ wave:G.wave, waveT:G.waveT, phase:G.phase, kills:G.kills, runes:G.runes, level:G.level, xp:G.xp, xpNeed:G.xpNeed, event:G.event, world:G.world, cine:G.cine||0, ultiDim:G.ultiDim||0, time:G.time, hitstop:G.hitstop||0, lvTurn:G.lvTurn, chest:!!G.chest, shrines:G.shrines.map(plainFx) },
+    p:[plainP(PL1()), plainP(PL2())], e:packE(C.x,C.y), b:(G.bosses||[]).filter(b=>b.on).map(b=>[b.id, b.name||"", b.hp, b.maxHp]), boss:G.boss&&G.boss.on?G.boss.id:-1,
+    pr:PR.filter(p=>p.on).map(p=>[p.kind,p.x,p.y,p.vx,p.vy,p.r,p.rot,p.evo?1:0,p.el||0]), ep:EP.filter(p=>p.on).map(p=>[p.kind,p.x,p.y,p.vx,p.vy,p.r]),
+    gm:GM.filter(g=>g.on).map(g=>[g.k,g.x,g.y,g.t]), tx:TX.filter(t=>t.on).map(t=>[t.x,t.y,t.v,t.l,t.c]),
+    fx:{ effects:effects.map(plainFx), pools:pools.map(plainFx), teles:teles.map(plainFx), craters:craters.map(plainFx), spirals:spirals.map(plainFx), allies:allies.map(plainFx), storms:storms.map(plainFx), icewaves:icewaves.map(plainFx) },
+    pt:packPt(), fxs:[shake,flash,kick], q:NET.q.splice(0), snd:NET.snd.splice(0) }; }
+function netTick(dt){
+  const now=performance.now();
+  if(NET.host){ if(G && state!=="over" && state!=="title"){ if(G.pid===0 || state==="level"){ NET.t-=dt; if(NET.t<=0){ NET.t=state==="play"?.05:.25; NET.conn.send(snap()); } } if(now-NET.seen>20000) netClosed(); } return; }
+  if(NET.guest && G && state!=="over" && now-NET.seen>20000) netClosed();
+}
+const toF=x=> x instanceof ArrayBuffer? new Float32Array(x) : ArrayBuffer.isView(x)? new Float32Array(x.buffer.slice(x.byteOffset,x.byteOffset+x.byteLength)) : new Float32Array(0);
+const fill=(arr,list,f)=>{ for(let i=0;i<arr.length;i++){ const o=arr[i]; if(i<list.length){ o.on=true; f(o,list[i]); } else o.on=false; } };
+function applySnap(m){
+  if(!G) return;
+  const fresh=!NET.p1; Object.assign(G, m.g); G.shrines=m.g.shrines.map(unFx);
+  const me=G.p2, a=m.p[0], b=m.p[1];
+  for(const k in a) if(k!=="x"&&k!=="y") G[k]=a[k];
+  NET.p1={x:a.x,y:a.y}; if(fresh){ G.x=a.x; G.y=a.y; }
+  for(const k in b) if(k!=="x"&&k!=="y"&&k!=="moving"&&k!=="dirx"&&k!=="diry"&&k!=="facing"&&k!=="walk") me[k]=b[k];
+  me.hx=b.x; me.hy=b.y; if(fresh || b.down){ me.x=b.x; me.y=b.y; }
+  const ea=toF(m.e), seen=new Uint8Array(MAXE);
+  for(let j=0;j<ea.length;j+=NE){ const i=ea[j]|0, e=E[i]; seen[i]=1; if(!e.on){ e.on=true; e.x=ea[j+2]; e.y=ea[j+3]; }
+    e.nx=ea[j+2]; e.ny=ea[j+3]; e.kind=EKIND[ea[j+1]|0]||"draugr"; e.r=ea[j+4]; e.scale=ea[j+5]; e.bob=ea[j+6]; e.face=ea[j+7]; e.fl=ea[j+8]; const f=ea[j+9]|0;
+    e.boss=!!(f&1); e.big=!!(f&2); e.elite=!!(f&4); e.ice=!!(f&8); e.frozen=f&16?1:0; e.slow=f&32?1:0; e.tier=ea[j+10]; e.st=EST[ea[j+11]|0]; e.stT=ea[j+12]; e.stM=ea[j+13]; e.mx=ea[j+14]; e.my=ea[j+15]; e.mr=ea[j+16]; e.aimA=ea[j+17]; }
+  for(let i=0;i<MAXE;i++) if(!seen[i]) E[i].on=false;
+  G.bosses=m.b.map(([i,name,hp,max])=>{ const e=E[i]; e.name=name; e.hp=hp; e.maxHp=max; return e; }); G.boss=m.boss>=0?E[m.boss]:null;
+  $("bossbar").hidden=!G.bosses.length; if(G.bosses.length) $("bossname").textContent = G.bosses.length>1? `${G.bosses[0].name} und ${G.bosses.length-1} weitere` : G.bosses[0].name;
+  fill(PR,m.pr,(p,v)=>{ [p.kind,p.x,p.y,p.vx,p.vy,p.r,p.rot]=v; p.evo=!!v[7]; p.el=v[8]||null; });
+  fill(EP,m.ep,(p,v)=>{ [p.kind,p.x,p.y,p.vx,p.vy,p.r]=v; });
+  fill(GM,m.gm,(g,v)=>{ [g.k,g.x,g.y,g.t]=v; });
+  fill(TX,m.tx,(t,v)=>{ [t.x,t.y,t.v,t.l,t.c]=v; });
+  for(const [arr,list] of [[effects,m.fx.effects],[pools,m.fx.pools],[teles,m.fx.teles],[craters,m.fx.craters],[spirals,m.fx.spirals],[allies,m.fx.allies],[storms,m.fx.storms],[icewaves,m.fx.icewaves]]){ arr.length=0; for(const o of list) arr.push(unFx(o)); }
+  const pa=toF(m.pt); for(let j=0;j<pa.length;j+=8){ const i=pHead; pHead=(pHead+1)%MAXPT; pt.x[i]=pa[j]; pt.y[i]=pa[j+1]; pt.vx[i]=pa[j+2]; pt.vy[i]=pa[j+3]; pt.l[i]=pa[j+4]; pt.m[i]=pa[j+5]; pt.s[i]=pa[j+6]; pt.c[i]=pa[j+7]; }
+  shake=Math.max(shake,m.fxs[0]); flash=Math.max(flash,m.fxs[1]); kick=Math.max(kick,m.fxs[2]);
+  for(const q of m.q) banner(q[0]||null,q[1]||null); for(const n of m.snd) sfx(n);
+  const sig=JSON.stringify([a.weapons,a.passives,b.weapons,b.passives].map(o=>Object.entries(o).map(([k,v])=>k+(v.lvl||v)+(v.evo?"*":"")))); if(sig!==NET.wsig){ NET.wsig=sig; renderSlots(); }
+  guestState(m.st);
+}
+function guestState(st){
+  if(st==="play"){ if(state!=="play"){ hide("ov-wait"); hide("ov-level"); state="play"; } return; }
+  if(state==="level") return;
+  const w = st==="pause"? ["Pause","Das Spiel ist für euch beide angehalten.",true] : st==="fate"? ["Schicksalswurf","Die Nornen werfen die Runen. Das Schicksal gilt für euch beide.",false]
+    : st==="coin"? ["Münzwurf","Spieler 1 entscheidet, ob ihr das Risiko eingeht.",false] : st==="level"? ["Stufenaufstieg","Spieler 1 wählt eine Gabe …",false] : ["Kurz warten","",false];
+  if(state!=="wait" || $("wait-title").textContent!==w[0]) showWait(w[0],w[1],w[2]); state="wait";
+}
+function guestStart(m){
+  selWorld=m.world; koop=true; NET.p1=null; NET.wsig=""; unlockAudio(); setMusic("battle");
+  newRun(m.g1, m.world, m.g2); if(Array.isArray(m.decor)){ DECOR=m.decor; decorWorld=m.world; }
+  only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); renderSlots(); hud();
+  $("btn-again").disabled=false; $("btn-again").textContent="Nochmals";
+}
+function guestTick(dt){
+  T+=dt; const me=G.p2; let mx=0,my=0;
+  if(keys.ArrowLeft||keys.KeyA) mx-=1; if(keys.ArrowRight||keys.KeyD) mx+=1; if(keys.ArrowUp||keys.KeyW) my-=1; if(keys.ArrowDown||keys.KeyS) my+=1;
+  if(joy.on){ const dx=joy.x-joy.ox, dy=joy.y-joy.oy, d=Math.hypot(dx,dy); if(d>6){ const m=Math.min(1,d/50); mx=dx/d*m; my=dy/d*m; } }
+  const m=Math.hypot(mx,my); if(m>1){ mx/=m; my/=m; }
+  if(!me.down){ me.moving=m>.05; if(me.moving){ me.dirx=mx; me.diry=my; if(Math.abs(mx)>.1) me.facing=mx>0?1:-1; me.walk+=dt*10; }   // eigene Figur sofort bewegen, dann sanft zum Stand von Spieler 1 ziehen
+    me.x=clamp(me.x+mx*(me.speed||200)*dt,-WORLD+20,WORLD-20); me.y=clamp(me.y+my*(me.speed||200)*dt,-WORLD+20,WORLD-20); }
+  if(me.hx!=null){ const dx=me.hx-me.x, dy=me.hy-me.y; if(dx*dx+dy*dy>180*180){ me.x=me.hx; me.y=me.hy; } else { const k=Math.min(1,dt*(me.moving?2:6)); me.x+=dx*k; me.y+=dy*k; } }
+  NET.sendT-=dt; const key=mx.toFixed(2)+","+my.toFixed(2); if(NET.conn && (key!==NET.lastIn || NET.sendT<=0)){ NET.conn.send({t:"in",mx,my}); NET.lastIn=key; NET.sendT=.2; }
+  if(NET.p1){ const k=Math.min(1,dt*12); G.x+=(NET.p1.x-G.x)*k; G.y+=(NET.p1.y-G.y)*k; }
+  const k=Math.min(1,dt*14); for(let i=0;i<MAXE;i++){ const e=E[i]; if(!e.on||e.nx==null) continue; e.x+=(e.nx-e.x)*k; e.y+=(e.ny-e.y)*k; }
+  for(const p of PR) if(p.on){ p.x+=p.vx*dt; p.y+=p.vy*dt; if(p.kind==="axe") p.rot+=dt*18; }
+  for(const p of EP) if(p.on){ p.x+=p.vx*dt; p.y+=p.vy*dt; }
+  for(let i=0;i<MAXPT;i++){ if(pt.l[i]<=0) continue; pt.l[i]-=dt; pt.x[i]+=pt.vx[i]*dt; pt.y[i]+=pt.vy[i]*dt; pt.vx[i]*=.92; pt.vy[i]*=.92; }
+  for(const t of TX){ if(!t.on) continue; t.l-=dt; t.y-=40*dt; if(t.l<=0) t.on=false; }
+  for(let i=effects.length-1;i>=0;i--){ const f=effects[i]; if(f.d>0){ f.d-=dt; continue; } f.l-=dt; if(f.l<=0) effects.splice(i,1); }
+  shake*=Math.pow(.0005,dt); flash=Math.max(0,flash-dt*1.5);
+}
+function guestOver(m){
+  state="over"; setMusic("title");
+  meta.runes+=m.earned|0; meta.souls=(meta.souls||0)+(m.souls|0); meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+(m.kills|0);
+  meta.bestKoop=meta.bestKoop||{}; const K=meta.bestKoop[m.world]||{wave:0,kills:0,gods:[]}; const rec=m.waves>K.wave || (m.waves===K.wave && m.kills>K.kills); if(rec) meta.bestKoop[m.world]={wave:m.waves,kills:m.kills,gods:m.gods}; saveMeta();
+  $("over-title").textContent=m.title; $("o-waves").textContent=m.waves; $("o-kills").textContent=m.kills; $("o-time").textContent=m.time; $("o-runes").textContent=m.earned;
+  $("o-record").textContent=`+${m.souls} Seelen und +${m.earned} Runen für dich. `+(rec&&m.waves>0?"Neuer Koop-Rekord! ":"")+"Spieler 1 kann eine neue Runde starten.";
+  $("o-dmg").innerHTML=m.dmg||""; $("o-boardwrap").hidden=true; $("btn-again").disabled=true; $("btn-again").textContent="Warte auf Spieler 1";
+  hide("ov-wait"); hide("ov-level"); $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
+}
+$("btn-lobby-copy").addEventListener("click", ()=>{ const v=$("lobby-link").value; const done=()=>{ $("btn-lobby-copy").textContent="Kopiert ✓"; setTimeout(()=>$("btn-lobby-copy").textContent="Link kopieren",1800); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done,()=>{ $("lobby-link").select(); document.execCommand&&document.execCommand("copy"); done(); }); else { $("lobby-link").select(); document.execCommand&&document.execCommand("copy"); done(); } });
+$("btn-lobby-share").addEventListener("click", ()=>{ try{ navigator.share({ title:"Götterwacht Koop", text:"Kämpf mit mir in Götterwacht!", url:$("lobby-link").value }).catch(()=>{}); }catch(e){} });
+$("lobby-link").addEventListener("focus", e=>e.target.select());
+$("btn-lobby-start").addEventListener("click", netStart);
+$("btn-lobby-leave").addEventListener("click", netLeave);
+$("btn-wait-resume").addEventListener("click", ()=>{ if(NET.guest) resume(); });
+$("btn-wait-leave").addEventListener("click", netLeave);
+
 /* ---------------- input ---------------- */
 addEventListener("keydown", e=>{ keys[e.code]=true;
   if(e.code==="Escape"||e.code==="KeyP"){ if(state==="play") pause(); else if(state==="pause") resume(); }
-  if(state==="level" && ["Digit1","Digit2","Digit3"].includes(e.code)){ const o=offers[+e.code.slice(-1)-1]; if(o) choose(o); }
+  if(state==="level" && ["Digit1","Digit2","Digit3"].includes(e.code)){ const i=+e.code.slice(-1)-1; if(NET.guest){ if($("cards").querySelector(`[data-i="${i}"]`)) netCard(i); } else { const o=offers[i]; if(o) choose(o); } }
   if(state==="play" && e.code.startsWith("Arrow")) e.preventDefault();
 });
 addEventListener("keyup", e=>{ keys[e.code]=false; });
 addEventListener("blur", ()=>{ for(const k in keys) keys[k]=false; if(state==="play") pause(); });
 document.addEventListener("visibilitychange", ()=>{ if(document.hidden && state==="play") pause(); });
-cv.addEventListener("pointerdown", e=>{ if(state!=="play") return; const J=(G&&G.coop&&e.clientX>VW/2)?joy2:joy; J.on=true; J.id=e.pointerId; J.ox=J.x=e.clientX; J.oy=J.y=e.clientY; try{cv.setPointerCapture(e.pointerId);}catch(_){} });
+cv.addEventListener("pointerdown", e=>{ if(state!=="play") return; const J=(G&&G.coop&&!NET.host&&!NET.guest&&e.clientX>VW/2)?joy2:joy; J.on=true; J.id=e.pointerId; J.ox=J.x=e.clientX; J.oy=J.y=e.clientY; try{cv.setPointerCapture(e.pointerId);}catch(_){} });
 cv.addEventListener("pointermove", e=>{ for(const J of [joy,joy2]){ if(!J.on||e.pointerId!==J.id) continue; J.x=e.clientX; J.y=e.clientY; const dx=J.x-J.ox, dy=J.y-J.oy, d=Math.hypot(dx,dy); if(d>70){ J.ox=J.x-dx/d*70; J.oy=J.y-dy/d*70; } } });
 const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false; J.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 38;
+const GAME_VERSION = 39;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2479,6 +2702,7 @@ document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && AC &&
 setInterval(()=>{ if(AC && AC.state!=="running") $("music-hint").hidden=false; }, 2000);
 VSPR[0]=SPR.valk;
 genDecor(); renderGods();
+if(URLP.get("koop")) setTimeout(()=>netJoin(URLP.get("koop").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8)),60);   // Einladungslink geöffnet
 requestAnimationFrame(t=>{ lastT=t; requestAnimationFrame(frame); });
 initShared();
 if(document.fonts && document.fonts.load){ document.fonts.load("16px 'Noto Sans Runic'").then(()=>{ /* re-render decor runes once the font is ready */ DECOR_SPR.stone = mk(64,96,(g)=>{ g.translate(32,60); g.fillStyle="rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(0,10,18,6,0,0,TAU); g.fill(); g.fillStyle=radial(g,0,-20,30,"#76828f","#323b46"); g.beginPath(); g.moveTo(-14,10); g.lineTo(-16,-30); g.quadraticCurveTo(0,-50,16,-30); g.lineTo(14,10); g.closePath(); g.fill(); g.fillStyle="rgba(127,216,255,.85)"; g.font="18px 'Noto Sans Runic', serif"; g.textAlign="center"; g.fillText("ᛟ",0,-14); g.fillText("ᚦ",0,4); }); }).catch(()=>{}); }
@@ -2540,6 +2764,6 @@ function simRun(god, opt={}){
   BOT.on=false; meta=JSON.parse(savedMeta); saveMeta(); G=null; state="title"; only("ov-title"); $("hud").hidden=true; $("bossbar").hidden=true;
   return res;
 }
-window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, buyHero, heroLv, heroCost, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), PL1, PL2, COOP, swapP, joy, joy2, get koop(){return koop;}, down:k=>{ const sw=G.pid!==k; if(sw) swapP(); playerDown(); if(sw) swapP(); }, alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, buyHero, heroLv, heroCost, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), PL1, PL2, COOP, swapP, joy, joy2, get koop(){return koop;}, NET, get code(){return NET.code;}, down:k=>{ const sw=G.pid!==k; if(sw) swapP(); playerDown(); if(sw) swapP(); }, alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
 })();
 </script>
