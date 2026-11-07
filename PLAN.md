@@ -26,9 +26,11 @@ Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
 - Balancing: Nico erreicht ohne Upgrades etwa Welle 17. Die Eiswelt beginnt nach Welle 20 etwas schwerer als Welle 20, die neuen Fähigkeiten gleichen das aus. Keine neue Schwierigkeitskurve für die Wellen 1 bis 20.
 - Heldenlevel: Kosten in Seelen, steigend; Levelgrenze 10; sichtbare Stufen bei Level 1, 4, 7 und 10 (Rüstung, Leuchten, Aura).
 
-- Eiswelt (v35, Claude): beginnt mit Welle 21 (erste Welle dort ohne Ereignis, damit man sie sieht). Gegner +10 % Leben, Treffer machen 1.4 s frierend (−20 % Tempo), Schneesturm jede gerade Welle ausser Boss-Wellen (−12 % Tempo, +50 % Erfahrung), Blutmond bleibt. Skadi ist dort zu Hause: +15 % Schaden, friert nicht. Ein siebter Platz für Waffen und Gaben.
-- Pfad nach Niflheim (v35, Claude): 10 Fähigkeiten in drei Ästen (Wärme, Eis, Wandel) plus Krone, je mit Vorgänger; Kosten 300 / 650 / 1100 / 1800 Runen (zusammen 7950). Kaufbar schon vor Welle 20, wirken nur in der Eiswelt.
-- Neue Gaben (v35, Claude): Waffen Frostnova und Eiszapfenregen (für alle Götter, in der Eiswelt öfter angeboten), Gaben Zähigkeit, Runenwissen, Scharfblick. Zwei neue Erfolge (Niflheim, Welle 25).
+- Welten (v36, Claude, nach Nicos Vorgabe 07.11.): Niflheim ist eine eigene Welt ab Welle 1, frei sobald Welle 20 in Midgard geschafft ist (Erfolg oder Rekord). Midgard läuft nach 20 endlos weiter wie bis v34. Eisgegner: Leben ×7, Schaden ×2.2, Treffer machen 1.4 s frierend (−20 % Tempo), Schneesturm jede gerade Welle ab 4 ausser Boss-Wellen. Skadi dort +15 % Schaden, friert nicht. Ein siebter Platz für Waffen und Gaben. Ruhmeshalle zählt nur Midgard; Niflheim hat einen eigenen Rekord.
+- Schmiede (v36): die 12 Kraft-Upgrades bekommen +10 Stufen, sobald Niflheim offen ist (Kosten laufen nach der gleichen Formel weiter). Schicksalsfaden, Erbe, Zweites Leben bleiben.
+- Menü (v36): Hauptmenü «Spiel starten · Solo» / «Koop (bald)» → Weltwahl → Heldenwahl mit Runenschmiede → «Ragnarök starten». Nach der Runde: Zusammenfassung, dann «Heldenauswahl».
+- Pfad nach Niflheim (v35, Claude): 10 Fähigkeiten in drei Ästen (Wärme, Eis, Wandel) plus Krone, je mit Vorgänger; Kosten 300 / 650 / 1100 / 1800 Runen (zusammen 7950). Kaufbar jederzeit, wirken nur in Niflheim.
+- Neue Gaben (v35, Claude): Waffen Frostnova und Eiszapfenregen (für alle Götter, in der Eiswelt öfter angeboten), Gaben Zähigkeit, Runenwissen, Scharfblick. Zwei neue Erfolge (Niflheim betreten, Welle 20 in Niflheim).
 
 ## Nächster Schritt
-GW-6 (Helden in der Ruhmeshalle leveln).
+GW-6 (Helden in der Ruhmeshalle leveln) als Version 37. Danach: Koop-Modus (eigene grosse Aufgabe).

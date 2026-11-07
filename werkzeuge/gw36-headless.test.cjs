@@ -1,5 +1,5 @@
-// Version 35: Eiswelt nach Welle 20, Pfad nach Niflheim (10 Fähigkeiten), neue Gaben beim Stufenaufstieg.
-// Aufruf: node werkzeuge/gw35-headless.test.cjs
+// Version 36: Welten (Midgard, Niflheim ab Welle 20 frei), Pfad nach Niflheim, neue Gaben, Menü Solo/Welt/Held, mehr Schmiede-Stufen.
+// Aufruf: node werkzeuge/gw36-headless.test.cjs
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'quelle-claude-artifact.html'), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-new vm.Script(script, { filename: 'goetterwacht_v35.inline.js' });
+new vm.Script(script, { filename: 'goetterwacht_v36.inline.js' });
 function block(start, open = '{', close = '}') {
   const s = script.indexOf(start); assert.notEqual(s, -1, `Missing ${start}`);
   const o = script.indexOf(open, s); let depth = 0, quote = '', esc = false;
@@ -26,32 +26,56 @@ function context(source, extras = {}) { const c = { ...extras }; vm.createContex
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log(`PASS ${name}`); }
 
-const iceData = [line(/const ICE_FROM = [^\n]+/), line(/const isIceWave = [^\n]+/), block('const ICE_SKILLS = [', '[', ']'),
+const iceData = [line(/const WORLDS = \{/) && block('const WORLDS = {'), line(/const worldOpen = [^\n]+/), block('const ICE_SKILLS = [', '[', ']'),
   line(/const iceOwned = [^\n]+/), line(/const cleanIce = [^\n]+/),
-  'Object.assign(globalThis, { ICE_FROM, isIceWave, ICE_SKILLS, iceOwned, cleanIce });'].join('\n');
+  'Object.assign(globalThis, { WORLDS, worldOpen, ICE_SKILLS, iceOwned, cleanIce });'].join('\n');
 
-test('Version 35 with credit', () => {
-  assert.match(html, /const GAME_VERSION = 35;/);
-  assert.match(html, /id="ver">Version 35<\/div>/);
+test('Version 36 with credit', () => {
+  assert.match(html, /const GAME_VERSION = 36;/);
+  assert.match(html, /id="ver">Version 36<\/div>/);
   assert.match(html, /id="credit">Made by a Legend NMO<\/div>/);
 });
 
-test('Ice world starts after wave 20', () => {
-  const c = context(iceData, { meta: {} });
-  assert.equal(c.ICE_FROM, 21);
-  for (let w = 1; w <= 20; w++) assert.equal(c.isIceWave(w), false, `wave ${w}`);
-  for (const w of [21, 22, 30, 50]) assert.equal(c.isIceWave(w), true);
+test('Niflheim is a world of its own, locked until wave 20 in Midgard', () => {
+  const c = context(iceData, { meta: { best: { wave: 19 }, ach: {} } });
+  assert.deepEqual(Object.keys(c.WORLDS), ['mittgard', 'eis']);
+  assert.equal(c.worldOpen('mittgard'), true);
+  assert.equal(c.worldOpen('eis'), false);
+  c.meta.best.wave = 20; assert.equal(c.worldOpen('eis'), true);
+  c.meta.best.wave = 3; c.meta.ach.w20 = 123; assert.equal(c.worldOpen('eis'), true, 'achievement unlocks too');
+  assert.doesNotMatch(fnSource('waveUpdate'), /enterIce/, 'Midgard no longer turns into ice after wave 20');
+  assert.match(fnSource('newRun'), /world==="eis"\?"eis":"mittgard"/);
+  assert.match(fnSource('startGame'), /newRun\(god, selWorld\)/);
 });
 
-test('Snowstorms replace fog in the ice world, waves 1-20 unchanged', () => {
-  const c = context(fnSource('waveEvent'), { ICE_FROM: 21 });
-  assert.equal(c.waveEvent(21, true), null, 'first ice wave stays clear');
+test('Menu flow: Solo/Koop, world choice, hero choice, Ragnarök starten', () => {
+  for (const id of ['btn-solo', 'btn-koop', 'ov-worlds', 'ov-heroes', 'btn-start', 'btn-shop3', 'btn-heroes-worlds', 'btn-heroes-menu'])
+    assert.match(html, new RegExp(`id="${id}"`), id);
+  assert.match(html, /id="btn-koop" type="button" disabled/);
+  assert.match(html, />Ragnarök starten</);
+  assert.match(script, /\$\("btn-menu"\)\.addEventListener\("click", toHeroes\)/, 'after a run back to hero choice');
+});
+
+test('Snowstorms replace fog in Niflheim, Midgard events unchanged', () => {
+  const c = context(fnSource('waveEvent'));
   const old = w => w % 7 === 0 ? 'blutmond' : (w >= 6 && w % 5 !== 0 && w % 4 === 2) ? 'nebel' : null;
-  for (let w = 1; w <= 20; w++) assert.equal(c.waveEvent(w, false), old(w), `wave ${w}`);
-  const ice = []; for (let w = 21; w <= 40; w++) { const e = c.waveEvent(w, true); assert.notEqual(e, 'nebel'); if (e === 'schneesturm') ice.push(w); }
-  assert.ok(ice.length >= 6, `storms: ${ice}`);
-  assert.equal(c.waveEvent(28, true), 'blutmond');
-  assert.equal(c.waveEvent(25, true), null, 'no storm in big boss wave');
+  for (let w = 1; w <= 40; w++) assert.equal(c.waveEvent(w, false), old(w), `wave ${w}`);
+  const ice = []; for (let w = 1; w <= 20; w++) { const e = c.waveEvent(w, true); assert.notEqual(e, 'nebel'); if (e === 'schneesturm') ice.push(w); }
+  assert.ok(ice.length >= 5, `storms: ${ice}`);
+  assert.equal(c.waveEvent(14, true), 'blutmond');
+  assert.equal(c.waveEvent(10, true), null, 'no storm in big boss wave');
+});
+
+test('Forge: 10 more stages per stat upgrade once Niflheim is open', () => {
+  const metaDecl = block('const META = {');
+  const c = context(`${metaDecl}\n${iceData}\n${line(/const metaMax = [^\n]+/)}\nglobalThis.META=META; globalThis.metaMax=metaMax;`, { meta: { best: { wave: 5 }, ach: {} } });
+  const ext = Object.keys(c.META).filter(k => c.META[k].ext);
+  assert.equal(ext.length, 12);
+  for (const k of ['reroll', 'start', 'revive']) assert.ok(!c.META[k].ext, k);
+  assert.equal(c.metaMax('armor'), 10); assert.equal(c.metaMax('hp'), 20);
+  c.meta.best.wave = 20;
+  assert.equal(c.metaMax('armor'), 20); assert.equal(c.metaMax('hp'), 30); assert.equal(c.metaMax('revive'), 2);
+  assert.match(fnSource('readAny'), /clamp\(v,0,META\[k\]\.max\+\(META\[k\]\.ext\|\|0\)\)/);
 });
 
 test('Ice skill tree: 10 unique skills, valid prerequisites, rising costs', () => {
@@ -79,7 +103,7 @@ test('Buying follows the tree and costs runes', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(meta.ice)), { pelz: true, glut: true });
 });
 
-test('v34 save loads, v35 save keeps the ice path, unknown ids are dropped', () => {
+test('v34 save loads, v36 save keeps the ice path, unknown ids are dropped', () => {
   const metaDecl = block('const META = {');
   const c = context(`${metaDecl}\n${iceData}\n${fnSource('readAny')}`, {
     meta: {}, clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m,
@@ -88,7 +112,7 @@ test('v34 save loads, v35 save keeps the ice path, unknown ids are dropped', () 
   const a = c.readAny(JSON.stringify(v34));
   assert.equal(a.runes, 500); assert.equal(a.up.hp, 3); assert.equal(a.best.wave, 17);
   assert.deepEqual(JSON.parse(JSON.stringify(a.ice)), {});
-  const b = c.readAny(JSON.stringify({ ...v34, version: 35, eispfad: { pelz: true, schuh: true, hack: true, glut: 'yes' } }));
+  const b = c.readAny(JSON.stringify({ ...v34, version: 36, eispfad: { pelz: true, schuh: true, hack: true, glut: 'yes' } }));
   assert.deepEqual(JSON.parse(JSON.stringify(b.ice)), { pelz: true, schuh: true });
 });
 
@@ -107,12 +131,13 @@ test('New level-up choices: 2 weapons and 3 gifts, one more slot in the ice worl
   assert.match(fnSource('weaponsUpdate'), /id==="frostnova"/); assert.match(fnSource('weaponsUpdate'), /id==="eiszapfen"/);
 });
 
-test('Entering the ice world: world switch, new map, frost enemies', () => {
-  assert.match(fnSource('waveUpdate'), /isIceWave\(G\.wave\) && G\.world!=="eis"/);
-  assert.match(fnSource('enterIce'), /G\.world="eis"; genDecor\("eis"\)/);
-  assert.match(fnSource('spawnEnemy'), /if\(G\.world==="eis"\)\{ e\.ice=true;/);
+test('Niflheim run: new map, frost enemies, wolves and saves', () => {
+  assert.match(fnSource('enterIce'), /G\.world="eis"; if\(decorWorld!=="eis"\) genDecor\("eis"\)/);
+  assert.match(fnSource('spawnEnemy'), /if\(G\.world==="eis"\)\{ e\.ice=true; e\.hp\*=ICE_HP; e\.maxHp\*=ICE_HP; e\.dmg\*=ICE_DMG; \}/);
   assert.match(fnSource('pickKind'), /return "golem"/);
   assert.match(script, /golem:\{ hp:110,/);
+  assert.match(fnSource('saveJSON'), /rekordNiflheim:/);
+  assert.match(fnSource('gameOver'), /if\(!ice\) submitScore/);
 });
 
-console.log(`${passed}/9 headless tests passed`);
+console.log(`${passed}/11 headless tests passed`);

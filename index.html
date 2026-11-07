@@ -164,6 +164,12 @@ h2.t{font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin
 .shop .card .ic{width:44px;height:44px;font-size:24px}
 .shop .card[disabled]{opacity:.45;cursor:default;transform:none}
 .shop .card.iceon[disabled]{opacity:1}
+.btn.big{font-size:20px;padding:12px 26px}.btn[disabled]{opacity:.45;cursor:default}
+.god.sel{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 0 34px color-mix(in srgb,var(--c) 35%,transparent)}
+.god[disabled]{opacity:.5;cursor:default;transform:none;box-shadow:none}
+.worlds{grid-template-columns:repeat(2,minmax(0,1fr));max-width:820px}
+@media (max-width:720px){.worlds{grid-template-columns:1fr}}
+.wic{width:96px;height:96px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-rune);font-size:46px;color:var(--c);background:radial-gradient(circle at 50% 60%, color-mix(in srgb,var(--c) 26%,transparent), transparent 70%);border:1px solid var(--line)}
 .cost{font-family:var(--font-display);color:var(--gold);font-size:14px;margin-top:6px}
 .shop-grp{grid-column:1/-1;font-family:var(--font-display);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-top:6px}
 .lvl-n{font-family:var(--font-ui);font-size:13px;color:var(--gold);letter-spacing:.06em;margin-left:4px}
@@ -210,10 +216,10 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 35</div>
+    <div class="ver" id="ver">Version 36</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
-    <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
-    <div class="gods" id="gods"></div>
+    <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
+    <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" disabled title="Kommt in einer späteren Version">Spiel starten · Koop <span class="tag">bald</span></button></div>
     <div class="row">
       <button class="btn" id="btn-shop" type="button">Runenschmiede <span class="runesTotal" id="runes-title"></span></button>
       <button class="btn" id="btn-board" type="button">Ruhmeshalle</button>
@@ -233,6 +239,19 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
     <div class="hint" id="music-hint" style="color:var(--gold)">♪ Tippe irgendwo, um die Musik zu starten</div>
   </div>
 </div>
+
+<div class="ov" id="ov-worlds" hidden><div class="ov-in">
+  <div class="runes" aria-hidden="true">ᛗᛁᛞᚷᚨᚱᛞ</div><h2 class="t">Wähle die Welt</h2><div class="hint">Jede Welt beginnt bei Welle 1. Schaffst du Welle 20, öffnet sich die nächste.</div>
+  <div class="gods worlds" id="worlds"></div>
+  <div class="row"><button class="btn gold" id="btn-worldsback" type="button">Hauptmenü</button></div>
+</div></div>
+<div class="ov" id="ov-heroes" hidden><div class="ov-in">
+  <h2 class="t" id="heroes-title">Midgard</h2><div class="sub">Wähle deinen Gott</div>
+  <div class="gods" id="gods"></div>
+  <div class="row"><button class="btn gold big" id="btn-start" type="button" disabled>Ragnarök starten</button></div>
+  <div class="row"><button class="btn" id="btn-shop3" type="button">Runenschmiede <span class="runesTotal" id="runes-heroes"></span></button><button class="btn" id="btn-heroes-worlds" type="button">Welt wechseln</button><button class="btn" id="btn-heroes-menu" type="button">Hauptmenü</button></div>
+  <div class="hint" id="best-heroes"></div>
+</div></div>
 
 <div class="ov" id="ov-level" hidden><div class="ov-in"><h2 class="t" id="level-title">Stufe 2</h2><div class="hint">Wähle eine Gabe der Götter</div><div class="cards" id="cards"></div><div class="row"><button class="btn" id="btn-reroll" type="button" hidden>Neu würfeln</button></div></div></div>
 
@@ -261,7 +280,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="hint" id="o-record"></div>
   <div class="panel" id="o-dmgwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Schaden nach Fähigkeit</div><div id="o-dmg" class="dmgbars"></div></div>
   <div class="panel" id="o-boardwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Ruhmeshalle</div><ul class="board" id="o-board"></ul><div class="hint" id="o-boardnote" style="margin-top:8px"></div></div>
-  <div class="row"><button class="btn gold" id="btn-again" type="button">Nochmals</button><button class="btn" id="btn-shop2" type="button">Runenschmiede</button><button class="btn" id="btn-menu" type="button">Götterwahl</button></div>
+  <div class="row"><button class="btn gold" id="btn-again" type="button">Nochmals</button><button class="btn" id="btn-shop2" type="button">Runenschmiede</button><button class="btn" id="btn-menu" type="button">Heldenauswahl</button></div>
 </div></div>
 
 <div class="ov" id="ov-shop" hidden><div class="ov-in">
@@ -730,9 +749,14 @@ const SKILLS = [
 ];
 const unlockedSkills = () => SKILLS.filter(k=>(meta.up[k.req]||0)>=k.lvl);
 // Eiswelt Niflheim ab Welle 21: neue Karte, Frostgegner, Schneestürme statt Nebel
-const ICE_FROM = 21, ICE_HP = 1.35;
-const isIceWave = w => w>=ICE_FROM;
-function waveEvent(w, ice){ return w===ICE_FROM ? null : w%7===0 ? "blutmond" : ice ? (w%5!==0 && w%2===0 ? "schneesturm" : null) : (w>=6 && w%5!==0 && w%4===2) ? "nebel" : null; }
+// Welten: Midgard (Start) und Niflheim (frei nach Welle 20 in Midgard). Jede Welt beginnt bei Welle 1.
+const WORLDS = {
+  mittgard:{ name:"Midgard", rune:"ᛗ", col:"#f2c14e", d:"Die Welt der Menschen. Draugr, Wölfe, Trolle und grosse Bosse. Die Wellen gehen endlos weiter." },
+  eis:{ name:"Niflheim", rune:"ᛁ", col:"#7fd8ff", d:"Die Eiswelt. Frostgegner, Eisgolems und Schneestürme. Schon die erste Welle ist hart, Treffer lassen dich frieren.", lock:"Schaffe Welle 20 in Midgard" },
+};
+const worldOpen = id => id!=="eis" || !!(meta.ach && meta.ach.w20) || ((meta.best && meta.best.wave)||0)>=20;
+const ICE_HP = 7, ICE_DMG = 2.2;
+function waveEvent(w, ice){ return w%7===0 ? "blutmond" : ice ? (w>=4 && w%5!==0 && w%2===0 ? "schneesturm" : null) : (w>=6 && w%5!==0 && w%4===2) ? "nebel" : null; }
 const slotMax = () => G && G.world==="eis" ? 7 : 6;
 // Pfad nach Niflheim: 10 Fähigkeiten im Skilltree, dauerhaft mit Runen gekauft, wirken in der Eiswelt
 const ICE_SKILLS = [
@@ -751,18 +775,18 @@ const iceOwned = id => !!(meta.ice && meta.ice[id]);
 const cleanIce = o => { const r={}; if(o && typeof o==="object") for(const k of ICE_SKILLS) if(o[k.id]===true) r[k.id]=true; return r; };
 // Runenschmiede: many small steps, rising costs. grp = section in the forge
 const META = {
-  hp:{ grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+4 Leben", tot:l=>`+${l*4} Leben`, cost:l=>40+l*20 },
-  armor:{ grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.4 Rüstung", tot:l=>`+${(l*.4).toFixed(1)} Rüstung`, cost:l=>75+l*45 },
-  regen:{ grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.12 Leben pro Sekunde", tot:l=>`+${(l*.12).toFixed(2)} Leben/s`, cost:l=>60+l*40 },
-  spd:{ grp:"Körper", name:"Flinkheit", rune:"ᛖ", max:15, d:"+2 % Tempo", tot:l=>`+${l*2} % Tempo`, cost:l=>45+l*25 },
-  dmg:{ grp:"Kampf", name:"Stärke", rune:"ᚢ", max:20, d:"+2 % Schaden", tot:l=>`+${l*2} % Schaden`, cost:l=>50+l*30 },
-  cd:{ grp:"Kampf", name:"Rastlosigkeit", rune:"ᚱ", max:15, d:"−1.5 % Abklingzeit", tot:l=>`−${(l*1.5).toFixed(1)} % Abklingzeit`, cost:l=>75+l*40 },
-  area:{ grp:"Kampf", name:"Weite", rune:"ᛞ", max:10, d:"+2 % Wirkungsbereich", tot:l=>`+${l*2} % Bereich`, cost:l=>60+l*35 },
-  ulti:{ grp:"Kampf", name:"Götterruf", rune:"ᚺ", max:10, d:"Ulti 3 % öfter", tot:l=>`Ulti −${l*3} % Abklingzeit`, cost:l=>90+l*45 },
-  luck:{ grp:"Glück", name:"Glück", rune:"ᛟ", max:15, d:"+1.5 % kritische Treffer, öfter Herzen und Münzen", tot:l=>`+${(l*1.5).toFixed(1)} % Krit, +${l*4} % Funde`, cost:l=>55+l*30 },
-  magnet:{ grp:"Glück", name:"Anziehung", rune:"ᚷ", max:15, d:"+6 % Sammelradius", tot:l=>`+${l*6} % Sammelradius`, cost:l=>30+l*20 },
-  greed:{ grp:"Glück", name:"Gier", rune:"ᚠ", max:15, d:"+5 % Runen", tot:l=>`+${l*5} % Runen`, cost:l=>60+l*30 },
-  xp:{ grp:"Glück", name:"Weisheit", rune:"ᚨ", max:15, d:"+3 % Erfahrung", tot:l=>`+${l*3} % Erfahrung`, cost:l=>50+l*25 },
+  hp:{ ext:10, grp:"Körper", name:"Lebenskraft", rune:"ᛒ", max:20, d:"+4 Leben", tot:l=>`+${l*4} Leben`, cost:l=>40+l*20 },
+  armor:{ ext:10, grp:"Körper", name:"Eisenhaut", rune:"ᛉ", max:10, d:"+0.4 Rüstung", tot:l=>`+${(l*.4).toFixed(1)} Rüstung`, cost:l=>75+l*45 },
+  regen:{ ext:10, grp:"Körper", name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.12 Leben pro Sekunde", tot:l=>`+${(l*.12).toFixed(2)} Leben/s`, cost:l=>60+l*40 },
+  spd:{ ext:10, grp:"Körper", name:"Flinkheit", rune:"ᛖ", max:15, d:"+2 % Tempo", tot:l=>`+${l*2} % Tempo`, cost:l=>45+l*25 },
+  dmg:{ ext:10, grp:"Kampf", name:"Stärke", rune:"ᚢ", max:20, d:"+2 % Schaden", tot:l=>`+${l*2} % Schaden`, cost:l=>50+l*30 },
+  cd:{ ext:10, grp:"Kampf", name:"Rastlosigkeit", rune:"ᚱ", max:15, d:"−1.5 % Abklingzeit", tot:l=>`−${(l*1.5).toFixed(1)} % Abklingzeit`, cost:l=>75+l*40 },
+  area:{ ext:10, grp:"Kampf", name:"Weite", rune:"ᛞ", max:10, d:"+2 % Wirkungsbereich", tot:l=>`+${l*2} % Bereich`, cost:l=>60+l*35 },
+  ulti:{ ext:10, grp:"Kampf", name:"Götterruf", rune:"ᚺ", max:10, d:"Ulti 3 % öfter", tot:l=>`Ulti −${l*3} % Abklingzeit`, cost:l=>90+l*45 },
+  luck:{ ext:10, grp:"Glück", name:"Glück", rune:"ᛟ", max:15, d:"+1.5 % kritische Treffer, öfter Herzen und Münzen", tot:l=>`+${(l*1.5).toFixed(1)} % Krit, +${l*4} % Funde`, cost:l=>55+l*30 },
+  magnet:{ ext:10, grp:"Glück", name:"Anziehung", rune:"ᚷ", max:15, d:"+6 % Sammelradius", tot:l=>`+${l*6} % Sammelradius`, cost:l=>30+l*20 },
+  greed:{ ext:10, grp:"Glück", name:"Gier", rune:"ᚠ", max:15, d:"+5 % Runen", tot:l=>`+${l*5} % Runen`, cost:l=>60+l*30 },
+  xp:{ ext:10, grp:"Glück", name:"Weisheit", rune:"ᚨ", max:15, d:"+3 % Erfahrung", tot:l=>`+${l*3} % Erfahrung`, cost:l=>50+l*25 },
   reroll:{ grp:"Schicksal", name:"Schicksalsfaden", rune:"ᚾ", max:5, d:"+1 Mal Gaben neu würfeln pro Runde", tot:l=>`${l}× neu würfeln`, cost:l=>125+l*125 },
   start:{ grp:"Schicksal", name:"Erbe der Ahnen", rune:"ᛜ", max:3, d:"Starte mit einer zusätzlichen Gabe", tot:l=>`${l} Gabe${l>1?"n":""} zum Start`, cost:l=>375+l*375 },
   revive:{ grp:"Schicksal", name:"Zweites Leben", rune:"ᛇ", max:2, d:"Einmal pro Runde wiederauferstehen", tot:l=>`${l}× wiederauferstehen`, cost:l=>500+l*625 },
@@ -777,6 +801,7 @@ migrateMeta(meta);
 for(const k in META) meta.up[k] = meta.up[k]||0;
 meta.ice = cleanIce(meta.ice);
 const saveMeta = ()=>store.set("gw-meta", meta);
+const metaMax = id => META[id].max + (worldOpen("eis") ? (META[id].ext||0) : 0);   // Niflheim-Stufen nach Welle 20
 
 /* ---------------- audio ---------------- */
 let AC=null, master=null, noiseBuf=null; const lastSfx={};
@@ -905,7 +930,7 @@ const effects = [], pools = [], teles = [], allies = [];
 let shake = 0, flash = 0, kick = 0;
 const keys = {}; const joy = { on:false, id:null, ox:0, oy:0, x:0, y:0 };
 
-function newRun(godId){
+function newRun(godId, world){
   const god = GODS[godId], u = meta.up;
   for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
   pt.l.fill(0); effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
@@ -916,14 +941,15 @@ function newRun(godId){
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
     bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, coinOffered:{}, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, dmgBy:{}, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
   G.ice={}; for(const k of ICE_SKILLS) if(iceOwned(k.id)) G.ice[k.id]=true;
-  Object.assign(G,{ world:"mittgard", chillT:0, funkeT:10, ymirT:25, kroneCd:0, pack:[] }); if(decorWorld!=="mittgard") genDecor("mittgard");
+  Object.assign(G,{ world:world==="eis"?"eis":"mittgard", chillT:0, funkeT:10, ymirT:25, kroneCd:0, pack:[] }); if(decorWorld!==G.world) genDecor(G.world);
   addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
   Object.assign(G,{ shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
     vidar: G.sk.vidar? {st:"away", next:rnd(60,150)} : null });
+  if(G.world==="eis") enterIce();
   T=0; shake=0; flash=0;
   for(let i=0;i<14;i++){ const a=i/14*TAU+rnd(-.1,.1); spawnEnemy("draugr", Math.cos(a)*rnd(380,460), Math.sin(a)*rnd(380,460)); }
-  banner(`Welle 1`, "Halte stand");
+  banner(G.world==="eis"?"Niflheim · Welle 1":"Welle 1", G.world==="eis"?"Halte stand im ewigen Eis":"Halte stand");
   G.tips = (meta.runs||0)<3 ? [[6,"Tipp: Weiche den roten Feldern aus, dann trifft dich nichts"],[16,"Tipp: Blaue Seelen einsammeln bringt neue Gaben"],[28,"Tipp: Am Ende jeder Welle kommen Bosse, besiege sie alle"],[45,"Tipp: Runen aus jeder Runde machen dich in der Runenschmiede dauerhaft stärker"]] : [];
 }
 const xpNeed = l => Math.floor(6 + l*5 + Math.pow(l,1.85));
@@ -1343,7 +1369,7 @@ function spawnEnemy(kind, x, y, opts){
     Object.assign(e,{ on:true, kind, x, y, r:t.r, hp:t.hp*hm, maxHp:t.hp*hm, sp:t.sp*(1+Math.min(.35,(w-1)*.015))*rnd(.92,1.08), dmg:t.dmg*dmgMulE(w), xp:t.xp, kbm:t.kb,
       kx:0, ky:0, fl:0, slow:0, frozen:0, stun:0, mark:0, enr:false, dashSp:0, dashT:0, mcd:rnd(0,.6), tHam:0, tAxe:0, tVal:0, boss:false, elite:false, face:1, atk:rnd(1,3), st:"walk", stT:0, ranged:!!t.ranged, scale:t.r/14, bob:Math.random()*TAU, tier:tierOf(w), vh:0, ice:false });
     if(opts) Object.assign(e,opts);
-    if(G.world==="eis"){ e.ice=true; e.hp*=ICE_HP; e.maxHp*=ICE_HP; e.dmg*=1.15; }
+    if(G.world==="eis"){ e.ice=true; e.hp*=ICE_HP; e.maxHp*=ICE_HP; e.dmg*=ICE_DMG; }
     return e; }
   return null;
 }
@@ -1655,17 +1681,15 @@ function renderSlots(){
 function waveUpdate(dt){
   if(G.phase==="fight"){ G.waveT-=dt; if(G.waveT<=0){ G.phase="boss"; spawnBoss(); } }
   else if(G.phase==="break"){ G.breakT-=dt; if(G.breakT<=0){ G.wave++; G.waveT=waveLen(G.wave); G.phase="fight"; G.hordeDone=false; G.bossFix=false; const tc=tierOf(G.wave)!==tierOf(G.wave-1);
-      const enter = isIceWave(G.wave) && G.world!=="eis"; if(enter) enterIce();
       G.event = waveEvent(G.wave, G.world==="eis");
-      if(enter) banner("Niflheim, die Eiswelt", `Welle ${G.wave}: Frostgegner, Schneestürme, ein Platz mehr für Waffen und Gaben`);
-      else banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":G.event==="schneesturm"?"Schneesturm: Kälte bremst dich, +50 % Erfahrung":G.world==="eis"?(G.wave%5===0?"Ein Frostboss naht":"Halte stand im ewigen Eis"):tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); openCoinOffer(); } }
+      banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":G.event==="schneesturm"?"Schneesturm: Kälte bremst dich, +50 % Erfahrung":G.world==="eis"?(G.wave%5===0?"Ein Frostboss naht":"Halte stand im ewigen Eis"):tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); openCoinOffer(); } }
   else if(G.phase==="boss"){ G.bosses=(G.bosses||[]).filter(b=>b.on);
     if(!G.bosses.length && G.boss===null && !G.bossFix){ G.bossFix=true; G.phase="break"; G.breakT=3; G.wavesDone=G.wave; $("bossbar").hidden=true; }
     let best=null, bd=1e12; for(const b of G.bosses){ const d=(b.x-G.x)**2+(b.y-G.y)**2; if(d<bd){bd=d;best=b;} } G.boss=best; }
 }
 
 function enterIce(){
-  G.world="eis"; genDecor("eis"); applyPassives(); renderSlots();
+  G.world="eis"; if(decorWorld!=="eis") genDecor("eis"); applyPassives(); renderSlots();
   if(G.ice.rudel) G.pack=[-1,1].map(sd=>({ x:G.x+sd*60, y:G.y+30, hit:0, face:sd, bob:0 }));
   burst(G.x,G.y,60,PIDX.snow,420,1,4); if(!BOT.on){ flash=Math.max(flash,.5); shake=Math.max(shake,10); sfx("freeze"); }
 }
@@ -2072,20 +2096,39 @@ function hud(){
 }
 
 /* ---------------- overlays & flow ---------------- */
-const OVS=["ov-ach","ov-title","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin"];
+const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin"];
 function show(id){ $(id).hidden=false; }
 function hide(id){ $(id).hidden=true; }
 function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
 
 function renderGods(){
-  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god" type="button" data-god="${id}" style="--c:${g.color}"><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div></div></button>`).join("");
+  if(!selGod && meta.lastGod && GODS[meta.lastGod]) selGod=meta.lastGod;
+  $("btn-start").disabled=!selGod; $("runes-heroes").textContent=`ᚱ ${meta.runes}`;
+  const Bh = selWorld==="eis"? meta.bestEis : meta.best; $("best-heroes").textContent = Bh&&Bh.wave? `Rekord in ${WORLDS[selWorld].name}: ${Bh.wave} Wellen mit ${GODS[Bh.god]?.name||"?"}` : "";
+  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div></div></button>`).join("");
   document.querySelectorAll("[data-portrait]").forEach(cv=>{ const g=cv.getContext("2d"); g.drawImage(GSPR[cv.dataset.portrait].img,0,0,192,192); });
   $("runes-title").textContent = `ᚱ ${meta.runes}`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
-  $("best-title").textContent = meta.best.wave? `Dein Rekord: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "";
+  $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`;
 }
-$("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b) return; startGame(b.dataset.god); });
-function startGame(god){ unlockAudio(); setMusic("battle"); lastGod=god; newRun(god); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
+let selWorld = meta.lastWorld && worldOpen(meta.lastWorld) ? meta.lastWorld : "mittgard", selGod = null;
+function renderWorlds(){
+  $("worlds").innerHTML = Object.entries(WORLDS).map(([id,w])=>{ const open=worldOpen(id), B=id==="eis"?meta.bestEis:meta.best;
+    return `<button class="god${id===selWorld&&open?" sel":""}" type="button" data-world="${id}" style="--c:${w.col}" ${open?"":"disabled"}><div class="wic">${open?w.rune:"🔒"}</div><div><h3>${w.name}</h3><div class="ti">${open?"Welle 1 bis endlos":"Gesperrt"}</div><p>${w.d}</p><div class="st">${open?(B&&B.wave?`<span>Rekord <b>${B.wave} Wellen</b></span>`:"<span>Noch kein Rekord</span>"):`<span style="color:var(--c)">${w.lock}</span>`}</div></div></button>`; }).join("");
+}
+function openWorlds(){ renderWorlds(); only("ov-worlds"); }
+function openHeroes(){ if(!worldOpen(selWorld)) selWorld="mittgard"; renderGods(); $("heroes-title").textContent = WORLDS[selWorld].name; only("ov-heroes"); }
+$("btn-solo").addEventListener("click", ()=>{ audioInit(); openWorlds(); });
+$("btn-worldsback").addEventListener("click", toTitle);
+$("worlds").addEventListener("click", e=>{ const b=e.target.closest("[data-world]"); if(!b||b.disabled) return; selWorld=b.dataset.world; meta.lastWorld=selWorld; saveMeta(); openHeroes(); });
+$("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b) return; const id=b.dataset.god;
+  if(selGod===id){ startGame(id); return; }
+  selGod=id; meta.lastGod=id; saveMeta(); document.querySelectorAll("#gods .god").forEach(x=>x.classList.toggle("sel", x.dataset.god===id)); $("btn-start").disabled=false; });
+$("btn-start").addEventListener("click", ()=>{ if(selGod) startGame(selGod); });
+$("btn-heroes-worlds").addEventListener("click", openWorlds);
+$("btn-heroes-menu").addEventListener("click", toTitle);
+$("btn-shop3").addEventListener("click", ()=>{ shopFrom="ov-heroes"; renderShop(); only("ov-shop"); });
+function startGame(god){ unlockAudio(); setMusic("battle"); lastGod=god; newRun(god, selWorld); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
 let lastGod="donar";
 function pause(){ if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
 function resume(){ if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
@@ -2102,25 +2145,26 @@ function gameOver(){
   const waves = G.wavesDone, earned = G.runes + Math.round((waves*5 + Math.min(150,Math.floor(G.kills/150)))*G.runeMul);
   meta.runes += earned;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
-  let record=false; if(waves>meta.best.wave || (waves===meta.best.wave && G.kills>meta.best.kills)){ meta.best={wave:waves,kills:G.kills,god:G.god}; record=true; }
+  const ice=G.world==="eis"; meta.bestEis=meta.bestEis||{wave:0,kills:0,god:""}; const B=ice?meta.bestEis:meta.best; let record=false; if(waves>B.wave || (waves===B.wave && G.kills>B.kills)){ const nb={wave:waves,kills:G.kills,god:G.god}; if(ice) meta.bestEis=nb; else meta.best=nb; record=true; }
   saveMeta();
-  $("over-title").textContent = `Gefallen in Welle ${G.wave}`;
+  $("over-title").textContent = `Gefallen in ${WORLDS[G.world].name}, Welle ${G.wave}`;
   $("o-waves").textContent=waves; $("o-kills").textContent=G.kills; $("o-time").textContent=fmt(G.time); $("o-runes").textContent=earned;
-  const na=(G.newAch||[]); $("o-record").textContent = (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord: ${meta.best.wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
+  const na=(G.newAch||[]); const nowOpen=!G.world||G.world==="mittgard" ? (worldOpen("eis") && !meta.eisNotified) : false; if(nowOpen){ meta.eisNotified=true; saveMeta(); } $("o-record").textContent = (nowOpen? "Niflheim ist jetzt offen: Wähle die Eiswelt im Solo-Menü. Die Runenschmiede hat 10 Stufen mehr pro Upgrade. " : "") + (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord in ${WORLDS[G.world].name}: ${(ice?meta.bestEis:meta.best).wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
   { const NAMES={ passive:["Göttliche Eigenschaft","ᛝ"], skills:["Schmiede-Fähigkeiten","ᛜ"], vidar:["Vidar","ᚢ"], eispfad:["Pfad nach Niflheim","ᛁ"], other:["Sonstiges","ᛝ"] }; const tot=Object.values(G.dmgBy).reduce((a,b)=>a+b,0)||1;
     const rows=Object.entries(G.dmgBy).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v])=>{ const n=WEAP[k]?[WEAP[k].name,WEAP[k].rune]:(NAMES[k]||[k,"ᛝ"]); const pc=v/tot*100;
       return `<div class="dmgrow"><span class="r">${n[1]}</span><span>${n[0]}</span><span class="b"><i style="width:${pc.toFixed(1)}%"></i></span><span class="v">${pc<1?"<1":Math.round(pc)} %</span></div>`; }).join("");
     $("o-dmg").innerHTML = rows || '<div class="hint">Kein Schaden verursacht</div>'; }
   $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
-  submitScore({wave:waves,kills:G.kills,god:G.god,time:Math.round(G.time),level:G.level});
+  if(!ice) submitScore({wave:waves,kills:G.kills,god:G.god,time:Math.round(G.time),level:G.level});
   renderBoard("o-board","o-boardnote"); $("o-boardwrap").hidden = !db;
 }
 $("btn-again").addEventListener("click", ()=>startGame(lastGod));
-$("btn-menu").addEventListener("click", toTitle);
+$("btn-menu").addEventListener("click", toHeroes);
 function toTitle(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; renderGods(); only("ov-title"); }
+function toHeroes(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; openHeroes(); }
 
 function iceShopHtml(){ const own=ICE_SKILLS.filter(k=>iceOwned(k.id)).length;
-  let h=`<div class="shop-grp">Pfad nach Niflheim · ${own}/${ICE_SKILLS.length}</div><div class="hint" style="grid-column:1/-1;margin-top:-4px">Die Eiswelt beginnt nach Welle 20. Diese Fähigkeiten wirken dort. Jede braucht die Fähigkeit davor.</div>`;
+  let h=`<div class="shop-grp">Pfad nach Niflheim · ${own}/${ICE_SKILLS.length}</div><div class="hint" style="grid-column:1/-1;margin-top:-4px">Diese Fähigkeiten wirken in der Eiswelt Niflheim (frei nach Welle 20 in Midgard). Jede braucht die Fähigkeit davor.</div>`;
   for(const k of ICE_SKILLS){ const on=iceOwned(k.id), ok=k.need.every(iceOwned), can=!on&&ok&&meta.runes>=k.cost;
     const need=k.need.length? `Braucht: ${k.need.map(n=>ICE_SKILLS.find(x=>x.id===n).name).join(", ")}` : "Erste Stufe";
     h+=`<button class="card${on?" evo iceon":""}" type="button" data-ice="${k.id}" ${can?"":"disabled"}><div class="ic">${k.rune}</div><div><h4>${k.name} <span class="lvl-n">${k.br} ${k.tier}</span></h4><p>${k.d}</p><div class="tot">${on?"Gelernt":need}</div><div class="cost">${on?"Freigeschaltet":`ᚱ ${k.cost}`}</div></div></button>`; }
@@ -2131,11 +2175,11 @@ function buyIce(id){ const k=ICE_SKILLS.find(x=>x.id===id); if(!k || iceOwned(id
 function renderShop(){
   $("runes-shop").textContent=`ᚱ ${meta.runes} Runen`;
   let last="", h="";
-  for(const [id,m] of Object.entries(META)){ const l=meta.up[id], maxed=l>=m.max, cost=m.cost(l), can=!maxed&&meta.runes>=cost;
+  for(const [id,m] of Object.entries(META)){ const mx=metaMax(id), l=meta.up[id], maxed=l>=mx, cost=m.cost(l), can=!maxed&&meta.runes>=cost;
     if(m.grp!==last){ last=m.grp; h+=`<div class="shop-grp">${m.grp}</div>`; }
     const sk=SKILLS.find(k=>k.req===id), skOn=sk&&l>=sk.lvl;
     const skH = sk? `<div class="skill ${skOn?"on":""}"><b>${skOn?"Freigeschaltet":`Ab Stufe ${sk.lvl}`}: ${sk.name}</b><span>${sk.d}</span></div>` : "";
-    h+=`<button class="card" type="button" data-up="${id}" ${can?"":"disabled"}><div class="ic">${m.rune}</div><div><h4>${m.name} <span class="lvl-n">${l}/${m.max}</span></h4><p>${m.d} pro Stufe</p><div class="bar"><i style="width:${l/m.max*100}%"></i></div><div class="tot">${l?m.tot(l):"noch nicht gelernt"}</div>${skH}<div class="cost">${maxed?"Voll ausgebaut":`ᚱ ${cost}`}</div></div></button>`; }
+    h+=`<button class="card" type="button" data-up="${id}" ${can?"":"disabled"}><div class="ic">${m.rune}</div><div><h4>${m.name} <span class="lvl-n">${l}/${mx}</span></h4><p>${m.d} pro Stufe</p><div class="bar"><i style="width:${l/mx*100}%"></i></div><div class="tot">${l?m.tot(l):"noch nicht gelernt"}</div>${m.ext&&!worldOpen("eis")?`<div class="tot" style="color:var(--frost)">+${m.ext} Stufen, sobald Niflheim offen ist</div>`:""}${skH}<div class="cost">${maxed?"Voll ausgebaut":`ᚱ ${cost}`}</div></div></button>`; }
   const nOn=unlockedSkills().length;
   h+=`<div class="vidar-panel ${nOn===SKILLS.length?"on":""}"><div class="ic">ᚢ</div><div><h4>Vidar, der schweigende Rächer <span class="lvl-n">${nOn}/${SKILLS.length} Fähigkeiten</span></h4>
     <p>Schalte alle ${SKILLS.length} Fähigkeiten frei. Dann erscheint Vidar zufällig für 2 Minuten im Kampf, frühestens alle 5 Minuten. Er hat ein Drittel deines Lebens und mäht alles nieder. Danach reisst ihn ein Höllenportal zurück in die Tiefe.</p>
@@ -2144,14 +2188,14 @@ function renderShop(){
   $("shop").innerHTML = h + (meta.refunded?`<div class="shop-grp" style="color:var(--gold)">Die Schmiede wurde neu gebaut: ${meta.refunded} Runen aus deinen alten Upgrades wurden dir zurückgegeben.</div>`:"");
   if(meta.refunded){ meta.refunded=0; saveMeta(); }
 }
-$("shop").addEventListener("click", e=>{ const ib=e.target.closest("[data-ice]"); if(ib){ if(ib.disabled) return; const id=ib.dataset.ice; if(buyIce(id)){ audioInit(); sfx("win"); renderShop(); $("runes-shop").textContent=`Gelernt: ${ICE_SKILLS.find(x=>x.id===id).name}`; } return; } const b=e.target.closest("[data-up]"); if(!b||b.disabled) return; const id=b.dataset.up, m=META[id], l=meta.up[id], cost=m.cost(l); if(l>=m.max||meta.runes<cost) return;
+$("shop").addEventListener("click", e=>{ const ib=e.target.closest("[data-ice]"); if(ib){ if(ib.disabled) return; const id=ib.dataset.ice; if(buyIce(id)){ audioInit(); sfx("win"); renderShop(); $("runes-shop").textContent=`Gelernt: ${ICE_SKILLS.find(x=>x.id===id).name}`; } return; } const b=e.target.closest("[data-up]"); if(!b||b.disabled) return; const id=b.dataset.up, m=META[id], l=meta.up[id], cost=m.cost(l); if(l>=metaMax(id)||meta.runes<cost) return;
   const before=unlockedSkills().length; meta.runes-=cost; meta.up[id]++; saveMeta(); audioInit(); sfx("level"); renderShop();
   const sk=SKILLS.find(k=>k.req===id && k.lvl===meta.up[id]); if(sk){ $("runes-shop").textContent=`Neue Fähigkeit freigeschaltet: ${sk.name}`; sfx("win"); }
   if(before<SKILLS.length && unlockedSkills().length===SKILLS.length){ $("runes-shop").textContent="Vidar ist freigeschaltet. Er wird in deinen Kämpfen erscheinen."; } });
 let shopFrom="ov-title";
 $("btn-shop").addEventListener("click", ()=>{ shopFrom="ov-title"; renderShop(); only("ov-shop"); });
 $("btn-shop2").addEventListener("click", ()=>{ shopFrom="ov-over"; renderShop(); only("ov-shop"); });
-$("btn-shopback").addEventListener("click", ()=>{ if(shopFrom==="ov-over") only("ov-over"); else { renderGods(); only("ov-title"); } });
+$("btn-shopback").addEventListener("click", ()=>{ if(shopFrom==="ov-over") only("ov-over"); else if(shopFrom==="ov-heroes") openHeroes(); else { renderGods(); only("ov-title"); } });
 
 /* ---------------- Ruhmeshalle (shared via db, falls back to local) ---------------- */
 let db=null, uid=null, boardDocs=[], canWrite=null;
@@ -2179,7 +2223,7 @@ function sum32(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.cha
 function saveCode(){ const j=JSON.stringify({v:1, at:Date.now(), meta}); const b=btoa(unescape(encodeURIComponent(j))); return "GW1."+b+"."+sum32(b); }
 function saveJSON(){ const d=new Date();
   return JSON.stringify({ spiel:"Götterwacht", format:2, version:GAME_VERSION, gespeichert:d.toISOString(), name:meta.nick||"",
-    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{}, eispfad:cleanIce(meta.ice) }, null, 2); }
+    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{}, eispfad:cleanIce(meta.ice), rekordNiflheim:meta.bestEis||{wave:0,kills:0,god:""} }, null, 2); }
 function downloadSave(){ const d=new Date(), name=`Goetterwacht_Spielstand_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const blob=new Blob([saveJSON()],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); return name; }
 function readAny(text){
@@ -2189,9 +2233,9 @@ function readAny(text){
   if(j && j.meta) j=j.meta;                       // tolerate older/other shapes
   const up=j.runenschmiede||j.up, runes=j.runen??j.runes;
   if(!up || typeof up!=="object" || typeof runes!=="number") throw new Error("In der Datei fehlen Runen oder Runenschmiede.");
-  const clean={}; for(const k in META){ const v=Math.floor(Number(up[k])||0); clean[k]=clamp(v,0,META[k].max); }
+  const clean={}; for(const k in META){ const v=Math.floor(Number(up[k])||0); clean[k]=clamp(v,0,META[k].max+(META[k].ext||0)); }
   return { runes:Math.max(0,Math.floor(runes)), up:clean, best:j.rekord||j.best||{wave:0,kills:0,god:""}, bestLevel:j.besteStufe??j.bestLevel??0,
-    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2, ach:j.erfolge||j.ach||{}, godW:j.goetterWelle5||j.godW||{}, ice:cleanIce(j.eispfad||j.ice) };
+    runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2, ach:j.erfolge||j.ach||{}, godW:j.goetterWelle5||j.godW||{}, ice:cleanIce(j.eispfad||j.ice), bestEis:j.rekordNiflheim||j.bestEis||{wave:0,kills:0,god:""} };
 }
 function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; meta.ice=cleanIce(meta.ice); saveMeta(); }
 function readCode(code){
@@ -2203,7 +2247,7 @@ function readCode(code){
 }
 let pendingLoad=null;
 function saveSummary(m){ return `${m.runes} Runen, Runenschmiede ${forgePctOf(m)} %, Rekord ${m.best?.wave||0} Wellen, ${m.runs||0} Runden`; }
-function forgePctOf(m){ let a=0,b=0; for(const k in META){ a+=(m.up&&m.up[k])||0; b+=META[k].max; } return Math.round(a/b*100); }
+function forgePctOf(m){ let a=0,b=0; for(const k in META){ a+=(m.up&&m.up[k])||0; b+=META[k].max+(META[k].ext||0); } return Math.round(a/b*100); }
 function openSave(){ $("save-code").value=saveCode(); $("save-summary").textContent="Aktuell: "+saveSummary(meta); $("load-msg").textContent=""; $("load-code").value=""; pendingLoad=null; $("btn-load").textContent="Code laden";
   $("btn-dl").hidden = !!(window.claude && window.claude.use); only("ov-save"); }
 $("btn-save").addEventListener("click", openSave);
@@ -2240,8 +2284,8 @@ const ACH = [
   { id:"lv30", rune:"ᚨ", name:"Erleuchtet", d:"Erreiche Stufe 30", r:150, test:()=>G.level>=30 },
   { id:"pure", rune:"ᛒ", name:"Ohne zweites Leben", d:"Überlebe Welle 10 ohne Wiederauferstehung", r:250, test:()=>G.wavesDone>=10 && !G.revived },
   { id:"gods", rune:"ᚷ", name:"Pantheon", d:"Erreiche mit jedem Gott Welle 5", r:200, test:()=>{ if(G.wavesDone>=5){ meta.godW=meta.godW||{}; meta.godW[G.god]=1; } return meta.godW && meta.godW.donar && meta.godW.ulfr && meta.godW.skadi; } },
-  { id:"ice", rune:"ᛁ", name:"Niflheim", d:"Erreiche die Eiswelt (Welle 21)", r:400, test:()=>G.world==="eis" },
-  { id:"w25", rune:"ᛟ", name:"Herr des Winters", d:"Überlebe Welle 25", r:1500, test:()=>G.wavesDone>=25 },
+  { id:"ice", rune:"ᛁ", name:"Niflheim", d:"Betritt die Eiswelt Niflheim", r:400, test:()=>G.world==="eis" },
+  { id:"eis20", rune:"ᛟ", name:"Herr des Winters", d:"Überlebe Welle 20 in Niflheim", r:2000, test:()=>G.world==="eis" && G.wavesDone>=20 },
   { id:"curse", rune:"ᚾ", name:"Verflucht und trotzdem", d:"Überlebe Welle 8 mit mindestens einem Fluch", r:120, test:()=>G.wavesDone>=8 && G.cursed },
 ];
 function achCheck(){ if(!G || BOT.on) return; meta.ach=meta.ach||{}; for(const a of ACH){ if(!meta.ach[a.id] && a.test()){ meta.ach[a.id]=Date.now(); meta.runes+=a.r; G.newAch=(G.newAch||[]); G.newAch.push(a); saveMeta(); banner("Erfolg: "+a.name, `+${a.r} Runen`); sfx("win"); } } }
@@ -2249,7 +2293,7 @@ function renderAch(){ meta.ach=meta.ach||{}; const n=ACH.filter(a=>meta.ach[a.id
   $("ach-list").innerHTML = ACH.map(a=>{ const on=!!meta.ach[a.id]; return `<div class="card ${on?"evo":""}" style="${on?"":"opacity:.6"}"><div class="ic">${a.rune}</div><div><h4>${a.name}</h4><p>${a.d}</p><div class="cost">${on?"Erreicht":`ᚱ ${a.r}`}</div></div></div>`; }).join(""); }
 $("btn-ach").addEventListener("click", ()=>{ renderAch(); only("ov-ach"); });
 $("btn-achback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
-function forgePct(){ let a=0,b=0; for(const k in META){ a+=meta.up[k]; b+=META[k].max; } return Math.round(a/b*100); }
+function forgePct(){ let a=0,b=0; for(const k in META){ a+=meta.up[k]; b+=META[k].max+(META[k].ext||0); } return Math.round(a/b*100); }
 $("btn-board").addEventListener("click", ()=>{ $("nick").value=meta.nick||""; renderBoard("board","boardnote"); only("ov-board"); });
 $("btn-boardback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
 $("nick").addEventListener("change", async ()=>{ meta.nick=$("nick").value.trim().slice(0,16); saveMeta();
@@ -2279,7 +2323,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 35;
+const GAME_VERSION = 36;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2345,8 +2389,9 @@ function botPick(list){ let best=list[0], bs=-1; for(const o of list){ let sc;
 function simRun(god, opt={}){
   const savedMeta=JSON.stringify(meta), maxWave=opt.maxWave||10, maxT=opt.maxTime||3000;
   if(opt.forge){ for(const k in META) meta.up[k]=0; Object.assign(meta.up,opt.forge); }
+  if(opt.world==='eis'){ meta.ach=meta.ach||{}; meta.ach.w20=meta.ach.w20||1; }
   if(opt.forge || opt.ice) meta.ice = opt.ice==="all" ? Object.fromEntries(ICE_SKILLS.map(k=>[k.id,true])) : cleanIce(opt.ice||{});
-  newRun(god); state="play"; BOT.on=true; BOT.dmg={}; BOT.rs={}; BOT.bt=[]; BOT.human=!!opt.human; let t=0, minHp=1, hits=0; const waveT=[];
+  newRun(god, opt.world); state="play"; BOT.on=true; BOT.dmg={}; BOT.rs={}; BOT.bt=[]; BOT.human=!!opt.human; let t=0, minHp=1, hits=0; const waveT=[];
   const hp0=G.hp; let lastW=1;
   while(state!=="over" && t<maxT && G.wavesDone<maxWave){
     update(STEP); t+=STEP; minHp=Math.min(minHp,G.hp/G.maxHp);
@@ -2359,7 +2404,7 @@ function simRun(god, opt={}){
   BOT.on=false; meta=JSON.parse(savedMeta); saveMeta(); G=null; state="title"; only("ov-title"); $("hud").hidden=true; $("bossbar").hidden=true;
   return res;
 }
-window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, isIceWave, waveEvent, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
 })();
 </script>
 
