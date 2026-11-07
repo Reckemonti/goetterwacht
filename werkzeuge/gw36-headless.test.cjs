@@ -46,13 +46,13 @@ test('Niflheim is a world of its own, locked until wave 20 in Midgard', () => {
   c.meta.best.wave = 3; c.meta.ach.w20 = 123; assert.equal(c.worldOpen('eis'), true, 'achievement unlocks too');
   assert.doesNotMatch(fnSource('waveUpdate'), /enterIce/, 'Midgard no longer turns into ice after wave 20');
   assert.match(fnSource('newRun'), /world==="eis"\?"eis":"mittgard"/);
-  assert.match(fnSource('startGame'), /newRun\(god, selWorld\)/);
+  assert.match(fnSource('startGame'), /newRun\(god, selWorld[,)]/);
 });
 
 test('Menu flow: Solo/Koop, world choice, hero choice, Ragnarök starten', () => {
   for (const id of ['btn-solo', 'btn-koop', 'ov-worlds', 'ov-heroes', 'btn-start', 'btn-shop3', 'btn-heroes-worlds', 'btn-heroes-menu'])
     assert.match(html, new RegExp(`id="${id}"`), id);
-  assert.match(html, /id="btn-koop" type="button" disabled/);
+  assert.match(html, /id="btn-koop" type="button"/); // v38: Koop ist offen
   assert.match(html, />Ragnarök starten</);
   assert.match(script, /\$\("btn-menu"\)\.addEventListener\("click", toHeroes\)/, 'after a run back to hero choice');
 });
@@ -107,7 +107,7 @@ test('Buying follows the tree and costs runes', () => {
 test('v34 save loads, v36 save keeps the ice path, unknown ids are dropped', () => {
   const metaDecl = block('const META = {');
   const c = context(`${metaDecl}\n${iceData}\n${fnSource('readAny')}`, {
-    meta: {}, cleanHeroes: () => ({}), clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m,
+    meta: {}, cleanHeroes: () => ({}), cleanKoop: () => ({}), clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m,
   });
   const v34 = { spiel: 'Götterwacht', format: 2, version: 34, runen: 500, runenschmiede: { hp: 3, revive: 1 }, rekord: { wave: 17, kills: 900, god: 'skadi' }, erfolge: { w5: 1 } };
   const a = c.readAny(JSON.stringify(v34));
@@ -138,7 +138,7 @@ test('Niflheim run: new map, frost enemies, wolves and saves', () => {
   assert.match(fnSource('pickKind'), /return "golem"/);
   assert.match(script, /golem:\{ hp:110,/);
   assert.match(fnSource('saveJSON'), /rekordNiflheim:/);
-  assert.match(fnSource('gameOver'), /if\(!ice\) submitScore/);
+  assert.match(fnSource('gameOver'), /if\(!ice( && !G\.coop)?\) submitScore/);
 });
 
 console.log(`${passed}/11 headless tests passed`);

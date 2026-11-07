@@ -4,7 +4,7 @@ Stand: 07.11.2026 (Claude), aus der Werkstatt hierher verschoben. Privates Spiel
 
 ## Wo liegt was
 - **Live:** dieses Repo (GitHub Pages, `index.html`) und das claude.ai-Artifact «Götterwacht» (Version 34 seit 07.11.2026). Beide werden zusammen nachgeführt.
-- **Quelle:** `quelle-claude-artifact.html` (= Artifact-Code); `index.html` = gleicher Code mit App-Kopf (Manifest, Symbole). Test: `node werkzeuge/gw34-headless.test.cjs`.
+- **Quelle:** `quelle-claude-artifact.html` (= Artifact-Code); `index.html` = gleicher Code mit App-Kopf (Manifest, Symbole). Tests: `node werkzeuge/gw34-headless.test.cjs` bis `gw38-headless.test.cjs`, Klick-Test `werkzeuge/qa.js`.
 
 ## Abgleich Aufgabensammlung ↔ Ist-Stand (geprüft 06.11.2026)
 Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Umwelteffekt, Fähigkeiten (`SKILLS`). Keiner der neuen Punkte ist umgesetzt.
@@ -17,6 +17,7 @@ Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Um
 | GW-3 | ✅ v35: Eiswelt nach Welle 20: neue Karte, Gegner in Gestalt, Charakter und Fähigkeiten angepasst, Schneestürme statt Nebel | GW-1 |
 | GW-4 | ✅ v35: Zehn neue freischaltbare Fähigkeiten im Skilltree für das Überleben in der Eiswelt | GW-3 |
 | GW-5 | ✅ v35: Weitere wählbare Fähigkeiten beim Seelen-Levelaufstieg | GW-4 |
+| GW-7 | ✅ v38: Koop-Modus (lokal zu zweit an einem Gerät) | GW-6 |
 | GW-6 | ✅ v37: Helden einzeln in der Ruhmeshalle leveln (passend zu ihren Fähigkeiten), Helden optisch überarbeiten, mit dem Level sichtbar mächtiger | GW-1 |
 
 Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
@@ -32,5 +33,15 @@ Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
 - Pfad nach Niflheim (v35, Claude): 10 Fähigkeiten in drei Ästen (Wärme, Eis, Wandel) plus Krone, je mit Vorgänger; Kosten 300 / 650 / 1100 / 1800 Runen (zusammen 7950). Kaufbar jederzeit, wirken nur in Niflheim.
 - Neue Gaben (v35, Claude): Waffen Frostnova und Eiszapfenregen (für alle Götter, in der Eiswelt öfter angeboten), Gaben Zähigkeit, Runenwissen, Scharfblick. Zwei neue Erfolge (Niflheim betreten, Welle 20 in Niflheim).
 
+- Koop (v38, Claude): **lokal an einem Gerät** statt online. Grund: Online-Koop braucht einen Vermittlungs-Server (WebRTC-Signalisierung oder Relais); das geht weder im claude.ai-Artifact noch auf GitHub Pages ohne fremden Dienst, und Verzögerungen machen ein schnelles Wellenspiel unfair. Lokal braucht nichts davon.
+  - Steuerung: Spieler 1 W A S D (linke Bildhälfte), Spieler 2 Pfeiltasten (rechte Bildhälfte). Solo behält WASD und Pfeile zusammen.
+  - Technik: Der Spielzustand `G` gehört immer dem aktiven Spieler, der zweite liegt in `G.p2`; `swapP()` tauscht die Spielerfelder (`PK`). So laufen Waffen, Fähigkeiten, Gaben, Pfad nach Niflheim und Heldenstufe für beide ohne doppelten Code. Geschosse, Walküren und Zirkel merken sich ihren Besitzer.
+  - Erfahrung und Stufe gemeinsam; jede Stufe: zuerst Spieler 1, dann Spieler 2 eine Karte. Schicksalswurf und Kleeblatt gelten für beide. Schreine wirken auf den, der darin steht.
+  - Gegner greifen den näheren stehenden Spieler an; Boss-Flächen, Gift und Feuer treffen beide.
+  - Wiederbeleben: 3 s innerhalb 70 Einheiten, dann 40 % Leben und 2 s unverwundbar. «Zweites Leben» aus der Schmiede wirkt pro Spieler zuerst. Ende, wenn beide am Boden sind; der Totenkopf beim Münzwurf beendet die Runde für beide.
+  - Kamera: Mitte zwischen beiden, zoomt bis 62 % heraus; weiter auseinander geht nicht (Leine).
+  - Schwierigkeit zu zweit: Gegner-Leben ×1.6, Bosse ×1.8, Nachschub ×1.45, Gegner gleichzeitig ×1.35, Erfahrung ÷1.25. Simulation: etwa gleich schwer wie Solo.
+  - Rekorde: Koop hat einen eigenen Rekord pro Welt (`koopRekord` im Spielstand), Solo-Rekord und Ruhmeshalle bleiben Solo. Runen, Seelen und Erfolge zählen auch im Koop (Erfolg «Welle 20» öffnet also auch hier Niflheim).
+
 ## Nächster Schritt
-Koop-Modus (eigene grosse Aufgabe). Offen: Versionen 35-37 ins claude.ai-Artifact veröffentlichen.
+Koop zu zweit testen und feinjustieren. Offen: Versionen 35-38 ins claude.ai-Artifact veröffentlichen.

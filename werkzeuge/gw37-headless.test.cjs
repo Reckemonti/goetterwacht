@@ -32,8 +32,8 @@ const heroData = [GODS, line(/const HERO_MAX = [^\n]+/), block('const HERO = {')
   'Object.assign(globalThis, { HERO_MAX, HERO, HERO_STAGE, heroStage, heroCost, cleanHeroes, heroLv, soulsForRun });'].join('\n');
 
 test('Version 37 with credit', () => {
-  assert.match(html, /const GAME_VERSION = 37;/);
-  assert.match(html, /id="ver">Version 37<\/div>/);
+  assert.match(html, /const GAME_VERSION = (3[7-9]|[4-9]\d);/);
+  assert.match(html, /id="ver">Version (3[7-9]|[4-9]\d)<\/div>/);
   assert.match(html, /id="credit">Made by a Legend NMO<\/div>/);
 });
 
