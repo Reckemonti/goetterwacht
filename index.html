@@ -38,6 +38,9 @@ body{background:var(--night);color:var(--ink);font:16px/1.4 var(--font-ui);overf
 canvas#game{position:fixed;inset:0;width:100%;height:100%;display:block;background:var(--night)}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.coin-token{width:58px;height:58px;margin:12px auto;border:2px solid #c89a35;border-radius:50%;display:grid;place-items:center;color:#f2c14e;background:radial-gradient(circle at 35% 30%,#fff1b0,#b8860b 70%);font:700 27px serif;text-shadow:0 1px 2px #533d06;box-shadow:0 0 22px rgba(242,193,78,.28)}
+.coin-token.spin{animation:coin-flip 1.2s ease-in-out infinite}
+@keyframes coin-flip{50%{transform:rotateY(900deg) scale(.75);filter:brightness(1.5)}}
 
 /* HUD */
 #hud{position:fixed;inset:0;pointer-events:none;padding-top:env(safe-area-inset-top,0px);
@@ -206,7 +209,8 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 33</div>
+    <div class="ver" id="ver">Version 34</div>
+    <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Wähle deinen Gott.</div>
     <div class="gods" id="gods"></div>
     <div class="row">
@@ -235,6 +239,13 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="dice" id="dice"><div class="die" id="die0">ᛈ</div><div class="die" id="die1">ᛈ</div></div>
   <div class="cards fate" id="fate-cards"></div>
   <div class="row"><button class="btn gold" id="btn-fate" type="button" hidden>Annehmen</button></div></div></div>
+<div class="ov" id="ov-coin" hidden><div class="ov-in">
+  <div class="runes" aria-hidden="true">ᚦ</div><h2 class="t">Münzwurf mit dem Tod</h2>
+  <div class="hint" id="coin-death">☠ Der Tod beobachtet dich schweigend.</div>
+  <div class="coin-token" id="coin-token" aria-hidden="true">ᚱ</div>
+  <div class="hint" id="coin-msg">Nimmst du das Risiko an? Totenkopf bedeutet den sofortigen Tod. Das Kleeblatt stärkt deine Fähigkeiten.</div>
+  <div class="row"><button class="btn gold" id="btn-coin-yes" type="button">Münzwurf annehmen</button><button class="btn" id="btn-coin-no" type="button">Ablehnen</button></div>
+</div></div>
 <div class="ov" id="ov-pause" hidden><div class="ov-in"><h2 class="t">Pause</h2><div class="build" id="pause-build"></div>
   <div class="row"><button class="btn gold" id="btn-resume" type="button">Weiter</button><button class="btn" id="btn-sound2" type="button">Ton: an</button><button class="btn" id="btn-music2" type="button">Musik: an</button><button class="btn" id="btn-quit" type="button">Aufgeben</button></div></div></div>
 
@@ -834,7 +845,7 @@ function newRun(godId){
     dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     level:1, xp:0, xpNeed:xpNeed(1), kills:0, inv:0, facing:1, moving:0, dirx:1, diry:0, walk:0,
     weapons:{}, passives:{}, wave:1, waveT:waveLen(1), phase:"fight", boss:null, breakT:0, spawnAcc:0,
-    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, dmgBy:{}, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
+    bosses:[], hordeDone:false, revives:u.revive, rerolls:u.reroll, pendingLv:0, pendingFate:0, coinOffered:{}, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0, event:null, dmgBy:{}, shrines:[], shrineT:22, buffs:{}, healBud:0, hitstop:0, ultiDim:0, combos:{}, frenzyT:0, kt:[], lowFr:false, runes:0, time:0, wavesDone:0, passiveT:0, healAcc:0 };
   addWeapon(god.start); applyPassives(); G.pendingLv += u.start||0;
   G.sk={}; for(const k of unlockedSkills()) G.sk[k.id]=true; G.sk.vidar = unlockedSkills().length===SKILLS.length;
   Object.assign(G,{ shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
@@ -846,6 +857,56 @@ function newRun(godId){
 }
 const xpNeed = l => Math.floor(6 + l*5 + Math.pow(l,1.85));
 const waveLen = w => Math.min(26 + w*2.2, 52);
+// Das Angebot erscheint bei Welle 10 und danach in Fünfer-Schritten.
+function isCoinOfferWave(wave){ return wave>=10 && (wave-10)%5===0; }
+function upgradeCoinSkills(run, weapons=WEAP, passives=PASS){
+  let raised=0;
+  for(const id of Object.keys(run.weapons||{})){ const skill=run.weapons[id], max=weapons[id]?.max||0; if(max && skill.lvl<max){ skill.lvl++; raised++; } }
+  for(const id of Object.keys(run.passives||{})){ const max=passives[id]?.max||0; if(max && run.passives[id]<max){ run.passives[id]++; raised++; } }
+  return raised;
+}
+function hasCoinSkillUpgrade(run, weapons=WEAP, passives=PASS){
+  return Object.keys(run.weapons||{}).some(id=>weapons[id]&&run.weapons[id].lvl<weapons[id].max) || Object.keys(run.passives||{}).some(id=>passives[id]&&run.passives[id]<passives[id].max);
+}
+function grantCoinSoulLevel(run){ run.xp=0; run.level++; run.xpNeed=xpNeed(run.level); run.pendingLv++; if(run.level%9===0) run.pendingFate++; }
+function coinBurnDamageForWave(wave){ return 75+Math.max(1,wave)*6; }
+function tickCoinBurn(area,dt,enemies,damage){
+  area.t-=dt; if(area.t<=0) return false;
+  area.tick-=dt;
+  if(area.tick<=0){ area.tick=.4; for(const enemy of enemies){ if(enemy.on && Math.hypot(enemy.x-area.x,enemy.y-area.y)<area.r+enemy.r) damage(enemy,area.dps*.4); } }
+  return true;
+}
+function openCoinOffer(){
+  if(!G || BOT.on || !isCoinOfferWave(G.wave) || G.coinOffered[G.wave]) return;
+  G.coinOffered[G.wave]=true; state="coin";
+  $("coin-msg").textContent="Nimmst du das Risiko an? Totenkopf bedeutet den sofortigen Tod. Das Kleeblatt stärkt deine Fähigkeiten.";
+  $("coin-death").textContent="☠ Der Tod beobachtet dich schweigend.";
+  $("coin-token").classList.remove("spin");
+  $("btn-coin-yes").disabled=false; $("btn-coin-no").disabled=false;
+  show("ov-coin"); $("btn-coin-yes").focus({preventScroll:true});
+}
+function resolveCoinFlip(outcome){
+  if(!G || state!=="coin") return;
+  $("btn-coin-yes").disabled=true; $("btn-coin-no").disabled=true;
+  $("coin-death").textContent="☠ Der Tod wirft die Münze …";
+  $("coin-token").classList.add("spin");
+  $("coin-msg").textContent="Die Münze dreht sich im Schatten.";
+  setTimeout(()=>{
+    if(!G || state!=="coin") return;
+    if(outcome==="skull"){
+      $("coin-msg").textContent="Der Totenkopf. Der Tod holt deine Seele."; hide("ov-coin"); state="play"; gameOver(); return;
+    }
+    const raised=upgradeCoinSkills(G);
+    if(raised){ applyPassives(); renderSlots(); $("coin-msg").textContent=`Das Kleeblatt! ${raised} deiner Fähigkeiten steigen je eine Stufe.`; }
+    else { grantCoinSoulLevel(G); $("coin-msg").textContent="Das Kleeblatt! Alle Fähigkeiten sind am Maximum: Du erhältst Seelen im Wert eines Stufenaufstiegs."; }
+    $("coin-death").textContent="☠ Der Tod wird zornig!";
+    pools.push({x:G.x,y:G.y,r:130,t:8,dps:coinBurnDamageForWave(G.wave),enemy:false,tick:0,col:"fire",coinBurn:true});
+    burst(G.x,G.y,36,PIDX.fire,200,.8,4); hide("ov-coin"); state="play"; lastT=performance.now();
+    banner("Kleeblatt!", raised ? `${raised} Fähigkeiten +1 Stufe. Der Tod wird zornig!` : "Seelen für einen Stufenaufstieg. Der Tod wird zornig!");
+  },1200);
+}
+$("btn-coin-yes").addEventListener("click", ()=>resolveCoinFlip(Math.random()<.5?"skull":"clover"));
+$("btn-coin-no").addEventListener("click", ()=>{ if(state!=="coin") return; hide("ov-coin"); state="play"; lastT=performance.now(); });
 function hpMul(w){ const k=w-1; return (1 + .22*k + .07*k*k) * Math.pow(1.05,k) * Math.pow(1.155,Math.max(0,k-5)); }
 function dmgMulE(w){ const k=w-1, l=Math.max(0,k-3); return 1 + .09*k + .028*l*l; }
 
@@ -1493,7 +1554,7 @@ function waveUpdate(dt){
   if(G.phase==="fight"){ G.waveT-=dt; if(G.waveT<=0){ G.phase="boss"; spawnBoss(); } }
   else if(G.phase==="break"){ G.breakT-=dt; if(G.breakT<=0){ G.wave++; G.waveT=waveLen(G.wave); G.phase="fight"; G.hordeDone=false; G.bossFix=false; const tc=tierOf(G.wave)!==tierOf(G.wave-1);
       G.event = G.wave%7===0 ? "blutmond" : (G.wave>=6 && G.wave%5!==0 && G.wave%4===2) ? "nebel" : null;
-      banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); } }
+      banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); openCoinOffer(); } }
   else if(G.phase==="boss"){ G.bosses=(G.bosses||[]).filter(b=>b.on);
     if(!G.bosses.length && G.boss===null && !G.bossFix){ G.bossFix=true; G.phase="break"; G.breakT=3; G.wavesDone=G.wave; $("bossbar").hidden=true; }
     let best=null, bd=1e12; for(const b of G.bosses){ const d=(b.x-G.x)**2+(b.y-G.y)**2; if(d<bd){bd=d;best=b;} } G.boss=best; }
@@ -1522,7 +1583,7 @@ function playerUpdate(dt){
     if(G.frenzyT>0 && Math.random()<dt*40) particle(G.x+rnd(-14,14),G.y+rnd(-14,14),rnd(-20,20),-80,.45,3.5,PIDX.red); }
   // pools
   for(let i=craters.length-1;i>=0;i--){ craters[i].t-=dt; if(craters[i].t<=0) craters.splice(i,1); }
-  for(let i=pools.length-1;i>=0;i--){ const p=pools[i]; p.t-=dt; p.tick-=dt; if(p.t<=0){ pools.splice(i,1); continue; }
+  for(let i=pools.length-1;i>=0;i--){ const p=pools[i]; if(p.coinBurn){ if(!tickCoinBurn(p,dt,E,(e,d)=>{ SRC="barrel"; hurt(e,d,0,0,0,3); })){ pools.splice(i,1); continue; } } else { p.t-=dt; p.tick-=dt; if(p.t<=0){ pools.splice(i,1); continue; } }
     if(Math.random()<.5) particle(p.x+rnd(-p.r,p.r)*.7,p.y+rnd(-p.r,p.r)*.7,0,-40,.5,3,p.col==="green"?PIDX.green:PIDX.fire);
     if(p.tick<=0){ p.tick=.4; if(p.enemy){ if(Math.hypot(G.x-p.x,G.y-p.y)<p.r) hitPlayer(p.dps*.4,"pool"); } else { SRC=p.leech?"slam":"barrel"; const n=query(p.x,p.y,p.r); for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,p.dps*.4,0,0,0,3); if(p.leech) for(let z=0;z<3;z++) particle(e.x,e.y,(G.x-e.x)*2.2,(G.y-e.y)*2.2,.45,3.5,PIDX.red); }
       if(p.leech && n){ const h=Math.min(6, n*.8); G.hp=Math.min(G.maxHp,G.hp+h); text(G.x,G.y-34,`+${Math.round(h)}`,4); } } } }
@@ -1891,7 +1952,7 @@ function hud(){
 }
 
 /* ---------------- overlays & flow ---------------- */
-const OVS=["ov-ach","ov-title","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save"];
+const OVS=["ov-ach","ov-title","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin"];
 function show(id){ $(id).hidden=false; }
 function hide(id){ $(id).hidden=true; }
 function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
@@ -2087,7 +2148,7 @@ const joyEnd=e=>{ if(e.pointerId===joy.id){ joy.on=false; joy.id=null; } };
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 33;
+const GAME_VERSION = 34;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2166,7 +2227,7 @@ function simRun(god, opt={}){
   BOT.on=false; meta=JSON.parse(savedMeta); saveMeta(); G=null; state="title"; only("ov-title"); $("hud").hidden=true; $("bossbar").hidden=true;
   return res;
 }
-window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get fps(){return fps;}, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
 })();
 </script>
 

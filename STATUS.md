@@ -1,8 +1,9 @@
 # Status
 
-Stand: 04.11.2026, Version 33
+Stand: 07.11.2026, Version 34
 
 ## Zuletzt geändert
+- Version 34: Credit «Made by a Legend NMO» im Titel; Münzwurf mit dem Tod ab Welle 10 und alle 5 Wellen (freiwillig): Totenkopf = Tod, Kleeblatt = alle Fähigkeiten +1 Stufe (bis Maximum, sonst Seelen für einen Stufenaufstieg), danach Brandfläche des zornigen Todes (8 s)
 - Version 33: Abschluss-Test der Stufen 6-10: Langläufe mit voller Schmiede bis Welle 30 ohne Fehler, Handy-Klicktest bestanden
 - Version 32: Meisterschaft sichtbar: Donnerhämmer, Äxte, Eisspeere, Runenkreis und Startangriffe leuchten ab Stufe 6 in der Farbstufe (rot bis goldrot) mit Funken und Schockring
 - Version 31: Wölfe laden auf und springen (rote Linie); alle Fähigkeiten und Gaben bis Stufe 10 (ab 6: +13 % Schaden pro Stufe, Gaben halb so stark); Walküren und Zirkel wechseln die Farbe (rot, violett, grün, blau, goldrot), Stufe 10 doppelte Schar; Fässer werden Frost-, Gift-, Donner- und Ragnarök-Fässer; Donars Blitzsturm abgeschwächt

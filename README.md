@@ -30,3 +30,5 @@ Automatisch im Browser. **⬇ Spielstand speichern** lädt eine JSON-Datei herun
 | `werkzeuge/sim.js` | Autopilot-Simulation fürs Balancing (`node sim.js <version> <runden> <maxWelle> [schmiede-json\|-] [h]`) |
 | `werkzeuge/qa.js` | Klick-Test aller Menüs auf Handygrösse |
 | `STATUS.md` | Stand und Änderungen |
+| `PLAN.md` | Offene Aufgaben (GW-1 bis GW-6) und Routine-Entscheide |
+| `werkzeuge/gw34-headless.test.cjs` | Test Münzwurf und Credit (`node werkzeuge/gw34-headless.test.cjs`) |
