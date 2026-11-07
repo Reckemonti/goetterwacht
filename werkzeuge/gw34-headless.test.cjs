@@ -24,9 +24,10 @@ function context(source, extras = {}) { const c = { ...extras }; vm.createContex
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log(`PASS ${name}`); }
 
-test('Version 34 and exact credit', () => {
-  assert.match(html, /const GAME_VERSION = 34;/);
-  assert.match(html, /id="ver">Version 34<\/div>/);
+test('Version 34 or later and exact credit', () => {
+  const v = +html.match(/const GAME_VERSION = (\d+);/)[1];
+  assert.ok(v >= 34);
+  assert.match(html, new RegExp(`id="ver">Version ${v}<\/div>`));
   assert.match(html, /id="credit">Made by a Legend NMO<\/div>/);
 });
 
@@ -89,7 +90,7 @@ test('A version 33 JSON save loads with defaults for all forge fields', () => {
   assert.ok(metaEnd > 0);
   const metaDecl = script.slice(metaStart, metaEnd).replace(/^const META/, 'const META');
   const c = context(`${metaDecl}\n${fnSource('readAny')}`, {
-    clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m,
+    clamp: (x, a, b) => Math.max(a, Math.min(b, x)), migrateMeta: m => m, cleanIce: () => ({}),
   });
   const loaded = c.readAny(JSON.stringify({ version: 33, runen: 120, runenschmiede: { hp: 2 }, rekord: { wave: 8, kills: 15, god: 'donar' } }));
   assert.equal(loaded.runes, 120);

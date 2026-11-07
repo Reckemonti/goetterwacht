@@ -1,8 +1,9 @@
 # Status
 
-Stand: 07.11.2026, Version 34
+Stand: 07.11.2026, Version 35
 
 ## Zuletzt geändert
+- Version 35 (Claude, GW-3 bis GW-5): Eiswelt Niflheim ab Welle 21 mit eigener Karte (Eisboden, Kristalle, verschneite Tannen), Frostgegnern und neuem Eisgolem, Schneestürmen statt Nebel; Treffer lassen frieren (langsamer), Götter mit Raureif, Skadi dort +15 % Schaden; ein Platz mehr für Waffen und Gaben. Runenschmiede: «Pfad nach Niflheim» mit 10 Fähigkeiten (Bärenfell, Glut im Herzen, Surtrs Funke, Frostklinge, Splitterhagel, Ymirs Atem, Schneeschuhe, Nordlicht, Schneewolf-Rudel, Krone des Winters). Neue Gaben beim Stufenaufstieg: Frostnova, Eiszapfenregen (mit Verschmelzungen), Zähigkeit, Runenwissen, Scharfblick. 2 neue Erfolge. Spielstände aus Version 34 laden weiter.
 - Version 34: Credit «Made by a Legend NMO» im Titel; Münzwurf mit dem Tod ab Welle 10 und alle 5 Wellen (freiwillig): Totenkopf = Tod, Kleeblatt = alle Fähigkeiten +1 Stufe (bis Maximum, sonst Seelen für einen Stufenaufstieg), danach Brandfläche des zornigen Todes (8 s)
 - Version 33: Abschluss-Test der Stufen 6-10: Langläufe mit voller Schmiede bis Welle 30 ohne Fehler, Handy-Klicktest bestanden
 - Version 32: Meisterschaft sichtbar: Donnerhämmer, Äxte, Eisspeere, Runenkreis und Startangriffe leuchten ab Stufe 6 in der Farbstufe (rot bis goldrot) mit Funken und Schockring
@@ -39,6 +40,7 @@ Stand: 07.11.2026, Version 34
 - Ohne Schmiede: Ø Welle 7-10 (mit springenden Wölfen)
 - Mittlere Schmiede (alle Upgrades Stufe 5): Ø Welle 18-21
 - Volle Schmiede: Ø Welle 22-26
+- Version 35, volle Schmiede bis Welle 28: ohne Pfad nach Niflheim Ø Welle 26 (v34 gleich gemessen: Ø 25), Tode meist bei Welle 23-24 kurz nach Eintritt in die Eiswelt; mit vollem Pfad fast alle Läufe bis Welle 28
 
 ## Offen
 - Balancing nach Spieltests von Nico feinjustieren
