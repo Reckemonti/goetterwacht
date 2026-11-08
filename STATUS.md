@@ -1,8 +1,9 @@
 # Status
 
-Stand: 08.11.2026, Version 51
+Stand: 08.11.2026, Version 52
 
 ## Zuletzt geändert
+- Version 52 (Claude, Wunsch Nico «Donar ein Ticken stärker»): Donar Leben 150 → 165, Donnerschlag lädt schneller (ct 1.08–.78 → .96–.74) und +2 Schaden je Stufe. Simulation (4 Läufe, SEED 7): Donar 7.3 → 8.5 Wellen (Läufe 9,9,7,9, kein früher Tod mehr), Ulfr 10.5, Skadi 10.0.
 - Version 51 (Claude mit Agent, Wünsche Nico und UX-Prüfung «unübersichtlich»):
   - **Skadi:** Grundangriff «Frostschlag» ist ein normaler Kreis wie bei Donar/Ulfr (Radius 80–124, bremst). Eisstern-Speere entfernt. Eissplitter bleiben. Simulation: Skadi 8.8, Ulfr 10.5, Donar 7.3 Wellen.
   - **Intro** dauert 5 s (5 Blitze, Tor öffnet 1–3.8 s).

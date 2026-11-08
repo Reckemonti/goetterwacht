@@ -239,7 +239,7 @@ textarea.code{box-sizing:border-box;max-width:100%;overflow-wrap:anywhere}#ov-sa
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 51</div>
+    <div class="ver" id="ver">Version 52</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -787,7 +787,7 @@ function genDecor(world){
 
 /* ---------------- data: gods, weapons, passives ---------------- */
 const GODS = {
-  donar:{ name:"Donar", title:"Gott des Donners", color:"#7fd8ff", hp:150, speed:158, armor:2, dmg:1, start:"smash",
+  donar:{ name:"Donar", title:"Gott des Donners", color:"#7fd8ff", hp:165, speed:158, armor:2, dmg:1, start:"smash",
     desc:"Zäh und standfest. Er lädt den Donnerschlag auf und trifft alles im Kreis um sich. Später kreisen Donnerhämmer mit Kettenblitzen um ihn.",
     passive:"Donnergrollen: Gratis-Blitz alle 6 s" },
   ulfr:{ name:"Ulfr", title:"Der Berserker", color:"#ff5a48", hp:100, speed:181, armor:1, dmg:1.22, start:"cleave",
@@ -814,7 +814,7 @@ function descW(id,l){ const D=WEAP[id]; if(l<=5) return D.d(l);
 const WEAP = {
   smash:{ name:"Donnerschlag", rune:"ᚦ", max:10, god:"donar", base:true,
     d:l=>["Lade auf und schlage zu: Schaden im Kreis um dich.","Grösserer Kreis, mehr Schaden","Schnelleres Aufladen","Grösserer Kreis, mehr Schaden","Gewaltiger Donnerschlag"][l-1],
-    ct:[1.08,1,.92,.85,.78], rad:[90,100,110,122,138], dmg:[36,44,52,62,82] },
+    ct:[.96,.9,.84,.79,.74], rad:[90,100,110,122,138], dmg:[38,46,54,64,84] },   // v52: Donar lädt schneller auf
   cleave:{ name:"Axtschwung", rune:"ᛏ", max:10, god:"ulfr", base:true,
     d:l=>["Lade auf und schwinge die Axt: Schaden im Kreis um dich.","Grösserer Kreis, mehr Schaden","Schnelleres Aufladen","Grösserer Kreis, mehr Schaden","Blutiger Wirbel"][l-1],
     ct:[1,.92,.85,.78,.7], rad:[72,80,90,100,112], dmg:[28,35,42,52,66] },
@@ -3031,7 +3031,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 51;
+const GAME_VERSION = 52;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
