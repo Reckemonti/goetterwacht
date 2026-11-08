@@ -194,6 +194,16 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 .keys kbd{font:600 13px var(--font-ui);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--ink)}
 .build{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 @media (prefers-reduced-motion: reduce){.card{animation:none}#banner{transition:none}}
+/* Tor-Intro: kurze Eröffnung nach dem Laden (ca. 2 s), Tippen überspringt */
+#intro{position:fixed;inset:0;z-index:200;background:var(--night);touch-action:none;cursor:pointer;transition:opacity .3s ease-out}
+#intro.out{opacity:0;pointer-events:none}
+#intro canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#intro .itxt{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;pointer-events:none;opacity:0;animation:intro-txt .5s .15s ease-out forwards}
+#intro .i1{font:800 clamp(24px,7.4vw,52px)/1.15 var(--font-display);color:var(--gold);letter-spacing:.04em;text-shadow:0 0 18px rgba(242,193,78,.65),0 3px 10px #000,0 0 3px #000}
+#intro .i2{margin-top:10px;font:600 clamp(14px,3.6vw,22px) var(--font-ui);color:var(--frost);letter-spacing:.3em;text-transform:uppercase;text-shadow:0 2px 8px #000}
+#intro.reduced canvas{display:none}
+#intro.reduced .itxt{animation-duration:.2s;animation-delay:0s}
+@keyframes intro-txt{from{opacity:0;transform:translateY(-46%)}to{opacity:1;transform:translateY(-50%)}}
 </style>
 
 <canvas id="game" aria-label="Spielfeld"></canvas>
@@ -351,6 +361,8 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="row"><label class="hint" for="nick">Dein Name</label><input class="nick" id="nick" maxlength="16" autocomplete="off"></div>
   <div class="row"><button class="btn gold" id="btn-boardback" type="button">Zurück</button></div>
 </div></div>
+
+<div id="intro" aria-hidden="true"><canvas></canvas><div class="itxt"><div class="i1">Open the Gate<br>to Götterwacht</div><div class="i2">Das Tor öffnet sich</div></div></div>
 
 <script>
 (() => {
@@ -3033,5 +3045,82 @@ function simRun(god, opt={}){
   return res;
 }
 window.__gw = { cam:()=>[camX,camY], heroSpr, sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, buyHero, heroLv, heroCost, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), PL1, PL2, COOP, swapP, joy, joy2, get koop(){return koop;}, NET, get code(){return NET.code;}, down:k=>{ const sw=G.pid!==k; if(sw) swapP(); playerDown(); if(sw) swapP(); }, alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+// ---- Tor-Intro (reine Canvas-Zeichnung, kein Einfluss auf Spiellogik; Einladungslinks überspringen es) ----
+(function introTor(){
+  const el=document.getElementById("intro"); if(!el) return;
+  if(URLP.get("koop")){ el.remove(); return; }
+  const red=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let done=false;
+  const end=()=>{ if(done) return; done=true; el.style.pointerEvents="none"; el.classList.add("out"); setTimeout(()=>el.remove(),340); window.removeEventListener("keydown",end); };
+  el.addEventListener("pointerdown",end); window.addEventListener("keydown",end);
+  if(red){ el.classList.add("reduced"); setTimeout(end,700); return; }
+  const cv=el.querySelector("canvas"), c=cv.getContext("2d"); if(!c){ setTimeout(end,1700); return; }
+  const dpr=Math.min(window.devicePixelRatio||1,1.5); const W=innerWidth, H=innerHeight;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); c.scale(dpr,dpr);
+  const DUR=2000, ease=x=>x<0?0:x>1?1:x*x*(3-2*x);
+  // Nebel-Sprite
+  const fs=document.createElement("canvas"); fs.width=fs.height=128; { const f=fs.getContext("2d"), g=f.createRadialGradient(64,64,0,64,64,64); g.addColorStop(0,"rgba(170,195,230,.9)"); g.addColorStop(.5,"rgba(140,170,210,.35)"); g.addColorStop(1,"rgba(140,170,210,0)"); f.fillStyle=g; f.fillRect(0,0,128,128); }
+  const fog=[]; for(let i=0;i<11;i++) fog.push({x:Math.random(),y:.45+Math.random()*.55,r:.35+Math.random()*.4,v:(Math.random()<.5?-1:1)*(.04+Math.random()*.08),a:.05+Math.random()*.07,front:i>5});
+  // Torgeometrie
+  const gh=Math.min(H*.76,W*1.5), gw=Math.min(W*.92,gh*.95), pw=gw*.11, ow=gw-2*pw, top=H*.13, bot=top+gh, cx=W/2, dw=ow/2;
+  const archPath=(x0,w,y0,y1)=>{ c.beginPath(); c.moveTo(x0,y1); c.lineTo(x0,y0+w/2); c.arc(x0+w/2,y0+w/2,w/2,Math.PI,0); c.lineTo(x0+w,y1); c.closePath(); };
+  // Blitze: [Start, Länge, Stärke]
+  const FL=[[110,230,.8],[620,260,1],[1120,230,.6]];
+  const mkBolt=()=>{ const pts=[]; let x=W*(.15+Math.random()*.7), y=0; const tx=x+(Math.random()-.5)*W*.3, n=11; for(let k=0;k<=n;k++){ pts.push([x,y]); y+=H*.5/n; x+=(tx-x)/(n-k+1)+(Math.random()-.5)*W*.07; } const br=[]; for(let b=0;b<2;b++){ const k=3+Math.floor(Math.random()*5), q=[pts[k]]; let bx=pts[k][0], by=pts[k][1]; for(let m=0;m<4;m++){ bx+=(b?1:-1)*W*.04+(Math.random()-.5)*W*.03; by+=H*.05; q.push([bx,by]); } br.push(q); } return {pts,br}; };
+  const bolts=FL.map(mkBolt);
+  const stone=(x,y,w,h)=>{ const g=c.createLinearGradient(x,0,x+w,0); g.addColorStop(0,"#1a2332"); g.addColorStop(.5,"#2b374a"); g.addColorStop(1,"#141b28"); c.fillStyle=g; c.fillRect(x,y,w,h); c.strokeStyle="rgba(0,0,0,.35)"; c.lineWidth=1; const bh=gh/11; for(let yy=y+bh;yy<y+h;yy+=bh){ c.beginPath(); c.moveTo(x,yy); c.lineTo(x+w,yy); c.stroke(); } };
+  const door=(hx,dir,s,lit,rune)=>{
+    c.save(); c.translate(hx,0); c.scale(s*dir,1);   // Scharnier aussen, Schwenk als Stauchung
+    const y0=top+pw, h=bot-y0, w=dw;
+    const g=c.createLinearGradient(0,0,w,0); g.addColorStop(0,"#222d3f"); g.addColorStop(1,"#0f1622"); c.fillStyle=g; c.fillRect(0,y0,w,h);
+    c.strokeStyle="rgba(0,0,0,.5)"; c.lineWidth=2; for(let k=1;k<4;k++){ c.beginPath(); c.moveTo(w*k/4,y0); c.lineTo(w*k/4,bot); c.stroke(); }
+    for(const f of [.2,.5,.8]){ const by=y0+h*f, bh=h*.055, bg=c.createLinearGradient(0,by,0,by+bh); bg.addColorStop(0,"#566277"); bg.addColorStop(.5,"#2d3646"); bg.addColorStop(1,"#171e2b"); c.fillStyle=bg; c.fillRect(0,by,w,bh); c.fillStyle="#c89a35"; for(let k=1;k<4;k++){ c.beginPath(); c.arc(w*k/4-w*.06,by+bh/2,Math.max(1.5,w*.012),0,7); c.fill(); } }
+    // Rune im Goldring
+    const rx=w*.5, ry=y0+h*.5-h*.02, rr=w*.3; c.save(); c.shadowColor="rgba(242,193,78,"+(.4+.6*lit)+")"; c.shadowBlur=14+14*lit; c.strokeStyle="#f2c14e"; c.lineWidth=2.5; c.beginPath(); c.arc(rx,ry,rr,0,7); c.stroke(); c.lineWidth=1.2; c.beginPath(); c.arc(rx,ry,rr*.82,0,7); c.stroke();
+    c.save(); c.translate(rx,ry); c.scale(dir,1); c.fillStyle="#ffd878"; c.font="700 "+Math.round(rr*1.15)+"px 'Noto Sans Runic','Segoe UI Historic',serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(rune,0,2); c.restore(); c.restore();
+    // Kante zur Mitte, Schattierung beim Schwenken
+    c.fillStyle="rgba(242,193,78,.55)"; c.fillRect(w-3,y0,3,h);
+    c.fillStyle="rgba(4,8,14,"+(.6*(1-s)).toFixed(3)+")"; c.fillRect(0,y0,w,h);
+    c.restore(); };
+  let t0=0, lastBoom=-1;
+  function drawFog(f,t){ const r=f.r*Math.max(W,H)*.9, x=((f.x+f.v*t/1000)%1.4+1.4)%1.4*W-.2*W; c.globalAlpha=f.a*(f.front?1:1.2)*(1+.4*Math.sin(t/500+f.x*9)); c.drawImage(fs,x-r,H*f.y-r*.55,r*2,r*1.1); c.globalAlpha=1; }
+  function frame(now){
+    if(done) return; if(!t0) t0=now; const t=now-t0;
+    if(t>=DUR){ end(); return; }
+    // Himmel
+    let g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#0a1220"); g.addColorStop(.6,"#101c33"); g.addColorStop(1,"#070b12"); c.fillStyle=g; c.fillRect(0,0,W,H);
+    // Blitzhelligkeit
+    let fl=0, flIdx=-1; FL.forEach((f,i)=>{ const d=t-f[0]; if(d>=0&&d<f[1]){ const v=f[2]*Math.pow(1-d/f[1],1.6); if(v>fl){ fl=v; flIdx=i; } } });
+    const open=ease((t-420)/1150);   // Tor öffnet sich von 0.42 s bis 1.57 s
+    // Licht hinter dem Tor
+    const iy=bot-gh*.45; c.save(); archPath(cx-ow/2,ow,top+pw,bot); c.clip();
+    let lg=c.createRadialGradient(cx,iy,0,cx,iy,gh*.75); lg.addColorStop(0,"rgba(255,244,205,"+(.25+.75*open)+")"); lg.addColorStop(.25,"rgba(242,193,78,"+(.15+.7*open)+")"); lg.addColorStop(.7,"rgba(60,90,150,.35)"); lg.addColorStop(1,"rgba(10,18,32,1)"); c.fillStyle=lg; c.fillRect(cx-ow/2,top,ow,gh);
+    if(open>0){ c.globalAlpha=open*.5; c.fillStyle="#fff2c8"; c.fillRect(cx-ow*.04*open,top+pw,ow*.08*open,gh); c.globalAlpha=1; }
+    // Türflügel
+    const sw=1-.9*open, lit=open;
+    door(cx-ow/2,1,sw,lit,"ᚠ"); door(cx+ow/2,-1,sw,lit,"ᛟ");
+    c.restore();
+    // Steinrahmen: Bogen und Pfeiler
+    c.save(); c.beginPath(); c.moveTo(cx-gw/2,bot); c.lineTo(cx-gw/2,top+gw/2); c.arc(cx,top+gw/2,gw/2,Math.PI,0); c.lineTo(cx+gw/2,bot); c.lineTo(cx+ow/2,bot); c.lineTo(cx+ow/2,top+pw+ow/2); c.arc(cx,top+pw+ow/2,ow/2,0,Math.PI,true); c.lineTo(cx-ow/2,bot); c.closePath(); c.clip(); stone(cx-gw/2,top,gw,gh);
+    const eg=c.createLinearGradient(0,top,0,top+gw/2); eg.addColorStop(0,"rgba(127,216,255,.10)"); eg.addColorStop(1,"rgba(0,0,0,0)"); c.fillStyle=eg; c.fillRect(cx-gw/2,top,gw,gw/2); c.restore();
+    c.save(); c.strokeStyle="rgba(242,193,78,.7)"; c.lineWidth=2; c.shadowColor="rgba(242,193,78,.6)"; c.shadowBlur=10; archPath(cx-ow/2,ow,top+pw,bot); c.stroke(); c.restore();
+    // Runenband im Bogen
+    c.save(); c.fillStyle="rgba(242,193,78,"+(.55+.4*open)+")"; c.font="700 "+Math.round(pw*.62)+"px 'Noto Sans Runic','Segoe UI Historic',serif"; c.textAlign="center"; c.textBaseline="middle"; c.shadowColor="rgba(242,193,78,.8)"; c.shadowBlur=8; const rs="ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ"; for(let k=0;k<rs.length;k++){ const a=Math.PI+Math.PI*(k+.5)/rs.length, R=gw/2-pw*.5; c.save(); c.translate(cx+Math.cos(a)*R,top+gw/2+Math.sin(a)*R); c.rotate(a+Math.PI/2); c.fillText(rs[k],0,0); c.restore(); } c.restore();
+    // Boden
+    const fg=c.createLinearGradient(0,bot-6,0,H); fg.addColorStop(0,"rgba(255,225,150,"+(.15+.45*open)+")"); fg.addColorStop(.12,"#0b111b"); fg.addColorStop(1,"#05080d"); c.fillStyle=fg; c.fillRect(0,bot,W,H-bot);
+    // Nebel (hinten/vorne) und Blitze
+    for(const f of fog) if(!f.front) drawFog(f,t);
+    if(flIdx>=0 && t-FL[flIdx][0]<120){ const b=bolts[flIdx]; c.save(); c.globalAlpha=Math.min(1,fl*1.4); c.strokeStyle="#eaf4ff"; c.shadowColor="#7fd8ff"; c.shadowBlur=18; c.lineWidth=3; c.lineJoin="round"; c.beginPath(); b.pts.forEach((q,k)=>k?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1])); c.stroke(); c.lineWidth=1.6; for(const q of b.br){ c.beginPath(); q.forEach((r,k)=>k?c.lineTo(r[0],r[1]):c.moveTo(r[0],r[1])); c.stroke(); } c.restore(); }
+    for(const f of fog) if(f.front) drawFog(f,t);
+    if(fl>0){ c.fillStyle="rgba(200,225,255,"+(fl*.5)+")"; c.fillRect(0,0,W,H); }
+    // Donner: nur wenn der Ton schon freigegeben ist
+    if(flIdx>=0 && flIdx!==lastBoom && t-FL[flIdx][0]<60){ lastBoom=flIdx; try{ if(flIdx<2 && AC && AC.state==="running") sfx(flIdx===0?"boom":"big"); }catch(e){} }
+    // Ausblenden zur Titelseite in den letzten 0.3 s
+    if(t>DUR-300 && !el.classList.contains("out")) el.classList.add("out");
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  setTimeout(end,DUR+400);   // Notausgang, falls requestAnimationFrame pausiert (Tab im Hintergrund)
+})();
 })();
 </script>
