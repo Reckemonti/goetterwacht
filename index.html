@@ -125,6 +125,7 @@ h2.t{font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin
 .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.slot{text-align:left;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 12px;color:inherit;font:inherit}.slot b{display:block;font-size:16px;margin-bottom:3px}.slot span{font-size:12px;opacity:.8}.slot.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}.slot.on b{color:var(--gold)}
 .btn.danger{border-color:#c0503a;color:#ff9a84}.btn.danger.sure{background:#7a2416;color:#fff}
+.shop-gods{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}.shop-gods button{border:1px solid var(--line);background:var(--panel-2);border-radius:999px;padding:6px 14px;color:inherit;font:600 14px/1 inherit}.shop-gods button.on{border-color:var(--c,var(--gold));color:var(--c,var(--gold));box-shadow:0 0 0 1px var(--c,var(--gold)) inset}
 .btn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 18px;font-weight:600;font-size:17px;letter-spacing:.06em}
 .btn:hover{border-color:var(--gold)}
 .btn.gold{background:linear-gradient(180deg,#f7d57a,var(--gold) 50%,#c08a1e);color:#1d1404;border-color:#ffe39a}
@@ -237,7 +238,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 48</div>
+    <div class="ver" id="ver">Version 49</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -324,7 +325,8 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 
 <div class="ov" id="ov-shop" hidden><div class="ov-in">
   <h2 class="t">Runenschmiede</h2>
-  <div class="hint">Dauerhafte Stärkung für alle Götter. Runen verdienst du mit jeder Welle und jedem Boss.</div>
+  <div class="hint" id="shop-hint">Dauerhafte Stärkung für den gewählten Gott. Runen verdienst du mit jeder Welle und jedem Boss.</div>
+  <div class="shop-gods" id="shop-gods"></div>
   <div class="runesTotal" id="runes-shop"></div>
   <div class="shop" id="shop"></div>
   <div class="row"><button class="btn gold" id="btn-shopback" type="button">Zurück</button></div>
@@ -944,6 +946,13 @@ function migrateMeta(m){ if(m.forgeV) return m; m.up=m.up||{}; const OLD={hp:l=>
   for(const k in OLD){ for(let l=0;l<(m.up[k]||0);l++) back+=OLD[k](l); m.up[k]=0; } m.runes=(m.runes||0)+back; m.forgeV=2; m.refunded=back; return m; }
 migrateMeta(meta);
 for(const k in META) meta.up[k] = meta.up[k]||0;
+function cleanUp(u){ const o={}; for(const k in META) o[k]=clamp(Math.floor(Number(u&&u[k])||0),0,META[k].max+(META[k].ext||0)); return o; }
+function linkForge(god){ // Runenschmiede pro Held (v49): alte gemeinsame Stufen bekommt jeder Held
+  if(!meta.upH || typeof meta.upH!=="object"){ const old=cleanUp(meta.up); meta.upH={}; for(const g in GODS) meta.upH[g]={...old}; }
+  for(const g in GODS) meta.upH[g]=cleanUp(meta.upH[g]);
+  if(god && GODS[god]) meta.forgeGod=god; if(!GODS[meta.forgeGod]) meta.forgeGod = GODS[meta.lastGod]? meta.lastGod : Object.keys(GODS)[0];
+  meta.up = meta.upH[meta.forgeGod]; return meta.up; }
+linkForge();
 meta.ice = cleanIce(meta.ice);
 const saveMeta = ()=>store.set(slotKey(SLOT), meta);
 const metaMax = id => META[id].max + (worldOpen("eis") ? (META[id].ext||0) : 0);   // Niflheim-Stufen nach Welle 20
@@ -1095,7 +1104,7 @@ const joy2 = { on:false, id:null, ox:0, oy:0, x:0, y:0 };   // Koop: rechte Bild
 let CZ = 1; const CZMIN = .62;                               // Koop: Kamera zoomt heraus, damit beide sichtbar bleiben
 
 function newRun(godId, world, god2, m2){
-  const god = GODS[godId], u = meta.up;
+  const god = GODS[godId], u = linkForge(godId);
   for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
   pt.l.fill(0); effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
   const hl=heroLv(godId), maxHp = Math.round((god.hp + u.hp*4)*(1+hl*HERO[godId].hp));
@@ -1137,8 +1146,8 @@ function nearP(x,y){ if(!G.coop) return G; const o=G.p2; if(G.down) return o; if
 function makeP2(godId, m2){
   Object.assign(G,{ down:false, revT:0, bk:0, bmx:0, bmy:0, hurtT:0, hurtFx:0, revived:false });
   const s1={}; for(const k of PK) s1[k]=G[k];
-  const god=GODS[godId], u=m2?m2.up:meta.up, hl=m2?(m2.heroLv[godId]||0):heroLv(godId), maxHp=Math.round((god.hp + u.hp*4)*(1+hl*HERO[godId].hp));
-  Object.assign(G,{ up:m2?u:undefined, god:godId, x:40, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor, dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
+  const god=GODS[godId], u=m2?m2.up:meta.upH[godId], hl=m2?(m2.heroLv[godId]||0):heroLv(godId), maxHp=Math.round((god.hp + u.hp*4)*(1+hl*HERO[godId].hp));
+  Object.assign(G,{ up:u, god:godId, x:40, y:0, r:15, hp:maxHp, maxHp, speed:god.speed, armor:god.armor, dmgMul:god.dmg, cdMul:1, area:1, magnet:90, regen:0, xpMul:1+u.xp*.03, runeMul:1+u.greed*.05, luck:u.luck,
     inv:0, facing:-1, moving:0, dirx:-1, diry:0, walk:0, weapons:{}, passives:{}, revives:u.revive, rerolls:u.reroll, fate:{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}, warT:4, slamGod:0,
     buffs:{}, healBud:0, combos:{}, frenzyT:0, kt:[], lowFr:false, passiveT:0, healAcc:0, hl, chillT:0, funkeT:10, ymirT:25, kroneCd:0, pack:[],
     shield:false, shieldT:0, bearT:0, bearCd:0, hasteT:0, idunT:30, heimT:25, rootT:10, sogT:30, einT:40, einh:[], ravens:[0,Math.PI].map(a=>({a,t:rnd(.3,1.2),x:0,y:0,dx:0,dy:0,dive:0})),
@@ -1357,7 +1366,7 @@ function weaponsUpdate(dt){ SRC="passive";
         const base=Math.atan2(t.y-G.y,t.x-G.x);
         for(let i=0;i<n;i++){ const a=base+(i-(n-1)/2)*.16; shoot("arrow",G.x,G.y,Math.cos(a)*720,Math.sin(a)*720,9,L(D.dmg,l)*OV(l)*G.dmgMul,L(D.pierce,l),1.1,{evo:w.evo}); }
         sfx("shoot"); }
-      else if(id==="slam"){ w.t=L(D.cd,l)*cdm*(w.evo?.75:1)*(1-meta.up.ulti*.03); const R=L(D.rad,l)*A, dmg=L(D.dmg,l)*OV(l)*G.dmgMul;
+      else if(id==="slam"){ w.t=L(D.cd,l)*cdm*(w.evo?.75:1)*(1-(G.up||meta.up).ulti*.03); const R=L(D.rad,l)*A, dmg=L(D.dmg,l)*OV(l)*G.dmgMul;
         const others=Object.keys(GODS).filter(k=>k!==G.god), gd=others[G.slamGod++%others.length];
         const tx=G.x+G.dirx*40, ty=G.y+G.diry*40;
         G.ultiDim=gd==="donar"?2.4:1.25; sfx(gd==="donar"?"thunder":"horn");
@@ -2388,7 +2397,7 @@ function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
 
 function renderGods(){
   if(!selGod && meta.lastGod && GODS[meta.lastGod] && meta.lastGod!==blockGod) selGod=meta.lastGod;
-  $("btn-start").disabled=!selGod; $("runes-heroes").textContent=`ᚱ ${meta.runes}`;
+  $("btn-start").disabled=!selGod; $("runes-heroes").textContent=`ᚱ ${meta.runes}`; if(typeof shop3Txt==="function") shop3Txt();
   const Bh = selWorld==="eis"? meta.bestEis : meta.best; $("best-heroes").textContent = Bh&&Bh.wave? `Rekord in ${WORLDS[selWorld].name}: ${Bh.wave} Wellen mit ${GODS[Bh.god]?.name||"?"}` : "";
   if(typeof koop!=="undefined" && koop){ const K=(meta.bestKoop||{})[selWorld]; $("best-heroes").textContent = K&&K.wave? `Koop-Rekord in ${WORLDS[selWorld].name}: ${K.wave} Wellen (${(K.gods||[]).map(g=>GODS[g]?.name||"?").join(" + ")})` : `Noch kein Koop-Rekord in ${WORLDS[selWorld].name}`; }
   $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"${id===blockGod?" disabled title=\"Schon von Spieler 1 gewählt\"":""}><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div>${heroLv(id)?`<div class="st" style="margin-top:2px"><span>Heldenstufe <b>${heroLv(id)}/${HERO_MAX}</b> · ${HERO_STAGE[heroStage(heroLv(id))]}</span></div>`:""}</div></button>`).join("");
@@ -2434,11 +2443,12 @@ $("btn-worldsback").addEventListener("click", toTitle);
 $("worlds").addEventListener("click", e=>{ const b=e.target.closest("[data-world]"); if(!b||b.disabled) return; selWorld=b.dataset.world; meta.lastWorld=selWorld; saveMeta(); openHeroes(); });
 $("gods").addEventListener("click", e=>{ const b=e.target.closest("[data-god]"); if(!b||b.disabled) return; const id=b.dataset.god;
   if(selGod===id){ pickStart(id); return; }
-  selGod=id; meta.lastGod=id; saveMeta(); document.querySelectorAll("#gods .god").forEach(x=>x.classList.toggle("sel", x.dataset.god===id)); $("btn-start").disabled=false; });
+  selGod=id; meta.lastGod=id; saveMeta(); document.querySelectorAll("#gods .god").forEach(x=>x.classList.toggle("sel", x.dataset.god===id)); $("btn-start").disabled=false; shop3Txt(); });
+function shop3Txt(){ const b=$("btn-shop3"); b.disabled=!selGod; b.firstChild.textContent = selGod? `Runenschmiede ${GODS[selGod].name} ` : "Runenschmiede "; }
 $("btn-start").addEventListener("click", ()=>{ if(selGod) pickStart(selGod); });
 $("btn-heroes-worlds").addEventListener("click", openWorlds);
 $("btn-heroes-menu").addEventListener("click", ()=>{ if(NET.guest||NET.host) netLeave(); else toTitle(); });
-$("btn-shop3").addEventListener("click", ()=>{ shopFrom="ov-heroes"; renderShop(); only("ov-shop"); });
+$("btn-shop3").addEventListener("click", ()=>{ if(!selGod) return; linkForge(selGod); shopFrom="ov-heroes"; renderShop(); only("ov-shop"); });
 function startGame(god, god2, m2){ unlockAudio(); setMusic("battle"); lastGod=god; lastGod2=god2||null; CZ=1; newRun(god, selWorld, god2||null, m2||null); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
 let lastGod="donar", lastGod2=null;
 function pause(){ if(NET.guest){ if(state==="play" && NET.conn) NET.conn.send({t:"pause"}); return; } if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
@@ -2488,6 +2498,10 @@ function buyIce(id){ const k=ICE_SKILLS.find(x=>x.id===id); if(!k || iceOwned(id
   meta.runes-=k.cost; meta.ice[id]=true; saveMeta(); return true; }
 // shop
 function renderShop(){
+  const fg=meta.forgeGod, lock = shopFrom==="ov-heroes";   // aus der Heldenwahl: nur der gewählte Held
+  $("shop-gods").innerHTML = lock? "" : Object.entries(GODS).map(([g,d])=>`<button type="button" data-shopgod="${g}" class="${g===fg?"on":""}" style="--c:${d.color}">${d.name}</button>`).join("");
+  $("shop-hint").textContent = `Dauerhafte Stärkung nur für ${GODS[fg].name}. Jeder Gott hat seine eigene Schmiede. Runen verdienst du mit jeder Welle und jedem Boss.`;
+  document.querySelector("#ov-shop h2.t").textContent = `Runenschmiede · ${GODS[fg].name}`;
   $("runes-shop").textContent=`ᚱ ${meta.runes} Runen`;
   let last="", h="";
   for(const [id,m] of Object.entries(META)){ const mx=metaMax(id), l=meta.up[id], maxed=l>=mx, cost=m.cost(l), can=!maxed&&meta.runes>=cost;
@@ -2503,14 +2517,15 @@ function renderShop(){
   $("shop").innerHTML = h + (meta.refunded?`<div class="shop-grp" style="color:var(--gold)">Die Schmiede wurde neu gebaut: ${meta.refunded} Runen aus deinen alten Upgrades wurden dir zurückgegeben.</div>`:"");
   if(meta.refunded){ meta.refunded=0; saveMeta(); }
 }
+$("shop-gods").addEventListener("click", e=>{ const b=e.target.closest("[data-shopgod]"); if(!b) return; linkForge(b.dataset.shopgod); saveMeta(); renderShop(); });
 $("shop").addEventListener("click", e=>{ const ib=e.target.closest("[data-ice]"); if(ib){ if(ib.disabled) return; const id=ib.dataset.ice; if(buyIce(id)){ audioInit(); sfx("win"); renderShop(); $("runes-shop").textContent=`Gelernt: ${ICE_SKILLS.find(x=>x.id===id).name}`; } return; } const b=e.target.closest("[data-up]"); if(!b||b.disabled) return; const id=b.dataset.up, m=META[id], l=meta.up[id], cost=m.cost(l); if(l>=metaMax(id)||meta.runes<cost) return;
   const before=unlockedSkills().length; meta.runes-=cost; meta.up[id]++; saveMeta(); audioInit(); sfx("level"); renderShop();
   const sk=SKILLS.find(k=>k.req===id && k.lvl===meta.up[id]); if(sk){ $("runes-shop").textContent=`Neue Fähigkeit freigeschaltet: ${sk.name}`; sfx("win"); }
   if(before<SKILLS.length && unlockedSkills().length===SKILLS.length){ $("runes-shop").textContent="Vidar ist freigeschaltet. Er wird in deinen Kämpfen erscheinen."; } });
 let shopFrom="ov-title";
 $("btn-shop").addEventListener("click", ()=>{ shopFrom="ov-title"; renderShop(); only("ov-shop"); });
-$("btn-shop2").addEventListener("click", ()=>{ shopFrom="ov-over"; renderShop(); only("ov-shop"); });
-$("btn-shopback").addEventListener("click", ()=>{ if(shopFrom==="ov-over") only("ov-over"); else if(shopFrom==="ov-heroes") openHeroes(); else { renderGods(); only("ov-title"); } });
+$("btn-shop2").addEventListener("click", ()=>{ shopFrom="ov-over"; linkForge(NET.guest? meta.lastGod : lastGod); renderShop(); only("ov-shop"); });
+$("btn-shopback").addEventListener("click", ()=>{ if(shopFrom==="ov-over") only("ov-over"); else if(shopFrom==="ov-heroes"){ renderGods(); only("ov-heroes"); } else { renderGods(); only("ov-title"); } });
 
 /* ---------------- Ruhmeshalle (shared via db, falls back to local) ---------------- */
 let db=null, uid=null, boardDocs=[], canWrite=null;
@@ -2538,7 +2553,7 @@ function sum32(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.cha
 function saveCode(){ const j=JSON.stringify({v:1, at:Date.now(), meta}); const b=btoa(unescape(encodeURIComponent(j))); return "GW1."+b+"."+sum32(b); }
 function saveJSON(){ const d=new Date();
   return JSON.stringify({ spiel:"Götterwacht", format:2, version:GAME_VERSION, gespeichert:d.toISOString(), name:meta.nick||"",
-    runen:meta.runes, runenschmiede:meta.up, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{}, eispfad:cleanIce(meta.ice), rekordNiflheim:meta.bestEis||{wave:0,kills:0,god:""}, seelen:meta.souls||0, helden:cleanHeroes(meta.heroLv), koopRekord:cleanKoop(meta.bestKoop) }, null, 2); }
+    runen:meta.runes, runenschmiede:meta.up, runenschmiedeHelden:meta.upH, schmiedeHeld:meta.forgeGod, rekord:meta.best, besteStufe:meta.bestLevel||0, runden:meta.runs||0, killsGesamt:meta.totalKills||0, ton:meta.sound, erfolge:meta.ach||{}, goetterWelle5:meta.godW||{}, eispfad:cleanIce(meta.ice), rekordNiflheim:meta.bestEis||{wave:0,kills:0,god:""}, seelen:meta.souls||0, helden:cleanHeroes(meta.heroLv), koopRekord:cleanKoop(meta.bestKoop) }, null, 2); }
 function downloadSave(){ const d=new Date(), name=`Goetterwacht_Spielstand_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const blob=new Blob([saveJSON()],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); return name; }
 function readAny(text){
@@ -2549,10 +2564,11 @@ function readAny(text){
   const up=j.runenschmiede||j.up, runes=j.runen??j.runes;
   if(!up || typeof up!=="object" || typeof runes!=="number") throw new Error("In der Datei fehlen Runen oder Runenschmiede.");
   const clean={}; for(const k in META){ const v=Math.floor(Number(up[k])||0); clean[k]=clamp(v,0,META[k].max+(META[k].ext||0)); }
-  return { runes:Math.max(0,Math.floor(runes)), up:clean, best:j.rekord||j.best||{wave:0,kills:0,god:""}, bestLevel:j.besteStufe??j.bestLevel??0,
+  const upH0=j.runenschmiedeHelden||j.upH, upH = upH0 && typeof upH0==="object"? Object.fromEntries(Object.keys(GODS).map(g=>[g,cleanUp(upH0[g]||clean)])) : undefined;
+  return { upH, forgeGod:j.schmiedeHeld||j.forgeGod, runes:Math.max(0,Math.floor(runes)), up:clean, best:j.rekord||j.best||{wave:0,kills:0,god:""}, bestLevel:j.besteStufe??j.bestLevel??0,
     runs:j.runden??j.runs??0, totalKills:j.killsGesamt??j.totalKills??0, nick:j.name??j.nick??"", sound:j.ton??j.sound??true, forgeV:2, ach:j.erfolge||j.ach||{}, godW:j.goetterWelle5||j.godW||{}, ice:cleanIce(j.eispfad||j.ice), bestEis:j.rekordNiflheim||j.bestEis||{wave:0,kills:0,god:""}, souls:Math.max(0,Math.floor(Number(j.seelen??j.souls)||0)), heroLv:cleanHeroes(j.helden||j.heroLv), bestKoop:cleanKoop(j.koopRekord||j.bestKoop) };
 }
-function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; meta.ice=cleanIce(meta.ice); meta.heroLv=cleanHeroes(meta.heroLv); meta.bestKoop=cleanKoop(meta.bestKoop); meta.souls=Math.max(0,Math.floor(meta.souls||0)); saveMeta(); }
+function applyLoaded(m){ meta=Object.assign({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 }, m); for(const k in META) meta.up[k]=meta.up[k]||0; linkForge(); meta.ice=cleanIce(meta.ice); meta.heroLv=cleanHeroes(meta.heroLv); meta.bestKoop=cleanKoop(meta.bestKoop); meta.souls=Math.max(0,Math.floor(meta.souls||0)); saveMeta(); }
 function readCode(code){
   const c=String(code||"").replace(/\s+/g,""); const m=/^GW1\.([A-Za-z0-9+/=]+)\.([a-z0-9]+)$/.exec(c);
   if(!m) throw new Error("Das ist kein gültiger Spielstand-Code. Er beginnt mit «GW1.».");
@@ -2732,7 +2748,7 @@ async function netJoin(code){
     netFail(`Verbindung fehlgeschlagen (${e.type}).`); });
   setTimeout(()=>{ if(NET.guest && NET.peer===peer && !started && !NET.conn) netFail("Der Verbindungsdienst antwortet nicht. Prüfe das Internet und lade die Seite neu."); }, 30000);
 }
-function netPick(id){ if(!NET.conn) return; meta.lastGod=id; saveMeta(); NET.conn.send({t:"pick", god:id, up:meta.up, heroLv:meta.heroLv}); lobby("Online-Koop", `Bereit mit ${GODS[id].name}. Warte, bis Spieler 1 startet …`); $("btn-lobby-leave").textContent="Verlassen"; }
+function netPick(id){ if(!NET.conn) return; meta.lastGod=id; linkForge(id); saveMeta(); NET.conn.send({t:"pick", god:id, up:meta.up, heroLv:meta.heroLv}); lobby("Online-Koop", `Bereit mit ${GODS[id].name}. Warte, bis Spieler 1 startet …`); $("btn-lobby-leave").textContent="Verlassen"; }
 function netCard(i){ if(!NET.conn) return; NET.conn.send({t:"card", i}); if(liveUiOn()){ liveClose(); return; } hide("ov-level"); state="wait"; }
 function netBack(){ // Gast ist nach einem Abbruch zurück: gleiche Runde, gleicher Gott, Stand bleibt
   NET.lost=false; NET.gotIn=false; NET.in={mx:0,my:0}; NET.live[1]=null; if(G.lvq) G.lvq[1]=0; NET.p1=null; NET.ph=pHead;
@@ -2941,7 +2957,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 48;
+const GAME_VERSION = 49;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -3008,7 +3024,7 @@ function botPick(list){ let best=list[0], bs=-1; for(const o of list){ let sc;
     sc+=Math.random()*8; if(sc>bs){ bs=sc; best=o; } } return best; }
 function simRun(god, opt={}){
   const savedMeta=JSON.stringify(meta), maxWave=opt.maxWave||10, maxT=opt.maxTime||3000;
-  if(opt.forge){ for(const k in META) meta.up[k]=0; Object.assign(meta.up,opt.forge); }
+  if(opt.forge){ meta.upH={}; for(const g in GODS) meta.upH[g]=cleanUp(opt.forge); linkForge(); }
   if(opt.world==='eis'){ meta.ach=meta.ach||{}; meta.ach.w20=meta.ach.w20||1; }
   if(opt.forge || opt.ice) meta.ice = opt.ice==="all" ? Object.fromEntries(ICE_SKILLS.map(k=>[k.id,true])) : cleanIce(opt.ice||{});
   if(opt.hero!=null) meta.heroLv={donar:opt.hero,ulfr:opt.hero,skadi:opt.hero};
