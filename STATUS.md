@@ -1,8 +1,17 @@
 # Status
 
-Stand: 08.11.2026, Version 44
+Stand: 08.11.2026, Version 45
 
 ## Zuletzt geändert
+- Version 45 (Claude, nach Nicos Wunsch «alle Punkte umsetzen» und Charakterdesign):
+  - **Neue Heldenfiguren:** Donar, Ulfr und Skadi sind neu und detaillierter gezeichnet (Umrisse, Schattierung, Waffe in der Hand: Hammer, zwei Äxte, Eisspeer). Die Heldenstufe ist in die Figur eingebaut statt aufgesetzt: Stufe 1 goldener Ring und Goldbeschläge, 4 Schulterpanzer und grössere Waffe, 7 leuchtende Rune auf der Brust, leuchtende Augen und Aura, 10 göttliche Krone (Donar goldener Flügelhelm, Ulfr Wolfskrone, Skadi Eiskrone) und kreisende goldene Funken.
+  - **Weniger Stufenaufstiege:** Ab Stufe 15 braucht jede Stufe 8 % mehr Erfahrung pro Stufe darüber. Dafür gibt jede Gabe ab Stufe 15 zusätzlich +3 % Schaden (steht im Kartentitel). Testläufe (Bot, ohne Schmiede): bei Welle 9 Stufe 33 statt rund 40.
+  - **Gaben automatisch:** Schalter im Hauptmenü und in der Pause («Gaben: selbst wählen / automatisch»). Gilt auch online für jeden Spieler auf seinem Gerät.
+  - **Fernkampf:** Pfeile und Eisgeschosse der Gegner machen 20 % weniger Schaden, höchstens 48 statt 60 gleichzeitig. Testläufe gleicher Zufall: Ø Welle 9,2 statt 7,5 (Donar 8,7, Ulfr 11,7, Skadi 7,3).
+  - **Weniger Daten online:** Gegner und Partikel als 16-Bit-Zahlen, Listen gerundet, 15 statt 20 Stände pro Sekunde. Gemessen über den Umweg-Server: 69 statt 129 KB/s (rund 0,25 GB pro Stunde).
+  - **Wieder einsteigen:** Bricht die Verbindung ab, versucht der Gast selbst wieder in die Runde zu kommen; sonst einfach den gleichen Link nochmals öffnen. Er bekommt seinen Gott mit allen Waffen zurück und steht mit halbem Leben wieder auf. Test `werkzeuge/online-zurueck.js` (lokal und echt) besteht.
+  - **Neue Version:** Auf GitHub Pages fragt das Spiel beim Start (und alle 10 Minuten im Menü) nach, ob es eine neuere Version gibt, und zeigt dann «Neu laden». Bei verschiedenen Versionen im Online-Koop steht, wer neu laden muss.
+  - **Knopf «Später»** steht bei offenen Gaben jetzt oben neben dem Titel (auf dem Handy nicht mehr unter dem Rand).
 - Version 44 (Claude, nach Nicos Test zu zweit): **Online-Koop frei laufen, Karten auf Knopfdruck.**
   - Frei laufen: Im Online-Koop folgt die Kamera auf jedem Gerät dem eigenen Gott, es gibt keine Leine und kein Herauszoomen mehr. Ist der Mitspieler nicht im Bild, zeigt ein Pfeil am Rand, wo er ist (rot mit «Hilfe!», wenn er am Boden liegt). Gegner, Bosse und Schreine erscheinen abwechselnd bei einem der beiden; Gegner, die weit weg zurückbleiben, tauchen beim Spieler wieder auf, den sie jagen. Spieler 2 bekommt die Gegner um sich herum geschickt.
   - Karten: Beim Stufenaufstieg erscheint nur ein kleiner Knopf «✦ Gabe wählen» rechts über der Karte (mit Zahl, wenn mehrere warten). Erst ein Tipp darauf (oder Taste E) öffnet die Karten. Solange sie offen sind, ist man geschützt, insgesamt höchstens 10 s, dann nimmt das Spiel die erste Karte. «Später» schliesst die Karten wieder, die Restzeit bleibt. Die Karten sind kompakter (ohne Zusatz-Hinweise).

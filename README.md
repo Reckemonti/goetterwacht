@@ -14,8 +14,9 @@ Nordisches Wellen-Überlebensspiel im Browser. Eine einzige HTML-Datei, keine In
 - **Welten:** Start im Menü mit «Spiel starten · Solo» oder «Koop», dann Welt und Gott wählen, «Ragnarök starten». Midgard geht nach Welle 20 endlos weiter. **Niflheim** (Eiswelt) öffnet sich mit Welle 20 in Midgard: eigene Karte aus Eis und Schnee, Frostgegner und Eisgolems, Schneestürme statt Nebel, Treffer lassen dich frieren; Start wieder bei Welle 1, aber viel härter. Ein Platz mehr für Waffen und Gaben
 - Runenschmiede: 15 Upgrades mit 180 Stufen (ab Niflheim +10 Stufen pro Kraft-Upgrade, zusammen 300), 15 freischaltbare Fähigkeiten, danach Vidar als Verbündeter; dazu der **Pfad nach Niflheim** (Skilltree mit 10 Fähigkeiten für die Eiswelt)
 - Gaben beim Stufenaufstieg: dazu Frostnova, Eiszapfenregen, Zähigkeit, Runenwissen, Scharfblick
-- **Heldenhalle** in der Ruhmeshalle: jeden Gott einzeln mit Seelen bis Stufe 10 leveln (mehr Leben, Schaden, Tempo und eine eigene Stärke); sichtbar mächtiger bei Stufe 1, 4, 7 und 10 (goldener Ring, Schulterpanzer, Runenleuchten, Krone)
-- **Online-Koop mit Link:** «Koop» → «Online mit Link», Welt und Gott wählen, Link schicken; der Mitspieler öffnet ihn auf seinem eigenen Handy oder PC, nimmt einen anderen Gott, und ihr kämpft zusammen auf derselben Karte. Jeder kann frei laufen, ein Pfeil zeigt, wo der andere ist. Neue Gaben warten hinter dem Knopf «✦ Gabe wählen», das Spiel hält nicht an
+- **Heldenhalle** in der Ruhmeshalle: jeden Gott einzeln mit Seelen bis Stufe 10 leveln (mehr Leben, Schaden, Tempo und eine eigene Stärke); sichtbar mächtiger bei Stufe 1, 4, 7 und 10 (Goldbeschläge, Schulterpanzer und grössere Waffe, leuchtende Rune und Aura, göttliche Krone mit Funken)
+- **Gaben automatisch:** Schalter im Hauptmenü und in der Pause, wer lieber nur kämpft. Ab Stufe 15 gibt es seltener neue Gaben, dafür je +3 % Schaden
+- **Online-Koop mit Link:** «Koop» → «Online mit Link», Welt und Gott wählen, Link schicken; der Mitspieler öffnet ihn auf seinem eigenen Handy oder PC, nimmt einen anderen Gott, und ihr kämpft zusammen auf derselben Karte. Jeder kann frei laufen, ein Pfeil zeigt, wo der andere ist. Neue Gaben warten hinter dem Knopf «✦ Gabe wählen», das Spiel hält nicht an Bricht die Verbindung ab, steigt der Mitspieler mit dem gleichen Link wieder in die laufende Runde ein.
 - **Koop zu zweit an einem Gerät:** gemeinsame Wellen, jeder mit eigenem Gott, eigener Lebensleiste und eigenen Waffen; abwechselnd Karten wählen; wer fällt, wird vom anderen wiederbelebt (3 Sekunden danebenstehen); vorbei erst, wenn beide liegen. Gegner sind zu zweit zahlreicher und zäher
 - 16 Erfolge, Schadens-Statistik, eigene Musik (Start, Kampf, Bosskampf), Vibration auf dem Handy
 
@@ -37,6 +38,7 @@ Automatisch im Browser. **⬇ Spielstand speichern** lädt eine JSON-Datei herun
 | `werkzeuge/qa.js` | Klick-Test aller Menüs auf Handygrösse, inklusive Koop |
 | `werkzeuge/online-wieder.js` | Online-Koop: Spieler 1 kurz offline, Gast kommt trotzdem rein (braucht Internet) |
 | `werkzeuge/online-qa.js` | Online-Koop-Test mit zwei Fenstern (ohne Internet; `NETZ=echt` über PeerJS) |
+| `werkzeuge/online-zurueck.js` | Online-Test: der Gast verliert mitten in der Runde die Verbindung und steigt mit dem gleichen Link wieder ein (`NETZ=echt` für echtes Netz) |
 | `STATUS.md` | Stand und Änderungen |
 | `PLAN.md` | Offene Aufgaben (GW-1 bis GW-8) und Routine-Entscheide |
 | `werkzeuge/gw34-headless.test.cjs` | Test Münzwurf und Credit (`node werkzeuge/gw34-headless.test.cjs`) |
