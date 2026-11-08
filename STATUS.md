@@ -1,8 +1,12 @@
 # Status
 
-Stand: 08.11.2026, Version 40
+Stand: 08.11.2026, Version 41
 
 ## Zuletzt geändert
+- Version 41 (Claude, nach Nicos Test: «Keine Verbindung … passiert die ganze Zeit»): **Einladung übersteht den Wechsel in eine andere App.**
+  - Fehler: Wechselt Spieler 1 auf dem Handy kurz in eine andere App (z. B. WhatsApp, um den Link zu schicken), trennt Android die Verbindung zum PeerJS-Vermittler. Das Spiel gab die Einladung dann sofort auf; der Mitspieler sah nach 20 s «Keine Verbindung».
+  - Lösung: Spieler 1 verbindet sich selbst neu mit dem Vermittler (sofort und beim Zurückkommen in die App), die Einladung und der Link bleiben gültig. Der Mitspieler klopft bis 2 Minuten lang alle 8 Sekunden neu an und zeigt «Warte auf Spieler 1 … (Versuch n)». Klopft er neu an, ersetzt die neue Verbindung die alte.
+  - Test: `werkzeuge/online-wieder.js` (echtes Internet): Spieler 1 ist 25 s offline, der Gast öffnet den Link in dieser Zeit und kommt danach rein. Version 40 scheitert an diesem Test, Version 41 besteht ihn.
 - Version 40 (Claude, nach Nicos erstem Test zu zweit): **Online-Koop repariert und Karten ohne Unterbruch.**
   - Fehler: Der Mitspieler schickte nur Signale, solange sein Spielbild lief. War seine Seite im Hintergrund (Handy gesperrt, WhatsApp offen) oder wartete er in einem Menü, kam 20 Sekunden nichts an. Sein Gott stand still und fiel, danach galt die Verbindung als abgebrochen.
   - Lösung: Beide Geräte schicken jede Sekunde ein Lebenszeichen (Herzschlag), auch im Menü und im Hintergrund; ein Abbruch gilt erst nach 30 Sekunden Stille. Ist die Seite des Mitspielers beim Start im Hintergrund, hält das Spiel sofort an. Bis seine Steuerung ankommt (höchstens 15 s), ist sein Gott geschützt.

@@ -35,6 +35,7 @@ Automatisch im Browser. **⬇ Spielstand speichern** lädt eine JSON-Datei herun
 | `werkzeuge/build.sh` | Baut `index.html` aus dem Quellcode |
 | `werkzeuge/sim.js` | Autopilot-Simulation fürs Balancing (`node sim.js <html-datei\|-> <runden> <maxWelle> [schmiede-json\|-] [h\|-] [eis: all\|json\|-]`, mit `PW_CHANNEL=msedge` für das installierte Edge, `WORLD=eis` für Niflheim, `HERO=0..10` für die Heldenstufe, `COOP=1` für zwei Bots zusammen, `SEED=<zahl>` für wiederholbare Läufe) |
 | `werkzeuge/qa.js` | Klick-Test aller Menüs auf Handygrösse, inklusive Koop |
+| `werkzeuge/online-wieder.js` | Online-Koop: Spieler 1 kurz offline, Gast kommt trotzdem rein (braucht Internet) |
 | `werkzeuge/online-qa.js` | Online-Koop-Test mit zwei Fenstern (ohne Internet; `NETZ=echt` über PeerJS) |
 | `STATUS.md` | Stand und Änderungen |
 | `PLAN.md` | Offene Aufgaben (GW-1 bis GW-8) und Routine-Entscheide |
