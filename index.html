@@ -283,6 +283,14 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="row"><button class="btn gold big" id="btn-start" type="button" disabled>Ragnarök starten</button></div>
   <div class="row"><button class="btn" id="btn-shop3" type="button">Runenschmiede <span class="runesTotal" id="runes-heroes"></span></button><button class="btn" id="btn-heroes-worlds" type="button">Welt wechseln</button><button class="btn" id="btn-heroes-menu" type="button">Hauptmenü</button></div>
   <div class="hint" id="best-heroes"></div>
+  <div class="row" id="run-box" hidden><button class="btn gold" id="btn-run-box" type="button"></button></div>
+</div></div>
+
+<div class="ov" id="ov-resume" hidden><div class="ov-in">
+  <div class="runes" aria-hidden="true">ᚱ</div><h2 class="t">Gespeicherte Runde</h2>
+  <div class="hint" id="resume-info"></div>
+  <div class="row"><button class="btn gold big" id="btn-run-go" type="button">Fortfahren</button><button class="btn big" id="btn-run-new" type="button">Neues Spiel</button></div>
+  <div class="row"><button class="btn" id="btn-run-back" type="button">Zurück</button></div>
 </div></div>
 
 <button class="livebtn" id="livebtn" type="button" hidden>✦ Gabe wählen</button>
@@ -1952,10 +1960,11 @@ function renderSlots(){
 
 /* ---------------- waves ---------------- */
 function waveUpdate(dt){
+  if(G.phase==="break"){ if(!G.svB){ G.svB=true; saveRun(); } } else G.svB=false;   // Auto-Speichern: Anfang jeder Pause zwischen den Wellen
   if(G.phase==="fight"){ G.waveT-=dt; if(G.waveT<=0){ G.phase="boss"; spawnBoss(); } }
   else if(G.phase==="break"){ G.breakT-=dt; if(G.breakT<=0){ G.wave++; G.waveT=waveLen(G.wave); G.phase="fight"; G.hordeDone=false; G.bossFix=false; const tc=tierOf(G.wave)!==tierOf(G.wave-1);
       G.event = waveEvent(G.wave, G.world==="eis");
-      banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":G.event==="schneesturm"?"Schneesturm: Kälte bremst dich, +50 % Erfahrung":G.world==="eis"?(G.wave%5===0?"Ein Frostboss naht":"Halte stand im ewigen Eis"):tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); openCoinOffer(); } }
+      banner(`Welle ${G.wave}`, G.event==="blutmond"?"Blutmond: Gegner rasen, doppelte Beute":G.event==="nebel"?"Nebel zieht auf: +50 % Erfahrung":G.event==="schneesturm"?"Schneesturm: Kälte bremst dich, +50 % Erfahrung":G.world==="eis"?(G.wave%5===0?"Ein Frostboss naht":"Halte stand im ewigen Eis"):tc?TIERTXT[tierOf(G.wave)]:G.wave%5===0?"Ein grosser Boss naht":"Halte stand"); if(G.event) sfx("thunder"); openCoinOffer(); saveRun(); } }
   else if(G.phase==="boss"){ G.bosses=(G.bosses||[]).filter(b=>b.on);
     if(!G.bosses.length && G.boss===null && !G.bossFix){ G.bossFix=true; G.phase="break"; G.breakT=3; G.wavesDone=G.wave; $("bossbar").hidden=true; }
     let best=null, bd=1e12; for(const b of G.bosses){ const d=(b.x-G.x)**2+(b.y-G.y)**2; if(d<bd){bd=d;best=b;} } G.boss=best; }
@@ -2409,7 +2418,7 @@ function hud(){
 }
 
 /* ---------------- overlays & flow ---------------- */
-const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin","ov-koop","ov-lobby","ov-wait"];
+const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin","ov-koop","ov-lobby","ov-wait","ov-resume"];
 function show(id){ $(id).hidden=false; }
 function hide(id){ $(id).hidden=true; }
 function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
@@ -2424,6 +2433,7 @@ function renderGods(){
   $("runes-title").textContent = `ᚱ ${meta.runes}`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
   $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`; autoTxt();
+  runBox();
 }
 function cardMode(){ return (meta.autoPick??true)? "auto" : meta.cardStop? "stop" : "live"; }   // Standard: automatisch; live = im Kampf wählen, stop = Spiel hält an, auto = automatisch
 const CARD_TXT = { live:"Gaben: im Kampf wählen", stop:"Gaben: Spiel hält an", auto:"Gaben: automatisch" };
@@ -2452,7 +2462,7 @@ function heroSub(){ const touch=!$("keys-touch").hidden;
   $("btn-start").textContent = koopStep===0 ? "Weiter zu Spieler 2" : "Ragnarök starten"; }
 function pickStart(id){ if(id===blockGod) return;
   if(NET.guest){ netPick(id); return; } if(koopNet){ netHost(id); return; }
-  if(!koop){ startGame(id); return; } if(koopStep===0){ koopGod1=id; koopStep=1; blockGod=id; if(selGod===id) selGod=null; renderGods(); heroSub(); return; } startGame(koopGod1, id); }
+  if(!koop){ const r=runRead(); if(r){ askRun(id,r); return; } startGame(id); return; } if(koopStep===0){ koopGod1=id; koopStep=1; blockGod=id; if(selGod===id) selGod=null; renderGods(); heroSub(); return; } startGame(koopGod1, id); }
 $("btn-solo").addEventListener("click", ()=>{ audioInit(); koop=false; koopNet=false; openWorlds(); });
 $("btn-koop").addEventListener("click", ()=>{ audioInit(); only("ov-koop"); });
 $("btn-koop-local").addEventListener("click", ()=>{ koop=true; koopNet=false; openWorlds(); });
@@ -2469,8 +2479,69 @@ $("btn-heroes-worlds").addEventListener("click", openWorlds);
 $("btn-heroes-menu").addEventListener("click", ()=>{ if(NET.guest||NET.host) netLeave(); else toTitle(); });
 $("btn-shop3").addEventListener("click", ()=>{ if(!selGod) return; linkForge(selGod); shopFrom="ov-heroes"; renderShop(); only("ov-shop"); });
 function startGame(god, god2, m2){ unlockAudio(); setMusic("battle"); lastGod=god; lastGod2=god2||null; CZ=1; newRun(god, selWorld, god2||null, m2||null); only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; renderSlots(); hud(); }
+/* ---------------- Laufende Runde speichern (nur Solo) ----------------
+   Ein Eintrag pro Spielstand-Platz. Gegner und Geschosse auf dem Feld werden nicht gespeichert:
+   die Runde geht mit frischen Gegnern in der gleichen Welle weiter (ein Bosskampf beginnt von vorn). */
+const RUN_V = 1, runKey = ()=> "gw-run-"+SLOT;
+function runClear(){ try{ localStorage.removeItem(runKey()); }catch(e){} }
+function runSoloOk(){ return !!G && !G.coop && !NET.guest && !NET.host && !BOT.on && state!=="over" && state!=="title"; }
+function saveRun(){
+  if(!runSoloOk()) return;
+  try{
+    let pl = G.pendingLv + ((G.lvq&&G.lvq[0])||0) + (NET.live[0]?1:0), pf = G.pendingFate + (state==="fate"?1:0);   // offene Karten nicht verlieren
+    for(const g of GM) if(g.on && g.k==="chest") pl += G.sk.freyja? 2 : 1;                                          // Schatz am Boden zählt schon
+    const boss = G.phase==="boss";
+    const s = { v:RUN_V, gv:GAME_VERSION, t:Date.now(), god:G.god, world:G.world, wave:G.wave, wavesDone:G.wavesDone, phase:boss?"fight":G.phase, waveT:boss?1.5:G.waveT, breakT:G.breakT, hordeDone:boss?true:!!G.hordeDone, bossFix:!!G.bossFix,
+      level:G.level, xp:G.xp, kills:G.kills, time:G.time, runes:G.runes, hp:G.hp, maxHp:G.maxHp, x:G.x, y:G.y, revives:G.revives, rerolls:G.rerolls, pendingLv:pl, pendingFate:pf,
+      coinOffered:G.coinOffered, fate:G.fate, passives:G.passives, combos:G.combos||{}, event:G.event, dmgBy:G.dmgBy||{}, cursed:!!G.cursed,
+      weapons:Object.values(G.weapons).map(w=>({ id:w.id, lvl:w.lvl, evo:!!w.evo })) };
+    localStorage.setItem(runKey(), JSON.stringify(s));
+  }catch(e){}
+}
+function runRead(){   // geprüfter Stand oder null (kaputt, fremde Version, gesperrte Welt)
+  let s; try{ s = JSON.parse(localStorage.getItem(runKey())||"null"); }catch(e){ return null; }
+  if(!s || typeof s!=="object" || s.v!==RUN_V || !GODS[s.god]) return null;
+  const world = s.world==="eis"? "eis" : "mittgard"; if(world==="eis" && !worldOpen("eis")) return null;
+  const n = (v,d,lo,hi)=>{ v=Number(v); return Number.isFinite(v)? clamp(v,lo,hi) : d; }, num = (o,keys,d)=>{ const r={}; for(const k of keys) r[k]=n(o&&o[k],d[k],-1e6,1e6); return r; };
+  const weapons=[]; for(const w of Array.isArray(s.weapons)?s.weapons:[]) if(w && WEAP[w.id] && !weapons.some(x=>x.id===w.id)) weapons.push({ id:w.id, lvl:Math.floor(n(w.lvl,1,1,WEAP[w.id].max||10)), evo:!!w.evo });
+  if(!weapons.length) return null;
+  const passives={}; for(const k in PASS) if(s.passives && s.passives[k]>0) passives[k]=Math.floor(n(s.passives[k],1,1,PASS[k].max||10));
+  const dmgBy={}; if(s.dmgBy && typeof s.dmgBy==="object") for(const k in s.dmgBy) dmgBy[k]=n(s.dmgBy[k],0,0,1e12);
+  const combos={}; if(s.combos && typeof s.combos==="object") for(const k in s.combos) if(s.combos[k]) combos[k]=1;
+  const coinOffered={}; if(s.coinOffered && typeof s.coinOffered==="object") for(const k in s.coinOffered) if(s.coinOffered[k]) coinOffered[k]=true;
+  const wave=Math.floor(n(s.wave,1,1,9999)), maxHp=n(s.maxHp,100,1,1e7);
+  return { god:s.god, world, wave, wavesDone:Math.floor(n(s.wavesDone,wave-1,0,9999)), phase:s.phase==="break"?"break":"fight", waveT:n(s.waveT,waveLen(wave),0,3600), breakT:n(s.breakT,3,0,60), hordeDone:!!s.hordeDone, bossFix:!!s.bossFix,
+    level:Math.floor(n(s.level,1,1,9999)), xp:n(s.xp,0,0,1e9), kills:Math.floor(n(s.kills,0,0,1e9)), time:n(s.time,0,0,1e7), runes:Math.floor(n(s.runes,0,0,1e9)), maxHp, hp:n(s.hp,maxHp,1,maxHp),
+    x:n(s.x,0,-WORLD,WORLD), y:n(s.y,0,-WORLD,WORLD), revives:Math.floor(n(s.revives,0,0,99)), rerolls:Math.floor(n(s.rerolls,0,0,99)), pendingLv:Math.floor(n(s.pendingLv,0,0,999)), pendingFate:Math.floor(n(s.pendingFate,0,0,99)),
+    coinOffered, fate:num(s.fate,["dmg","cd","spd","area","magnet","armor","crit","steal"],{dmg:1,cd:1,spd:1,area:1,magnet:1,armor:0,crit:0,steal:0}), passives, combos, event:["blutmond","nebel","schneesturm"].includes(s.event)?s.event:null, dmgBy, cursed:!!s.cursed, weapons };
+}
+function runRestore(o){   // G kommt frisch aus newRun(); hier kommt der Fortschritt drauf
+  Object.assign(G, { wave:o.wave, wavesDone:o.wavesDone, phase:o.phase, waveT:o.waveT, breakT:o.breakT, hordeDone:o.hordeDone, bossFix:o.bossFix, level:o.level, xp:o.xp, xpNeed:xpNeed(o.level), kills:o.kills, time:o.time, runes:o.runes,
+    x:o.x, y:o.y, revives:o.revives, rerolls:o.rerolls, pendingLv:o.pendingLv, pendingFate:o.pendingFate, coinOffered:o.coinOffered, fate:o.fate, passives:o.passives, combos:o.combos, event:o.event, dmgBy:o.dmgBy, cursed:o.cursed, inv:2, tips:[] });
+  G.weapons={}; for(const w of o.weapons) G.weapons[w.id]={ id:w.id, lvl:w.lvl, t:.5, evo:w.evo, ang:0, cdh:0 };
+  applyPassives(); G.maxHp=o.maxHp; G.hp=Math.min(o.maxHp,o.hp);   // abgeleitete Werte neu rechnen, Leben wie gespeichert
+  for(const e of E) e.on=false; for(const p of PR) p.on=false; for(const p of EP) p.on=false; for(const g of GM) g.on=false; for(const t of TX) t.on=false;
+  effects.length=0; pools.length=0; teles.length=0; allies.length=0; craters.length=0; spirals.length=0; storms.length=0; icewaves.length=0;
+  camX=G.x; camY=G.y; renderSlots();
+}
+function resumeRun(o){
+  if(!o) return; selWorld=o.world; unlockAudio(); setMusic("battle"); lastGod=o.god; lastGod2=null; CZ=1; newRun(o.god, o.world, null, null); runRestore(o);
+  only(null); $("hud").hidden=false; state="play"; lastT=performance.now(); acc=0; hud(); banner(`Willkommen zurück · Welle ${G.wave}`, "Das Spiel ist angehalten"); pause();
+}
+const runInfo = r => `${GODS[r.god].name} in ${WORLDS[r.world].name}, Welle ${r.wave}, Stufe ${r.level}`;
+let runPick=null;
+function askRun(id,r){ runPick=id; const same = r.god===id && r.world===selWorld;
+  $("resume-info").textContent = same? `Du hast hier eine laufende Runde: ${runInfo(r)}. Ein neues Spiel löscht sie.` : `Gespeichert ist eine andere Runde: ${runInfo(r)}. Ein neues Spiel mit ${GODS[id].name} löscht sie.`;
+  $("btn-run-go").textContent = `Fortfahren (Welle ${r.wave}, Stufe ${r.level})`; only("ov-resume"); }
+$("btn-run-go").addEventListener("click", ()=>{ resumeRun(runRead()); });
+$("btn-run-new").addEventListener("click", ()=>{ runClear(); if(runPick) startGame(runPick); });
+$("btn-run-back").addEventListener("click", openHeroes);
+function runBox(){ const r = (typeof koop!=="undefined" && (koop||koopNet)) || NET.guest? null : runRead(); $("run-box").hidden=!r; if(r) $("btn-run-box").textContent=`Fortfahren: ${runInfo(r)}`; }
+$("btn-run-box").addEventListener("click", ()=>{ resumeRun(runRead()); });
+addEventListener("pagehide", saveRun);
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden) saveRun(); });
 let lastGod="donar", lastGod2=null;
-function pause(){ if(NET.guest){ if(state==="play" && NET.conn) NET.conn.send({t:"pause"}); return; } if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); }
+function pause(){ if(NET.guest){ if(state==="play" && NET.conn) NET.conn.send({t:"pause"}); return; } if(state!=="play") return; state="pause"; renderSlots(); show("ov-pause"); saveRun(); }
 function resume(){ if(NET.guest){ NET.conn&&NET.conn.send({t:"resume"}); return; } if(state!=="pause") return; hide("ov-pause"); state="play"; lastT=performance.now(); }
 $("pausebtn").addEventListener("click", pause); $("btn-resume").addEventListener("click", resume);
 $("btn-quit").addEventListener("click", ()=>{ hide("ov-pause"); state="play"; gameOver(); });
@@ -2482,7 +2553,7 @@ $("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventL
 
 function gameOver(){
   if(!NET.guest){ NET.live=[null,null]; liveClose(); }
-  if(state==="over") return; achCheck(); state="over"; setMusic("title");
+  if(state==="over") return; achCheck(); state="over"; setMusic("title"); if(!G.coop && !NET.guest && !NET.host && !BOT.on) runClear();
   const waves = G.wavesDone, earned = G.runes + Math.round((waves*5 + Math.min(150,Math.floor(G.kills/150)))*G.runeMul);
   meta.runes += earned; const souls=soulsForRun(G.kills,waves); meta.souls=(meta.souls||0)+souls;
   meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+G.kills; meta.bestLevel=Math.max(meta.bestLevel||0,G.level);
@@ -2612,7 +2683,7 @@ function useSlot(n){ if(n===SLOT) return; saveMeta(); SLOT=n; store.set("gw-slot
 $("slots").addEventListener("click", e=>{ const b=e.target.closest("[data-slot]"); if(b) useSlot(+b.dataset.slot); });
 $("btn-del").addEventListener("click", ()=>{
   if(!delArm){ delArm=1; $("btn-del").classList.add("sure"); $("btn-del").textContent="Wirklich löschen? Nochmals tippen"; $("slot-msg").textContent=`Alles in Spielstand ${SLOT} geht verloren: Runen, Schmiede, Helden, Erfolge und Rekorde. Das kann man nicht rückgängig machen.`; return; }
-  applyLoaded(keepPrefs(freshMeta())); selGod=null; renderGods(); openSave(); $("slot-msg").textContent=`Spielstand ${SLOT} ist gelöscht.`; });
+  runClear(); applyLoaded(keepPrefs(freshMeta())); selGod=null; renderGods(); openSave(); $("slot-msg").textContent=`Spielstand ${SLOT} ist gelöscht.`; });
 slotLabel();
 function openSave(){ renderSlots2(); $("slot-msg").textContent=""; $("save-code").value=saveCode(); $("save-summary").textContent="Aktuell: "+saveSummary(meta); $("load-msg").textContent=""; $("load-code").value=""; pendingLoad=null; $("btn-load").textContent="Code laden";
   $("btn-dl").hidden = !!(window.claude && window.claude.use); only("ov-save"); }
