@@ -761,9 +761,9 @@ const GODS = {
   ulfr:{ name:"Ulfr", title:"Der Berserker", color:"#ff5a48", hp:100, speed:181, armor:1, dmg:1.22, start:"cleave",
     desc:"Gewaltiger Schaden, wenig Leben. Axtschwung im Kreis, später kreisende Äxte und Wurfäxte. Mehrfach-Kills oder wenig Leben lösen den Blutrausch aus.",
     passive:"Blutrausch: 50 % schneller, Treffer heilen" },
-  skadi:{ name:"Skadi", title:"Göttin des Winters", color:"#cfeeff", hp:120, speed:170, armor:1, dmg:1.05, start:"thrust",
-    desc:"Ihr Speerstoss trifft als langer Balken vor ihr und macht viel Schaden. Später kreisen Eisspeere um sie, die Gegner einfrieren.",
-    passive:"Frostbiss: +25 % Schaden an gebremsten Gegnern" },
+  skadi:{ name:"Skadi", title:"Göttin des Winters", color:"#cfeeff", hp:130, speed:178, armor:1, dmg:1.1, start:"thrust",
+    desc:"Schnell und eiskalt. Ihr Speerstoss trifft als langer Balken und bremst. Gefrorene Gegner zerspringen in Eissplitter, die Nachbarn treffen: ganze Gruppen zerbrechen in Ketten.",
+    passive:"Frostbiss: +30 % Schaden an gebremsten Gegnern. Eissplitter: Gefrorene zerspringen" },
 };
 const L = (arr,l)=>arr[Math.min(arr.length,l)-1];
 const OV = l => l<=5 ? 1 : 1 + .13*(l-5);            // levels 6-10: more damage, no more copies
@@ -787,8 +787,8 @@ const WEAP = {
     d:l=>["Lade auf und schwinge die Axt: Schaden im Kreis um dich.","Grösserer Kreis, mehr Schaden","Schnelleres Aufladen","Grösserer Kreis, mehr Schaden","Blutiger Wirbel"][l-1],
     ct:[1,.92,.85,.78,.7], rad:[72,80,90,100,112], dmg:[28,35,42,52,66] },
   thrust:{ name:"Speerstoss", rune:"ᛁ", max:10, god:"skadi", base:true,
-    d:l=>["Lade auf und stoss zu: ein langer Balken in Laufrichtung, der Gegner bremst.","Längerer Stoss, mehr Schaden","Schnelleres Aufladen","Breiter und länger","Gewaltiger Eisstoss"][l-1],
-    ct:[.9,.84,.78,.72,.64], len:[200,220,245,272,310], wid:[42,46,50,56,64], dmg:[44,54,64,78,100] },
+    d:l=>["Lade auf und stoss zu: drei Eisspeere schiessen als Stern in alle Richtungen und bremsen Gegner.","Längerer Stoss, mehr Schaden","+1 Speer, schnelleres Aufladen","Breiter und länger","Eisstern: sechs Speere rundum"][l-1],
+    ct:[.9,.84,.78,.72,.64], len:[200,220,245,272,310], wid:[42,46,50,56,64], dmg:[40,48,56,68,86], dirs:[3,3,4,4,6] },
   hammer:{ name:"Donnerhammer", rune:"ᚦ", max:10, god:"donar",
     d:l=>[ "Ein Donnerhammer kreist um dich. Treffer springen als Kettenblitz auf drei weitere Gegner.", "+1 Hammer", "Mehr Schaden und grösserer Kreis", "+1 Hammer", "+1 Hammer, schneller und härter"][l-1],
     cnt:[1,2,2,3,4], dmg:[16,18,24,26,34], rad:[78,82,96,100,112], spin:[3,3.2,3.4,3.6,4.2] },
@@ -1252,7 +1252,7 @@ function hurt(e, dmg, kx=0, ky=0, kb=0, col=0){
   if(!e.on) return;
   let d = dmg;
   if(G.god==="ulfr"){ d *= 1 + .6*(1-G.hp/G.maxHp); }
-  if(G.god==="skadi" && e.slow>0){ d *= 1.25+.03*(G.hl||0); }
+  if(G.god==="skadi" && e.slow>0){ d *= 1.3+.03*(G.hl||0); }
   if(e.frozen>0) d*=1.5;
   if(e.mark>0) d*=1.2;
   if(G.buffs.zorn>0) d*=1.5;
@@ -1266,12 +1266,18 @@ function hurt(e, dmg, kx=0, ky=0, kb=0, col=0){
   sfx("hit");
   if(e.hp<=0) kill(e);
 }
+let SHATTER = 0;   // Skadi: Eissplitter-Kette, höchstens 3 Glieder tief
+function shatter(e){ const R=78, d=11*G.dmgMul*hpMul(G.wave)*(1+.05*(G.hl||0)), n=query(e.x,e.y,R), hit=[];
+  for(let q=0;q<n;q++){ const o=E[QR[q]]; if(o.on && o!==e) hit.push(o); }
+  burst(e.x,e.y,16,PIDX.ice,260,.5,3); sfx("freeze"); SHATTER++;
+  try{ const pS=SRC; SRC="skadi:splitter"; for(const o of hit){ o.slow=Math.max(o.slow||0,2); hurt(o,d,o.x-e.x,o.y-e.y,120,1); } SRC=pS; } finally{ SHATTER--; } }
 function kill(e){
   e.on=false; G.kills++;
   const c = e.kind==="geist"?PIDX.frost:e.kind==="troll"?PIDX.green:e.boss?PIDX.gold:PIDX.rot;
   burst(e.x,e.y,e.boss?60:8,c,e.boss?320:150,e.boss?1:.45,e.boss?5:3);
   if(e.boss){ bossDown(e); return; }
   dropGem(e.x,e.y,e.xp);
+  if(G.god==="skadi" && (e.frozen>0 || (e.slow>0 && Math.random()<.3)) && SHATTER<3) shatter(e);
   if(G.world==="eis" && G.ice.splitter && Math.random()<.15){ const d=2.5*G.dmgMul*hpMul(G.wave), a0=Math.random()*TAU; for(let i=0;i<3;i++){ const a=a0+i/3*TAU; shoot("shard",e.x,e.y,Math.cos(a)*480,Math.sin(a)*480,6,d,2,.5); } }
   if(Math.random()<.35){ particle(e.x,e.y-6,rnd(-8,8),-rnd(50,90),rnd(.7,1.1),3.5,PIDX.frost); }
   if(e.elite){ effects.push({k:"ring",x:e.x,y:e.y,r:e.r*3,l:.35,m:.35,c:"rgba(242,193,78,"}); burst(e.x,e.y,30,PIDX.gold,240,.6,4); kick=Math.max(kick,.2); }
@@ -1407,11 +1413,12 @@ function baseStrike(id,w){
   const l=w.lvl, D=WEAP[id], sid=strikeId++; let dmg=L(D.dmg,l)*OV(l)*G.dmgMul;
   if(G.sk.tyr){ w.n=(w.n||0)+1; if(w.n%4===0){ dmg*=3; effects.push({k:"ring",x:G.x,y:G.y,r:90,l:.4,m:.4,c:"rgba(255,215,120,"}); text(G.x,G.y-44,"Tyrs Urteil",2); } }
   if(id==="thrust"){
-    const len=L(D.len,l)*G.area, wid=L(D.wid,l)*G.area; let dx=G.dirx, dy=G.diry;
-    const tg=thrustTarget(len); if(tg){ const m=Math.hypot(tg.x-G.x,tg.y-G.y)||1; dx=(tg.x-G.x)/m; dy=(tg.y-G.y)/m; }
-    for(let t=12;t<=len;t+=wid*.6){ const x=G.x+dx*t, y=G.y+dy*t, n=query(x,y,wid/2); for(let q=0;q<n;q++){ const e=E[QR[q]]; if(e.vt===sid) continue; e.vt=sid; hurt(e,dmg,dx,dy,200,1); e.slow=1.4; } }
-    effects.push({k:"thrust", x:G.x, y:G.y, dx, dy, len, wid, l:.22, m:.22});
-    for(let i=0;i<14;i++){ const t=rnd(20,len); particle(G.x+dx*t,G.y+dy*t,dx*rnd(80,300),dy*rnd(80,300),.35,3,PIDX.ice); }
+    const len=L(D.len,l)*G.area, wid=L(D.wid,l)*G.area, nd=L(D.dirs,l)+(w.evo?1:0); let a0=Math.atan2(G.diry,G.dirx);
+    const tg=thrustTarget(len); if(tg) a0=Math.atan2(tg.y-G.y,tg.x-G.x);
+    for(let k=0;k<nd;k++){ const a=a0+k/nd*TAU, dx=Math.cos(a), dy=Math.sin(a);   // Eisstern: Speere in alle Richtungen, der erste zielt
+      for(let t=12;t<=len;t+=wid*.6){ const x=G.x+dx*t, y=G.y+dy*t, n=query(x,y,wid/2); for(let q=0;q<n;q++){ const e=E[QR[q]]; if(e.vt===sid) continue; e.vt=sid; hurt(e,dmg,dx,dy,200,1); e.slow=1.4; } }
+      effects.push({k:"thrust", x:G.x, y:G.y, dx, dy, len, wid, l:.22, m:.22});
+      for(let i=0;i<6;i++){ const t=rnd(20,len); particle(G.x+dx*t,G.y+dy*t,dx*rnd(80,300),dy*rnd(80,300),.35,3,PIDX.ice); } }
     shake=Math.max(shake,2.5); sfx("shoot"); return; }
   const R=L(D.rad,l)*G.area, n=query(G.x,G.y,R);
   for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,dmg,e.x-G.x,e.y-G.y,id==="smash"?220:160,id==="smash"?1:0); if(id==="cleave"&&G.frenzyT>0) heal(.6); if(G.world==="eis") e.slow=Math.max(e.slow,1); }
@@ -1875,7 +1882,7 @@ let offers=[];
 function openLevel(){
   if(G.coop && !levelTurn()) return;
   state="level"; offers=buildOffers();
-  if(meta.autoPick && !BOT.on && !(NET.host && G.coop && G.pid===1)){ const o=botPick(offers); autoNote(o); choose(o); sfx("level"); return; }
+  if(cardMode()==="auto" && !BOT.on && !(NET.host && G.coop && G.pid===1)){ const o=botPick(offers); autoNote(o); choose(o); sfx("level"); return; }
   if(NET.host && G.coop && G.pid===1){ // Online: Spieler 2 wählt auf seinem Gerät
     if(!NET.conn){ G.lvTurn=0; swapP(); G.pendingLv--; G.chest=false; state="play"; return; }
     const lt = G.chest? "Schatz des Wächters" : `Stufe ${G.level - G.pendingLv + 1}`;
@@ -2053,8 +2060,8 @@ function drawPlayer(c){
   const W=G.weapons;
   // charge indicators of the base attacks
   for(const id of ["smash","cleave","thrust"]){ const w=W[id]; if(!w) continue; const k=w.c||0, D=WEAP[id], col= w.lvl>=6 ? VT[Math.min(5,w.lvl-4)].trail : id==="cleave"?"255,80,60":id==="smash"?"150,215,255":"190,240,255";
-    if(id==="thrust"){ const len=L(D.len,w.lvl)*G.area, wid=L(D.wid,w.lvl)*G.area; const tg=(T*10|0)%2===0||!w.tg?(w.tg=thrustTarget(len)||null):w.tg; c.save(); c.translate(G.x,G.y); c.rotate(tg&&tg.on?Math.atan2(tg.y-G.y,tg.x-G.x):Math.atan2(G.diry,G.dirx));
-      c.strokeStyle=`rgba(${col},.35)`; c.lineWidth=1.5; c.strokeRect(10,-wid/2,len-10,wid); c.fillStyle=`rgba(${col},${.08+k*.22})`; c.fillRect(10,-wid/2,(len-10)*k,wid); c.restore(); }
+    if(id==="thrust"){ const len=L(D.len,w.lvl)*G.area, wid=L(D.wid,w.lvl)*G.area; const tg=(T*10|0)%2===0||!w.tg?(w.tg=thrustTarget(len)||null):w.tg; const a0=tg&&tg.on?Math.atan2(tg.y-G.y,tg.x-G.x):Math.atan2(G.diry,G.dirx), nd=L(D.dirs,w.lvl)+(w.evo?1:0);
+      for(let j=0;j<nd;j++){ c.save(); c.translate(G.x,G.y); c.rotate(a0+j/nd*TAU); c.strokeStyle=`rgba(${col},${j?.18:.35})`; c.lineWidth=1.5; c.strokeRect(10,-wid/2,len-10,wid); c.fillStyle=`rgba(${col},${(.08+k*.22)*(j?.6:1)})`; c.fillRect(10,-wid/2,(len-10)*k,wid); c.restore(); } }
     else { const R=L(D.rad,w.lvl)*G.area; c.strokeStyle=`rgba(${col},.3)`; c.lineWidth=1.5; c.beginPath(); c.arc(G.x,G.y,R,0,TAU); c.stroke();
       c.strokeStyle=`rgba(${col},${.5+k*.4})`; c.lineWidth=3; c.beginPath(); c.arc(G.x,G.y,R,-Math.PI/2,-Math.PI/2+k*TAU); c.stroke();
       if(k>.75){ c.fillStyle=`rgba(${col},${(k-.75)*.5})`; c.beginPath(); c.arc(G.x,G.y,R,0,TAU); c.fill(); } } }
@@ -2390,14 +2397,14 @@ function renderGods(){
   $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`; autoTxt();
 }
-function cardMode(){ return meta.autoPick? "auto" : meta.cardStop? "stop" : "live"; }   // live = im Kampf wählen, stop = Spiel hält an, auto = automatisch
+function cardMode(){ return (meta.autoPick??true)? "auto" : meta.cardStop? "stop" : "live"; }   // Standard: automatisch; live = im Kampf wählen, stop = Spiel hält an, auto = automatisch
 const CARD_TXT = { live:"Gaben: im Kampf wählen", stop:"Gaben: Spiel hält an", auto:"Gaben: automatisch" };
 const CARD_SHORT = { live:"Gaben: Kampf", stop:"Gaben: Pause", auto:"Gaben: Auto" };   // kurzer Text für den Knopf im Spiel
 function autoTxt(){ $("btn-auto3").textContent = CARD_SHORT[cardMode()]; $("btn-auto3").title = CARD_TXT[cardMode()]; }
 function toggleAuto(){ const m=cardMode(), nx= m==="live"?"stop" : m==="stop"?"auto" : "live";
   meta.autoPick= nx==="auto"; meta.cardStop= nx==="stop"; saveMeta(); autoTxt();
   if(G && !G.coop && !NET.guest && !liveOn() && G.lvq){ G.pendingLv += (NET.live[0]?1:0) + (G.lvq[0]||0); G.lvq[0]=0; NET.live=[null,null]; liveClose(); }   // offene Karten nicht verlieren
-  if(NET.guest && NET.conn) NET.conn.send({t:"auto", v:!!meta.autoPick}); }
+  if(NET.guest && NET.conn) NET.conn.send({t:"auto", v:cardMode()==="auto"}); }
 $("btn-auto3").addEventListener("click", e=>{ toggleAuto(); e.currentTarget.blur(); if(G) floatTxt(CARD_TXT[cardMode()]); });
 function autoNote(o){ const nm=o.t==="w"||o.t==="evo"?WEAP[o.id].name:o.t==="p"?PASS[o.id].name:o.t==="heal"?"Heilung":o.t==="runes"?"Runen":"Macht"; floatTxt(`✦ ${nm}`); }
 function floatTxt(v){ if(G) text(G.x, G.y-44, v, 2); }
@@ -2713,7 +2720,7 @@ async function netHost(god){
 }
 async function netJoin(code){
   netReset(); NET.guest=true; NET.code=code; lobby("Online-Koop", "Verbinde mit Spieler 1 …");
-  if(NET_LOCAL){ attach(wrapBC(code,"g")); NET.conn.send({t:"hello", v:GAME_VERSION}); NET.conn.send({t:"auto", v:!!meta.autoPick}); return; }
+  if(NET_LOCAL){ attach(wrapBC(code,"g")); NET.conn.send({t:"hello", v:GAME_VERSION}); NET.conn.send({t:"auto", v:cardMode()==="auto"}); return; }
   try{ await loadPeer(); }catch(e){ netFail("Die Verbindungs-Bibliothek konnte nicht geladen werden. Prüfe das Internet."); return; }
   const peer=new Peer(PEER_OPT); NET.peer=peer; const t0=performance.now(); let tries=0, started=false, why="", found=false;
   const knock=()=>{ if(!NET.guest || NET.conn || NET.peer!==peer) return;
@@ -2722,7 +2729,7 @@ async function netJoin(code){
     if(++tries>1) $("lobby-msg").textContent = why==="nohost" ? `Warte auf Spieler 1 … (Versuch ${tries}). Spieler 1 ist gerade nicht erreichbar: Er muss das Spiel mit der Einladung offen und vorne haben.` : `Versuch ${tries}: ${NO_DIRECT}`;
     why="";
     const c=peer.connect("gwacht-"+code.toLowerCase(), {reliable:true});
-    c.on("open", ()=>{ if(NET.conn || !NET.guest){ try{ c.close(); }catch(e){} return; } attach(wrapPeer(c)); NET.conn.send({t:"hello", v:GAME_VERSION}); NET.conn.send({t:"auto", v:!!meta.autoPick}); });
+    c.on("open", ()=>{ if(NET.conn || !NET.guest){ try{ c.close(); }catch(e){} return; } attach(wrapPeer(c)); NET.conn.send({t:"hello", v:GAME_VERSION}); NET.conn.send({t:"auto", v:cardMode()==="auto"}); });
     setTimeout(()=>{ if(NET.guest && !NET.conn && NET.peer===peer){ if(why!=="nohost") found=true; try{ c.close(); }catch(e){} knock(); } }, KNOCK_MS); };
   peer.on("open", ()=>{ if(started) return; started=true; knock(); });
   peer.on("disconnected", ()=>{ if(!NET.conn) netRejoin(peer); });
@@ -2893,7 +2900,7 @@ function liveUpdate(dt){
     if(k===1 && NET.lost){ NET.live[1]=null; G.lvq[1]=0; continue; }
     if(L){ if(L.open){ L.t-=dt; P.inv=Math.max(P.inv,.12); if(k===0) $("level-bar").firstChild.style.width=Math.max(0,L.t/LIVE_T*100)+"%"; if(L.t<=0) livePick(k,0); } }
     else if(G.lvq[k]>0 && !P.down){ G.lvq[k]--;
-      if(k? NET.auto2 : meta.autoPick){ asP(k,()=>applyCard(botPick(buildOffers()))); renderSlots(); if(k===0){ sfx("level"); floatTxt("✦ neue Gabe"); } continue; }
+      if(k? NET.auto2 : cardMode()==="auto"){ asP(k,()=>applyCard(botPick(buildOffers()))); renderSlots(); if(k===0){ sfx("level"); floatTxt("✦ neue Gabe"); } continue; }
       asP(k,()=>{ NET.live[k]={ o:buildOffers(), t:LIVE_T, open:false }; }); liveShow(k); } }
   liveBadge(NET.live[0]? 1+G.lvq[0] : 0);
 }

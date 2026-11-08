@@ -12,13 +12,14 @@ const h=await ctx.newPage(), g=await ctx.newPage(); await h.setViewportSize({wid
 let err=0; for(const [n,p] of [['host',h],['guest',g]]) p.on('pageerror',e=>{ err++; console.log('ERR',n,e.message); });
 const ok=(n,c)=>console.log((c?'OK  ':'FAIL')+' '+n), W=ms=>h.waitForTimeout(ms);
 const until=async(p,fn,arg,ms=8000)=>{ const t=Date.now(); while(Date.now()-t<ms){ if(await p.evaluate(fn,arg)) return true; await p.waitForTimeout(100); } return false; };
-await h.goto(base+(REAL?'':'?netz=lokal')); await h.evaluate(()=>localStorage.clear()); await h.reload(); await W(500);
+await h.goto(base+(REAL?'':'?netz=lokal')); await h.evaluate(()=>localStorage.clear()); await h.reload(); await W(500); await h.evaluate(()=>{ __gw.meta.autoPick=false; });   // Test braucht Karten statt Auto
 await h.click('#btn-koop'); ok('koop choice', !(await h.isHidden('#ov-koop'))); await h.click('#btn-koop-net'); await h.click('[data-world=mittgard]');
 ok('host picks a god', (await h.textContent('#btn-start'))==='Einladung erstellen'); await h.click('[data-god=donar]'); await h.click('#btn-start');
 ok('invitation link', await until(h,()=>/koop=[A-Z0-9]{6}/.test(document.getElementById('lobby-link').value),null,REAL?20000:4000));
 const link=await h.inputValue('#lobby-link'), code=link.match(/koop=([A-Z0-9]+)/)[1]; console.log('     link', link);
 await g.goto(`${base}?koop=${code}${REAL?'':'&netz=lokal'}`);
 ok('guest sees god choice', await until(g,()=>!document.getElementById('ov-heroes').hidden,null,REAL?25000:5000));
+await g.evaluate(()=>{ __gw.meta.autoPick=false; __gw.NET.conn && __gw.NET.conn.send({t:'auto',v:false}); });
 ok('host god is blocked', await g.evaluate(()=>document.querySelector('[data-god=donar]').disabled)); ok('guest button', (await g.textContent('#btn-start'))==='Bereit');
 await g.click('[data-god=skadi]'); await g.click('#btn-start'); ok('guest ready', (await g.textContent('#lobby-msg')).includes('Bereit'));
 ok('host can start', await until(h,()=>!document.getElementById('btn-lobby-start').hidden)); await h.click('#btn-lobby-start');

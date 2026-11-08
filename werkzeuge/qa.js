@@ -20,7 +20,7 @@ await p.tap('#btn-solo'); ok('world choice', !(await p.isHidden('#ov-worlds')));
 await p.tap('[data-world=mittgard]'); ok('hero choice', !(await p.isHidden('#ov-heroes')));
 await p.tap('[data-god=skadi]'); ok('hero selected', await p.evaluate(()=>!document.getElementById('btn-start').disabled)); await p.tap('#btn-start'); await p.waitForTimeout(1500); ok('game running', await p.evaluate(()=>__gw.state==='play' && __gw.G.world==='mittgard'));
 await p.tap('#pausebtn'); ok('pause', !(await p.isHidden('#ov-pause'))); await p.tap('#btn-resume');
-await p.evaluate(()=>{ __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('solo live cards: game runs', await p.evaluate(()=>__gw.state==='play') && !(await p.isHidden('#livebtn')));
+await p.evaluate(()=>{ __gw.meta.autoPick=false; __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('solo live cards: game runs', await p.evaluate(()=>__gw.state==='play') && !(await p.isHidden('#livebtn')));
 await p.tap('#livebtn'); await p.waitForTimeout(150); ok('level-up cards', (await p.$$('#cards .card')).length>=3); await p.tap('#cards .card'); await p.waitForTimeout(150); ok('live card taken', await p.isHidden('#ov-level'));
 await p.evaluate(()=>{ __gw.meta.cardStop=true; __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('stop mode pauses', await p.evaluate(()=>__gw.state==='level')); await p.tap('#cards .card'); await p.evaluate(()=>{ __gw.meta.cardStop=false; });
 await p.evaluate(()=>{ __gw.G.pendingFate=1; }); await p.waitForTimeout(1900); ok('fate', !(await p.isHidden('#btn-fate'))); await p.tap('#btn-fate');
