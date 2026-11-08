@@ -233,7 +233,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 45</div>
+    <div class="ver" id="ver">Version 46</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -2385,8 +2385,13 @@ function renderGods(){
   $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`; autoTxt();
 }
-function autoTxt(){ $("btn-auto").textContent = $("btn-auto2").textContent = meta.autoPick? "Gaben: automatisch" : "Gaben: selbst wählen"; }
-function toggleAuto(){ meta.autoPick=!meta.autoPick; saveMeta(); autoTxt(); if(NET.guest && NET.conn) NET.conn.send({t:"auto", v:!!meta.autoPick}); }
+function cardMode(){ return meta.autoPick? "auto" : meta.cardStop? "stop" : "live"; }   // live = im Kampf wählen, stop = Spiel hält an, auto = automatisch
+const CARD_TXT = { live:"Gaben: im Kampf wählen", stop:"Gaben: Spiel hält an", auto:"Gaben: automatisch" };
+function autoTxt(){ $("btn-auto").textContent = $("btn-auto2").textContent = CARD_TXT[cardMode()]; }
+function toggleAuto(){ const m=cardMode(), nx= m==="live"?"stop" : m==="stop"?"auto" : "live";
+  meta.autoPick= nx==="auto"; meta.cardStop= nx==="stop"; saveMeta(); autoTxt();
+  if(G && !G.coop && !NET.guest && !liveOn() && G.lvq){ G.pendingLv += (NET.live[0]?1:0) + (G.lvq[0]||0); G.lvq[0]=0; NET.live=[null,null]; liveClose(); }   // offene Karten nicht verlieren
+  if(NET.guest && NET.conn) NET.conn.send({t:"auto", v:!!meta.autoPick}); }
 $("btn-auto").addEventListener("click", toggleAuto); $("btn-auto2").addEventListener("click", toggleAuto);
 function autoNote(o){ const nm=o.t==="w"||o.t==="evo"?WEAP[o.id].name:o.t==="p"?PASS[o.id].name:o.t==="heal"?"Heilung":o.t==="runes"?"Runen":"Macht"; floatTxt(`✦ ${nm}`); }
 function floatTxt(v){ if(G) text(G.x, G.y-44, v, 2); }
@@ -2434,7 +2439,7 @@ function toggleMusic(){ meta.music = meta.music===false; saveMeta(); unlockAudio
 $("btn-music").addEventListener("click", toggleMusic); $("btn-music2").addEventListener("click", toggleMusic); musicLabel();
 
 function gameOver(){
-  if(NET.host){ NET.live=[null,null]; liveClose(); }
+  if(!NET.guest){ NET.live=[null,null]; liveClose(); }
   if(state==="over") return; achCheck(); state="over"; setMusic("title");
   const waves = G.wavesDone, earned = G.runes + Math.round((waves*5 + Math.min(150,Math.floor(G.kills/150)))*G.runeMul);
   meta.runes += earned; const souls=soulsForRun(G.kills,waves); meta.souls=(meta.souls||0)+souls;
@@ -2847,14 +2852,15 @@ function guestOver(m){
 /* Online-Koop (v40): Karten ohne Unterbruch. Das Spiel läuft weiter, jeder wählt auf seinem Gerät.
    Wer wählt, ist geschützt; nach LIVE_T Sekunden wird die erste Karte genommen. */
 const LIVE_T = 10;
-const liveOn = ()=> !!(G && G.coop && NET.host);
+const liveOn = ()=> !!(G && !BOT.on && (G.coop ? NET.host : cardMode()==="live"));   // Solo: Karten im Kampf, wenn so eingestellt
 const liveUiOn = ()=> $("ov-level").classList.contains("live") && !$("ov-level").hidden;
 function asP(k,fn){ const sw=G.pid!==k; if(sw) swapP(); try{ return fn(); } finally{ if(sw) swapP(); } }
 function liveUpdate(dt){
   if(!G.lvq) G.lvq=[0,0];
-  if(G.pendingLv>0){ G.lvq[0]+=G.pendingLv; G.lvq[1]+=G.pendingLv; G.pendingLv=0; G.chest=false; }   // jede Stufe gibt beiden eine Karte
-  if(!NET.gotIn && G.time<15){ const p=PL2(); p.inv=Math.max(p.inv,.12); }                              // Gast geschützt, bis seine Steuerung ankommt
-  for(let k=0;k<2;k++){ const P=k?PL2():PL1(), L=NET.live[k];
+  const n=G.coop?2:1;
+  if(G.pendingLv>0){ G.lvq[0]+=G.pendingLv; if(G.coop) G.lvq[1]+=G.pendingLv; G.pendingLv=0; G.chest=false; }   // jede Stufe gibt beiden eine Karte
+  if(G.coop && !NET.gotIn && G.time<15){ const p=PL2(); p.inv=Math.max(p.inv,.12); }                              // Gast geschützt, bis seine Steuerung ankommt
+  for(let k=0;k<n;k++){ const P=k?PL2():PL1(), L=NET.live[k];
     if(k===1 && NET.lost){ NET.live[1]=null; G.lvq[1]=0; continue; }
     if(L){ if(L.open){ L.t-=dt; P.inv=Math.max(P.inv,.12); if(k===0) $("level-bar").firstChild.style.width=Math.max(0,L.t/LIVE_T*100)+"%"; if(L.t<=0) livePick(k,0); } }
     else if(G.lvq[k]>0 && !P.down){ G.lvq[k]--;
@@ -2868,7 +2874,7 @@ function liveOpen(){ if(NET.guest){ if(!$("cards").children.length || !NET.conn)
   const L=NET.live[0]; if(!L) return; L.open=true; $("ov-level").hidden=false; $("livebtn").hidden=true; }
 function liveLater(){ if(NET.guest){ NET.gopen=false; NET.conn&&NET.conn.send({t:"cardclose"}); } else if(NET.live[0]) NET.live[0].open=false; $("ov-level").hidden=true; }
 function liveShow(k){ const L=NET.live[k]; if(!L) return;
-  asP(k,()=>{ const title=`${GODS[G.god].name}: neue Gabe`+(G.lvq[k]>0?` (+${G.lvq[k]} offen)`:""), html=L.o.map(cardHtml).join("");
+  asP(k,()=>{ const title=`${GODS[G.god].name}: neue Gabe`+(G.lvq[k]>0?` (+${G.lvq[k]} offen)`:"")+(G.level>LV_SLOW?" · +3 % Schaden":""), html=L.o.map(cardHtml).join("");
     if(k===0){ liveUi(title, html, G.rerolls, L.open); if(!L.open) sfx("level"); } else if(NET.conn) NET.conn.send({t:"cards", live:1, title, html, rerolls:G.rerolls}); }); }
 function liveUi(title, html, rerolls, open){ const ov=$("ov-level"); ov.classList.add("live"); $("level-title").textContent=title; $("cards").innerHTML=html;
   $("level-hint").textContent="Das Spiel läuft weiter. Solange die Karten offen sind, bist du geschützt (10 s)."; $("level-bar").firstChild.style.width="100%";
@@ -2906,7 +2912,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 45;
+const GAME_VERSION = 46;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio

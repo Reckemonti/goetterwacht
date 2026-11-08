@@ -19,6 +19,7 @@ Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Um
 | GW-5 | ✅ v35: Weitere wählbare Fähigkeiten beim Seelen-Levelaufstieg | GW-4 |
 | GW-7 | ✅ v38: Koop-Modus (lokal zu zweit an einem Gerät) | GW-6 |
 | GW-8 | ✅ v39: Online-Koop mit Einladungslink, jeder auf seinem Gerät, nicht derselbe Gott | GW-7 |
+| GW-14 | ✅ v46: Solo-Gaben im Kampf wählen wie online (Schalter: im Kampf / Spiel hält an / automatisch) | GW-13 |
 | GW-13 | ✅ v45: neue Heldenfiguren mit sichtbaren Stufen, weniger Stufenaufstiege, Gaben automatisch, weniger Daten, Wiedereinstieg, Versionshinweis | GW-12 |
 | GW-12 | ✅ v44: Online-Koop frei laufen (eigene Kamera, Pfeil zum Partner), Karten hinter Knopf | GW-11 |
 | GW-11 | ✅ v42/v43: Netz-Meldung und Umweg-Server (ExpressTURN, Konto von Nico) | GW-10 |

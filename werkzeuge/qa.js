@@ -20,7 +20,9 @@ await p.tap('#btn-solo'); ok('world choice', !(await p.isHidden('#ov-worlds')));
 await p.tap('[data-world=mittgard]'); ok('hero choice', !(await p.isHidden('#ov-heroes')));
 await p.tap('[data-god=skadi]'); ok('hero selected', await p.evaluate(()=>!document.getElementById('btn-start').disabled)); await p.tap('#btn-start'); await p.waitForTimeout(1500); ok('game running', await p.evaluate(()=>__gw.state==='play' && __gw.G.world==='mittgard'));
 await p.tap('#pausebtn'); ok('pause', !(await p.isHidden('#ov-pause'))); await p.tap('#btn-resume');
-await p.evaluate(()=>{ __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('level-up cards', (await p.$$('#cards .card')).length>=3); await p.tap('#cards .card');
+await p.evaluate(()=>{ __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('solo live cards: game runs', await p.evaluate(()=>__gw.state==='play') && !(await p.isHidden('#livebtn')));
+await p.tap('#livebtn'); await p.waitForTimeout(150); ok('level-up cards', (await p.$$('#cards .card')).length>=3); await p.tap('#cards .card'); await p.waitForTimeout(150); ok('live card taken', await p.isHidden('#ov-level'));
+await p.evaluate(()=>{ __gw.meta.cardStop=true; __gw.G.pendingLv=1; }); await p.waitForTimeout(400); ok('stop mode pauses', await p.evaluate(()=>__gw.state==='level')); await p.tap('#cards .card'); await p.evaluate(()=>{ __gw.meta.cardStop=false; });
 await p.evaluate(()=>{ __gw.G.pendingFate=1; }); await p.waitForTimeout(1900); ok('fate', !(await p.isHidden('#btn-fate'))); await p.tap('#btn-fate');
 await p.evaluate(()=>{ const G=__gw.G; G.wave=20; G.phase='break'; G.breakT=.05; }); await p.waitForTimeout(700); ok('Midgard goes on after 20', await p.evaluate(()=>__gw.G.world==='mittgard' && __gw.G.wave===21));
 await p.tap('#pausebtn'); await p.tap('#btn-quit'); await p.waitForTimeout(400); ok('game over screen', !(await p.isHidden('#ov-over'))); await p.screenshot({path:'qa_over.png'});
@@ -53,7 +55,7 @@ await p.evaluate(()=>__gw.down(1)); await p.waitForTimeout(300); ok('player 2 do
 await p.evaluate(()=>{ const a=__gw.PL1(), b=__gw.PL2(); a.x=b.x+20; a.y=b.y; a.inv=99; }); await p.waitForTimeout(3800);
 ok('revived', await p.evaluate(()=>!__gw.PL2().down && __gw.PL2().hp>0)); await p.screenshot({path:'qa_koop_revive.png'});
 const best0=await p.evaluate(()=>JSON.stringify(__gw.meta.best));
-await p.evaluate(()=>{ __gw.down(0); }); ok('one down is not game over', await p.evaluate(()=>__gw.state==='play'));
+await p.evaluate(()=>{ __gw.down(0); }); { const sd=await p.evaluate(()=>__gw.state); ok('one down is not game over', sd==='play'||sd==='level'||sd==='fate'); if(sd!=='play') console.log('state was',sd); }
 await p.evaluate(()=>{ __gw.down(1); }); await p.waitForTimeout(400); ok('both down: game over', !(await p.isHidden('#ov-over')) && (await p.textContent('#over-title')).includes('Koop'));
 ok('solo record untouched', await p.evaluate(b=>JSON.stringify(__gw.meta.best)===b, best0)); ok('koop record saved', await p.evaluate(()=>!!(__gw.meta.bestKoop&&__gw.meta.bestKoop.mittgard)));
 await p.tap('#btn-again'); await p.waitForTimeout(500); ok('koop again', await p.evaluate(()=>__gw.state==='play' && __gw.G.coop && __gw.PL2().god==='skadi'));

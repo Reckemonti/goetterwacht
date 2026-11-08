@@ -1,8 +1,12 @@
 # Status
 
-Stand: 08.11.2026, Version 45
+Stand: 08.11.2026, Version 46
 
 ## Zuletzt geändert
+- Version 46 (Claude, nach Nicos Wunsch «Solo wie im Multiplayer»):
+  - **Gaben im Kampf auch solo:** Der Schalter im Hauptmenü und in der Pause hat jetzt drei Stellungen: «Gaben: im Kampf wählen» (neu, Standard), «Gaben: Spiel hält an» (wie früher) und «Gaben: automatisch». Im Kampf-Modus läuft das Spiel weiter, unten erscheint der Knopf «✦ Gabe wählen (n)»; Karten öffnen, solange sie offen sind, ist man geschützt (10 s, dann nimmt das Spiel die erste Karte), «Später» schliesst sie wieder. Taste E öffnet/schliesst, 1–4 wählt.
+  - Wechselt man mitten in der Runde auf «Spiel hält an», gehen offene Karten nicht verloren. Lokaler Koop an einem Gerät hält weiterhin an (zwei Spieler, ein Bildschirm). Online war schon immer im Kampf.
+  - Test `werkzeuge/qa.js` prüft Kampf-Modus und Halte-Modus.
 - Version 45 (Claude, nach Nicos Wunsch «alle Punkte umsetzen» und Charakterdesign):
   - **Neue Heldenfiguren:** Donar, Ulfr und Skadi sind neu und detaillierter gezeichnet (Umrisse, Schattierung, Waffe in der Hand: Hammer, zwei Äxte, Eisspeer). Die Heldenstufe ist in die Figur eingebaut statt aufgesetzt: Stufe 1 goldener Ring und Goldbeschläge, 4 Schulterpanzer und grössere Waffe, 7 leuchtende Rune auf der Brust, leuchtende Augen und Aura, 10 göttliche Krone (Donar goldener Flügelhelm, Ulfr Wolfskrone, Skadi Eiskrone) und kreisende goldene Funken.
   - **Weniger Stufenaufstiege:** Ab Stufe 15 braucht jede Stufe 8 % mehr Erfahrung pro Stufe darüber. Dafür gibt jede Gabe ab Stufe 15 zusätzlich +3 % Schaden (steht im Kartentitel). Testläufe (Bot, ohne Schmiede): bei Welle 9 Stufe 33 statt rund 40.
