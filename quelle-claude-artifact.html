@@ -107,6 +107,8 @@ h2.t{font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin
 .god .st{display:flex;gap:12px;font-size:13px;color:var(--mute);flex-wrap:wrap}
 .god .st b{color:var(--ink)}
 .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.slot{text-align:left;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 12px;color:inherit;font:inherit}.slot b{display:block;font-size:16px;margin-bottom:3px}.slot span{font-size:12px;opacity:.8}.slot.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}.slot.on b{color:var(--gold)}
+.btn.danger{border-color:#c0503a;color:#ff9a84}.btn.danger.sure{background:#7a2416;color:#fff}
 .btn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 18px;font-weight:600;font-size:17px;letter-spacing:.06em}
 .btn:hover{border-color:var(--gold)}
 .btn.gold{background:linear-gradient(180deg,#f7d57a,var(--gold) 50%,#c08a1e);color:#1d1404;border-color:#ffe39a}
@@ -219,7 +221,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 47</div>
+    <div class="ver" id="ver">Version 48</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -314,7 +316,13 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 
 <div class="ov" id="ov-save" hidden><div class="ov-in">
   <h2 class="t">Spielstand</h2>
-  <div class="hint">Dein Fortschritt wird automatisch in diesem Browser gespeichert. Sichere ihn hier zusätzlich, damit er nicht verloren geht oder auf ein anderes Gerät mitkommt.</div>
+  <div class="hint">Dein Fortschritt wird automatisch in diesem Browser gespeichert. Du hast drei Plätze, zum Beispiel für verschiedene Spieler. Sichere ihn hier zusätzlich, damit er nicht verloren geht oder auf ein anderes Gerät mitkommt.</div>
+  <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+    <div class="hint" style="text-align:left">Spielstand wählen</div>
+    <div class="slots" id="slots"></div>
+    <div class="row" style="justify-content:flex-start"><button class="btn danger" id="btn-del" type="button">Diesen Spielstand löschen</button></div>
+    <div class="hint" style="text-align:left" id="slot-msg" role="status"></div>
+  </div>
   <div class="panel" style="display:flex;flex-direction:column;gap:10px">
     <div class="hint" style="text-align:left" id="save-summary"></div>
     <label class="hint" style="text-align:left" for="save-code">Dein Spielstand-Code</label>
@@ -911,14 +919,17 @@ const META = {
 };
 
 /* ---------------- persistent meta ---------------- */
-let meta = store.get("gw-meta", null) || { runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true };
+const SLOTS = 3, slotKey = n => n===1? "gw-meta" : "gw-meta-"+n;   // mehrere Spielstände; Platz 1 = bisheriger Speicher
+let SLOT = Math.min(SLOTS, Math.max(1, Math.floor(store.get("gw-slot", 1))||1));
+const freshMeta = () => ({ runes:0, up:{}, best:{wave:0,kills:0,god:""}, nick:"", sound:true, forgeV:2 });
+let meta = store.get(slotKey(SLOT), null) || freshMeta();
 meta.up = meta.up || {};
 function migrateMeta(m){ if(m.forgeV) return m; m.up=m.up||{}; const OLD={hp:l=>40+l*45,dmg:l=>50+l*55,spd:l=>40+l*40,xp:l=>50+l*50,revive:()=>400,reroll:l=>120+l*120}; let back=0;
   for(const k in OLD){ for(let l=0;l<(m.up[k]||0);l++) back+=OLD[k](l); m.up[k]=0; } m.runes=(m.runes||0)+back; m.forgeV=2; m.refunded=back; return m; }
 migrateMeta(meta);
 for(const k in META) meta.up[k] = meta.up[k]||0;
 meta.ice = cleanIce(meta.ice);
-const saveMeta = ()=>store.set("gw-meta", meta);
+const saveMeta = ()=>store.set(slotKey(SLOT), meta);
 const metaMax = id => META[id].max + (worldOpen("eis") ? (META[id].ext||0) : 0);   // Niflheim-Stufen nach Welle 20
 // Heldenhalle (GW-6): jeder Gott einzeln bis Stufe 10, bezahlt mit Seelen aus den Runden; sichtbar mächtiger bei Stufe 1, 4, 7 und 10
 const HERO_MAX = 10;
@@ -2536,7 +2547,23 @@ function readCode(code){
 let pendingLoad=null;
 function saveSummary(m){ return `${m.runes} Runen, Runenschmiede ${forgePctOf(m)} %, Rekord ${m.best?.wave||0} Wellen, ${m.runs||0} Runden`; }
 function forgePctOf(m){ let a=0,b=0; for(const k in META){ a+=(m.up&&m.up[k])||0; b+=META[k].max+(META[k].ext||0); } return Math.round(a/b*100); }
-function openSave(){ $("save-code").value=saveCode(); $("save-summary").textContent="Aktuell: "+saveSummary(meta); $("load-msg").textContent=""; $("load-code").value=""; pendingLoad=null; $("btn-load").textContent="Code laden";
+const KEEP_PREFS = ["sound","music","autoPick","cardStop"];   // Geräte-Einstellungen bleiben beim Wechseln und Löschen
+function keepPrefs(m){ for(const k of KEEP_PREFS) if(meta[k]!==undefined) m[k]=meta[k]; return m; }
+function slotLabel(){ $("btn-save").textContent = `Spielstand ${SLOT}`; }
+let delArm=0;
+function renderSlots2(){ let h=""; for(let n=1;n<=SLOTS;n++){ const m = n===SLOT? meta : store.get(slotKey(n), null);
+    const info = m? (m.nick? m.nick+" · " : "") + `${m.runes||0} Runen, Rekord ${m.best?.wave||0} Wellen` : "leer";
+    h+=`<button class="slot${n===SLOT?" on":""}" type="button" data-slot="${n}"><b>Spielstand ${n}${n===SLOT?" ✓":""}</b><span>${info}</span></button>`; }
+  $("slots").innerHTML=h; delArm=0; $("btn-del").classList.remove("sure"); $("btn-del").textContent=`Spielstand ${SLOT} löschen`; }
+function useSlot(n){ if(n===SLOT) return; saveMeta(); SLOT=n; store.set("gw-slot", n);
+  const m = store.get(slotKey(n), null); applyLoaded(keepPrefs(m? migrateMeta(m) : freshMeta())); selGod=null; renderGods(); slotLabel();
+  openSave(); $("slot-msg").textContent = m? `Spielstand ${n} ist jetzt aktiv.` : `Spielstand ${n} ist neu und leer. Viel Glück!`; }
+$("slots").addEventListener("click", e=>{ const b=e.target.closest("[data-slot]"); if(b) useSlot(+b.dataset.slot); });
+$("btn-del").addEventListener("click", ()=>{
+  if(!delArm){ delArm=1; $("btn-del").classList.add("sure"); $("btn-del").textContent="Wirklich löschen? Nochmals tippen"; $("slot-msg").textContent=`Alles in Spielstand ${SLOT} geht verloren: Runen, Schmiede, Helden, Erfolge und Rekorde. Das kann man nicht rückgängig machen.`; return; }
+  applyLoaded(keepPrefs(freshMeta())); selGod=null; renderGods(); openSave(); $("slot-msg").textContent=`Spielstand ${SLOT} ist gelöscht.`; });
+slotLabel();
+function openSave(){ renderSlots2(); $("slot-msg").textContent=""; $("save-code").value=saveCode(); $("save-summary").textContent="Aktuell: "+saveSummary(meta); $("load-msg").textContent=""; $("load-code").value=""; pendingLoad=null; $("btn-load").textContent="Code laden";
   $("btn-dl").hidden = !!(window.claude && window.claude.use); only("ov-save"); }
 $("btn-save").addEventListener("click", openSave);
 $("btn-saveback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
@@ -2898,7 +2925,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 47;
+const GAME_VERSION = 48;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
