@@ -15,7 +15,7 @@ Nordisches Wellen-Überlebensspiel im Browser. Eine einzige HTML-Datei, keine In
 - Runenschmiede: 15 Upgrades mit 180 Stufen (ab Niflheim +10 Stufen pro Kraft-Upgrade, zusammen 300), 15 freischaltbare Fähigkeiten, danach Vidar als Verbündeter; dazu der **Pfad nach Niflheim** (Skilltree mit 10 Fähigkeiten für die Eiswelt)
 - Gaben beim Stufenaufstieg: dazu Frostnova, Eiszapfenregen, Zähigkeit, Runenwissen, Scharfblick
 - **Heldenhalle** in der Ruhmeshalle: jeden Gott einzeln mit Seelen bis Stufe 10 leveln (mehr Leben, Schaden, Tempo und eine eigene Stärke); sichtbar mächtiger bei Stufe 1, 4, 7 und 10 (goldener Ring, Schulterpanzer, Runenleuchten, Krone)
-- **Online-Koop mit Link:** «Koop» → «Online mit Link», Welt und Gott wählen, Link schicken; der Mitspieler öffnet ihn auf seinem eigenen Handy oder PC, nimmt einen anderen Gott, und ihr kämpft zusammen auf derselben Karte. Karten wählt jeder unten in einer Leiste, ohne dass das Spiel anhält (10 Sekunden, solange geschützt)
+- **Online-Koop mit Link:** «Koop» → «Online mit Link», Welt und Gott wählen, Link schicken; der Mitspieler öffnet ihn auf seinem eigenen Handy oder PC, nimmt einen anderen Gott, und ihr kämpft zusammen auf derselben Karte. Jeder kann frei laufen, ein Pfeil zeigt, wo der andere ist. Neue Gaben warten hinter dem Knopf «✦ Gabe wählen», das Spiel hält nicht an
 - **Koop zu zweit an einem Gerät:** gemeinsame Wellen, jeder mit eigenem Gott, eigener Lebensleiste und eigenen Waffen; abwechselnd Karten wählen; wer fällt, wird vom anderen wiederbelebt (3 Sekunden danebenstehen); vorbei erst, wenn beide liegen. Gegner sind zu zweit zahlreicher und zäher
 - 16 Erfolge, Schadens-Statistik, eigene Musik (Start, Kampf, Bosskampf), Vibration auf dem Handy
 

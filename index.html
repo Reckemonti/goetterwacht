@@ -93,6 +93,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ov.live .ov-in{pointer-events:auto;width:min(760px,100%);margin:0 auto;gap:8px;background:rgba(7,11,18,.84);border:1px solid var(--line);border-radius:16px;padding:10px 12px;max-height:50vh;overflow-y:auto}
 .ov.live h2.t{font-size:18px;margin:0}.ov.live .hint{font-size:13px;margin:0}.ov.live .cards{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
 .ov.live .card{padding:9px 10px;grid-template-columns:34px minmax(0,1fr);gap:8px;animation:none}.ov.live .card p{font-size:13px}
+.livebtn{position:fixed;right:12px;bottom:calc(min(120px, 26vw) + 24px + env(safe-area-inset-bottom,0px));z-index:30;padding:10px 18px;border-radius:999px;border:1px solid var(--gold);background:rgba(10,15,24,.88);color:var(--gold);font:600 15px/1 inherit;animation:lbp 1.6s ease-in-out infinite}
+@keyframes lbp{0%,100%{box-shadow:0 0 0 0 rgba(255,215,120,.45)}50%{box-shadow:0 0 0 8px rgba(255,215,120,0)}}
+.livelater{display:none}.ov.live .card p+p{display:none}.ov.live .card h4{font-size:16px;margin:2px 0}.ov.live .card .lvl{font-size:11px}.ov.live .card .ic{width:34px;height:34px;font-size:20px}
+.ov.live .livelater{display:inline-flex}
 .livebar{display:none;width:100%;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}.ov.live .livebar{display:block}.livebar i{display:block;height:100%;width:100%;background:var(--gold)}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.03)}}
@@ -228,7 +232,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 43</div>
+    <div class="ver" id="ver">Version 44</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -265,7 +269,8 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="hint" id="best-heroes"></div>
 </div></div>
 
-<div class="ov" id="ov-level" hidden><div class="ov-in"><h2 class="t" id="level-title">Stufe 2</h2><div class="hint" id="level-hint">Wähle eine Gabe der Götter</div><div class="livebar" id="level-bar"><i></i></div><div class="cards" id="cards"></div><div class="row"><button class="btn" id="btn-reroll" type="button" hidden>Neu würfeln</button></div></div></div>
+<button class="livebtn" id="livebtn" type="button" hidden>✦ Gabe wählen</button>
+<div class="ov" id="ov-level" hidden><div class="ov-in"><h2 class="t" id="level-title">Stufe 2</h2><div class="hint" id="level-hint">Wähle eine Gabe der Götter</div><div class="livebar" id="level-bar"><i></i></div><div class="cards" id="cards"></div><div class="row"><button class="btn" id="btn-reroll" type="button" hidden>Neu würfeln</button><button class="btn livelater" id="btn-later" type="button">Später</button></div></div></div>
 
 <div class="ov" id="ov-fate" hidden><div class="ov-in"><div class="runes" aria-hidden="true">ᛈᛈᛈ</div><h2 class="t">Schicksalswurf</h2><div class="hint" id="fate-sub">Die Nornen werfen die Runen</div>
   <div class="dice" id="dice"><div class="die" id="die0">ᛈ</div><div class="die" id="die1">ᛈ</div></div>
@@ -1024,6 +1029,9 @@ function swapP(){ const o=G.p2; for(const k of PK){ const v=G[k]; G[k]=o[k]; o[k
 const PL1 = ()=> G.pid ? G.p2 : G, PL2 = ()=> G.pid ? G : G.p2;
 function eachP(fn){ if(!G.coop){ fn(); return; } for(let k=0;k<2;k++){ if(k) swapP(); if(!G.down && state==="play") fn(); if(k) swapP(); } }   // für jeden stehenden Spieler
 function allP(fn){ fn(); if(G.coop){ swapP(); fn(); swapP(); } }                                                                                   // für beide, auch am Boden
+const netCoop = ()=> !!(G && G.coop && (NET.host||NET.guest));   // Online-Koop: jeder hat seine eigene Kamera, keine Leine
+let spawnAt = null; const SPC = ()=> spawnAt || ctr();
+function spawnC(){ const a=PL1(), b=PL2(), p = a.down? b : (b.down||NET.lost)? a : (Math.random()<.5? a : b); return { x:p.x, y:p.y }; }   // Online: Gegner kommen bei einem der beiden
 function ctr(){ if(!G.coop) return G; const o=G.p2; return { x:(G.x+o.x)/2, y:(G.y+o.y)/2 }; }
 function nearP(x,y){ if(!G.coop) return G; const o=G.p2; if(G.down) return o; if(o.down) return G; return (G.x-x)**2+(G.y-y)**2 <= (o.x-x)**2+(o.y-y)**2 ? G : o; }
 function makeP2(godId, m2){
@@ -1042,7 +1050,7 @@ function makeP2(godId, m2){
 }
 function coopUpdate(dt){
   for(let k=0;k<2;k++){ if(k) swapP(); if(!G.down) playerUpdate(dt); if(k) swapP(); }
-  tether(); worldUpdate(dt); spawner(dt);
+  if(!NET.host) tether(); worldUpdate(dt); spawner(dt);
   const o=G.p2; for(let i=0;i<MAXE;i++){ const e=E[i]; if(!e.on) continue; e.tg = G.down?1 : o.down?0 : ((e.x-G.x)**2+(e.y-G.y)**2 <= (e.x-o.x)**2+(e.y-o.y)**2 ? 0 : 1); }   // Gegner greifen den näheren Spieler an
   for(let k=0;k<2;k++){ if(k) swapP(); enemiesUpdate(dt); if(!G.down){ weaponsUpdate(dt); projUpdate(dt); spiralsUpdate(dt); skillsUpdate(dt); iceUpdate(dt); pickupsUpdate(dt); } if(k) swapP(); }
   stormsUpdate(dt); icewavesUpdate(dt); reviveUpdate(dt);
@@ -1491,9 +1499,9 @@ function spawnEnemy(kind, x, y, opts){
     return e; }
   return null;
 }
-function spawnRing(){
-  const R = Math.hypot(VW,VH)/2/(ZOOM*CZ) + 60;
-  const C = ctr(), a = Math.random()*TAU; let x=C.x+Math.cos(a)*R, y=C.y+Math.sin(a)*R;
+function spawnRing(C0){
+  const R = Math.max(Math.hypot(VW,VH)/2/(ZOOM*CZ) + 60, spawnAt||C0? 760 : 0);
+  const C = C0 || SPC(), a = Math.random()*TAU; let x=C.x+Math.cos(a)*R, y=C.y+Math.sin(a)*R;
   if(Math.abs(x)>WORLD-20 || Math.abs(y)>WORLD-20){ x=C.x-Math.cos(a)*R; y=C.y-Math.sin(a)*R; }
   return [clamp(x,-WORLD+20,WORLD-20), clamp(y,-WORLD+20,WORLD-20)];
 }
@@ -1507,6 +1515,7 @@ function pickKind(w){
   return "draugr";
 }
 function spawner(dt){
+  spawnAt = (G.coop && NET.host)? spawnC() : null;
   if(G.phase==="break") return;
   const w=G.wave, alive=E.reduce((n,e)=>n+(e.on?1:0),0);
   const late=Math.max(0,w-4);
@@ -1518,10 +1527,10 @@ function spawner(dt){
     if(e && w>=5 && Math.random()<.004+w*.004){ e.elite=true; e.hp*=4; e.maxHp*=4; e.r*=1.4; e.scale*=1.4; e.xp*=8; e.dmg*=1.5; e.kbm*=.4; } }
   // wolf horde storms in from one side, mid-wave from wave 4
   if(w>=5 && G.phase==="fight" && !G.hordeDone && G.waveT<waveLen(w)*.5){ G.hordeDone=true; const a=Math.random()*TAU, R=Math.hypot(VW,VH)/2/(ZOOM*CZ)+40, n=20+w*5;
-    for(let i=0;i<n;i++){ const b=a+rnd(-.5,.5), r=R+rnd(0,160); spawnEnemy("wolf", clamp(ctr().x+Math.cos(b)*r,-WORLD,WORLD), clamp(ctr().y+Math.sin(b)*r,-WORLD,WORLD), {sp:ETYPES.wolf.sp*1.25}); }
+    for(let i=0;i<n;i++){ const b=a+rnd(-.5,.5), r=R+rnd(0,160); spawnEnemy("wolf", clamp(SPC().x+Math.cos(b)*r,-WORLD,WORLD), clamp(SPC().y+Math.sin(b)*r,-WORLD,WORLD), {sp:ETYPES.wolf.sp*1.25}); }
     banner(G.world==="eis"?"Ein Rudel Frostwölfe naht":"Eine Wolfshorde naht","Sie kommen von einer Seite"); sfx("horn"); }
   // occasional encirclement
-  if(w>=3 && Math.random()<dt*(.02+w*.004) && alive<cap*.9){ const n=14+w*3, R=360; for(let i=0;i<n;i++){ const a=i/n*TAU; spawnEnemy(w>=6&&i%2?"wolf":"draugr", clamp(ctr().x+Math.cos(a)*R,-WORLD,WORLD), clamp(ctr().y+Math.sin(a)*R,-WORLD,WORLD)); } banner(null,"Sie kreisen dich ein"); }
+  if(w>=3 && Math.random()<dt*(.02+w*.004) && alive<cap*.9){ const n=14+w*3, R=360; for(let i=0;i<n;i++){ const a=i/n*TAU; spawnEnemy(w>=6&&i%2?"wolf":"draugr", clamp(SPC().x+Math.cos(a)*R,-WORLD,WORLD), clamp(SPC().y+Math.sin(a)*R,-WORLD,WORLD)); } banner(null,"Sie kreisen dich ein"); }
 }
 const BOSSES = ["jotunn","hrimwolf","surt","nidhogg","modgud","fafnir"];
 const BOSSNAME = { jotunn:"Hrungnir der Frostriese", hrimwolf:"Hrimfang der Eiswolf", surt:"Surtrs Glut", nidhogg:"Nidhögg der Wurzelnager", modgud:"Modgud, Wächterin der Hel", fafnir:"Fafnir der Goldwurm" };
@@ -1541,7 +1550,7 @@ function spawnBoss(){
 }
 function spawnOneBoss(big, a, n){
   const w=G.wave;
-  const x=clamp(ctr().x+Math.cos(a)*460,-WORLD+60,WORLD-60), y=clamp(ctr().y+Math.sin(a)*460,-WORLD+60,WORLD-60);
+  const x=clamp(SPC().x+Math.cos(a)*460,-WORLD+60,WORLD-60), y=clamp(SPC().y+Math.sin(a)*460,-WORLD+60,WORLD-60);
   let e;
   if(big){ const kind=BOSSES[(w/5-1)%BOSSES.length]; const hp=5600*Math.pow(w/5,1.9);
     e=spawnEnemy("troll",x,y,{ kind, boss:true, big:true, r:44, hp, maxHp:hp, sp: kind==="hrimwolf"?95:60, dmg:26*dmgMulE(w), xp:0, scale:3.2, atk:2.5 });
@@ -1639,7 +1648,7 @@ function enemiesUpdate(dt){
     // contact
     const cr=e.r+G.r-4; if(e.boss && d<cr){ hitPlayer(e.dmg*(e.big?.4:.55),"contact:"+e.kind); const px=G.x-e.x, py=G.y-e.y, pd=Math.hypot(px,py)||1, pu=cr-pd+10; G.x=clamp(G.x+px/pd*pu,-WORLD+20,WORLD-20); G.y=clamp(G.y+py/pd*pu,-WORLD+20,WORLD-20); }
     // despawn far stragglers (respawn nearer)
-    if(!e.boss && d>1500){ const [x,y]=spawnRing(); e.x=x; e.y=y; }
+    if(!e.boss && d>1500){ const [x,y]=spawnRing(G.coop&&NET.host?{x:G.x,y:G.y}:null); e.x=x; e.y=y; }
   }
   for(const p of EP){ if(!p.on) continue; if(!G.coop || G.pid===0){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.l-=dt; if(p.l<=0){p.on=false; continue;}
     if(p.kind!=="arrow" && Math.random()<.4) particle(p.x,p.y,0,0,.25,3,p.kind==="fire"?PIDX.fire:PIDX.frost); }
@@ -1897,7 +1906,7 @@ const SHRINES = [
 function shrinesUpdate(dt){
   G.shrineT-=dt;
   if(G.shrineT<=0 && G.shrines.length<2){ G.shrineT=rnd(35,55); const a=Math.random()*TAU, r=rnd(380,620), sh=pick(SHRINES);
-    G.shrines.push({ ...sh, x:clamp(ctr().x+Math.cos(a)*r,-WORLD+80,WORLD-80), y:clamp(ctr().y+Math.sin(a)*r,-WORLD+80,WORLD-80), prog:0, life:40 }); }
+    G.shrines.push({ ...sh, x:clamp(SPC().x+Math.cos(a)*r,-WORLD+80,WORLD-80), y:clamp(SPC().y+Math.sin(a)*r,-WORLD+80,WORLD-80), prog:0, life:40 }); }
   for(let i=G.shrines.length-1;i>=0;i--){ const h=G.shrines[i]; h.life-=dt; if(h.life<=0){ G.shrines.splice(i,1); continue; }
     const sp=nearP(h.x,h.y), d=Math.hypot(sp.x-h.x,sp.y-h.y); h.prog = d<46 ? h.prog+dt/1.0 : Math.max(0,h.prog-dt);
     if(h.prog>=1){ G.shrines.splice(i,1); G.shrinesUsed=(G.shrinesUsed||0)+1; if(h.id==="leben") sp.hp=Math.min(sp.maxHp,sp.hp+sp.maxHp*.4); else sp.buffs[h.id]=h.dur;
@@ -2002,8 +2011,8 @@ function drawDown(c){ // Koop: gefallener Spieler liegt am Boden, der Ring zeigt
 function render(dt){
   const c=ctx; c.setTransform(DPR,0,0,DPR,0,0);
   if(!G){ renderTitleBg(dt); return; }
-  const CC=ctr();
-  if(G.coop){ const o=G.p2, need=Math.max(1, Math.abs(G.x-o.x)/Math.max(200,VW/ZOOM-200), Math.abs(G.y-o.y)/Math.max(200,VH/ZOOM-240)); CZ+=(clamp(1/need,CZMIN,1)-CZ)*Math.min(1,dt*4); } else CZ=1;
+  const OWN = NET.guest&&G.coop? G.p2 : G, CC = netCoop()? OWN : ctr();
+  if(G.coop && !netCoop()){ const o=G.p2, need=Math.max(1, Math.abs(G.x-o.x)/Math.max(200,VW/ZOOM-200), Math.abs(G.y-o.y)/Math.max(200,VH/ZOOM-240)); CZ+=(clamp(1/need,CZMIN,1)-CZ)*Math.min(1,dt*4); } else CZ=1;
   camX += (CC.x-camX)*Math.min(1,dt*9); camY += (CC.y-camY)*Math.min(1,dt*9);
   const sx = shake>0.3? rnd(-shake,shake):0, sy = shake>0.3? rnd(-shake,shake):0;
   kick*=Math.pow(.02,dt); const Z=ZOOM*CZ*(1+kick*.06);
@@ -2157,9 +2166,9 @@ function render(dt){
   drawWeather(c,dt);
   if(G.event==="blutmond"){ c.fillStyle="rgba(140,0,0,.13)"; c.fillRect(0,0,VW,VH); const mx2=VW-110, my2=110; c.globalCompositeOperation="lighter"; c.globalAlpha=.6; c.drawImage(GLOW.red,mx2-90,my2-90,180,180); c.globalAlpha=1; c.globalCompositeOperation="source-over";
     c.fillStyle="#b3121c"; c.beginPath(); c.arc(mx2,my2,34,0,TAU); c.fill(); c.fillStyle="rgba(0,0,0,.25)"; c.beginPath(); c.arc(mx2-9,my2-6,8,0,TAU); c.arc(mx2+10,my2+9,6,0,TAU); c.fill(); }
-  if(G.event==="nebel"){ const px=(G.x-camX)*ZOOM*CZ+VW/2, py=(G.y-camY)*ZOOM*CZ+VH/2, r0=Math.min(VW,VH)*.32, r1=Math.max(VW,VH)*.62;
+  if(G.event==="nebel"){ const px=(OWN.x-camX)*ZOOM*CZ+VW/2, py=(OWN.y-camY)*ZOOM*CZ+VH/2, r0=Math.min(VW,VH)*.32, r1=Math.max(VW,VH)*.62;
     const gr=c.createRadialGradient(px,py,r0*.6,px,py,r1); gr.addColorStop(0,"rgba(150,160,170,0)"); gr.addColorStop(.45,"rgba(120,130,140,.55)"); gr.addColorStop(1,"rgba(90,100,110,.9)"); c.fillStyle=gr; c.fillRect(0,0,VW,VH); }
-  if(G.event==="schneesturm"){ const clear=G.ice&&G.ice.nordlicht, px=(G.x-camX)*ZOOM*CZ+VW/2, py=(G.y-camY)*ZOOM*CZ+VH/2, r0=Math.min(VW,VH)*(clear?.5:.3), r1=Math.max(VW,VH)*(clear?.8:.6);
+  if(G.event==="schneesturm"){ const clear=G.ice&&G.ice.nordlicht, px=(OWN.x-camX)*ZOOM*CZ+VW/2, py=(OWN.y-camY)*ZOOM*CZ+VH/2, r0=Math.min(VW,VH)*(clear?.5:.3), r1=Math.max(VW,VH)*(clear?.8:.6);
     const gr=c.createRadialGradient(px,py,r0*.6,px,py,r1); gr.addColorStop(0,"rgba(230,240,250,0)"); gr.addColorStop(.45,`rgba(215,230,245,${clear?.2:.5})`); gr.addColorStop(1,`rgba(200,220,240,${clear?.45:.88})`); c.fillStyle=gr; c.fillRect(0,0,VW,VH); }
   if(G.cine>0){ const k=Math.min(1,G.cine/.4, (2-G.cine)/.35+0), bh=VH*.09*Math.min(1,Math.min(G.cine,2-G.cine)/.3); c.fillStyle="#000"; c.fillRect(0,0,VW,bh); c.fillRect(0,VH-bh,VW,bh); }
   if(flash>0){ c.fillStyle=`rgba(220,240,255,${flash*.5})`; c.fillRect(0,0,VW,VH); }
@@ -2167,6 +2176,10 @@ function render(dt){
   for(const h of G.shrines){ const bx=(h.x-camX)*ZOOM*CZ+VW/2, by=(h.y-camY)*ZOOM*CZ+VH/2; if(bx<0||bx>VW||by<0||by>VH){ const a=Math.atan2(by-VH/2,bx-VW/2), px=clamp(VW/2+Math.cos(a)*(VW/2-30),30,VW-30), py=clamp(VH/2+Math.sin(a)*(VH/2-30),90,VH-30);
     c.save(); c.translate(px,py); c.fillStyle=h.col; c.beginPath(); c.arc(0,0,10,0,TAU); c.fill(); c.fillStyle="#0b0f16"; c.font="bold 12px 'Noto Sans Runic', serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(h.rune,0,1); c.restore(); } }
   for(const B of (G.bosses||[])){ if(!B.on) continue; const bx=(B.x-camX)*ZOOM*CZ+VW/2, by=(B.y-camY)*ZOOM*CZ+VH/2; if(bx<0||bx>VW||by<0||by>VH){ const a=Math.atan2(by-VH/2,bx-VW/2), px=clamp(VW/2+Math.cos(a)*(VW/2-34),34,VW-34), py=clamp(VH/2+Math.sin(a)*(VH/2-34),90,VH-34); c.save(); c.translate(px,py); c.rotate(a); c.fillStyle="#ff4d3d"; c.beginPath(); c.moveTo(16,0); c.lineTo(-8,-10); c.lineTo(-8,10); c.fill(); c.restore(); } }
+  if(netCoop()){ const o = NET.guest? G : G.p2, bx=(o.x-camX)*ZOOM*CZ+VW/2, by=(o.y-camY)*ZOOM*CZ+VH/2;   // Pfeil zum Mitspieler, wenn er nicht im Bild ist
+    if(bx<0||bx>VW||by<0||by>VH){ const a=Math.atan2(by-VH/2,bx-VW/2), px=clamp(VW/2+Math.cos(a)*(VW/2-34),34,VW-34), py=clamp(VH/2+Math.sin(a)*(VH/2-34),100,VH-34), col=o.down?"#ff6a4a":"#7fd8ff";
+      c.save(); c.translate(px,py); c.rotate(a); c.fillStyle=col; c.beginPath(); c.moveTo(16,0); c.lineTo(-8,-10); c.lineTo(-8,10); c.closePath(); c.fill(); c.restore();
+      c.fillStyle=col; c.font="600 12px sans-serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(o.down?"Hilfe!":GODS[o.god].name, px, py+(py>VH/2?-22:22)); } }
   // minimap
   const mm=Math.min(120, VW*.26), mx=VW-mm-Math.max(12,0), my=VH-mm-12-(window.visualViewport?0:0);
   c.fillStyle="rgba(8,12,20,.7)"; c.fillRect(mx,my,mm,mm); c.strokeStyle="rgba(127,216,255,.3)"; c.lineWidth=1; c.strokeRect(mx+.5,my+.5,mm-1,mm-1);
@@ -2590,6 +2603,8 @@ function netMsg(m){
       NET.guestInfo=cleanGuest(m); if(G && state!=="over") return;
       $("lobby-msg").textContent=`${GODS[m.god].name} ist bereit. Du spielst ${GODS[NET.hostGod].name} in ${WORLDS[NET.world].name}.`; $("btn-lobby-start").hidden=false; $("btn-lobby-start").focus({preventScroll:true}); return; }
     if(m.t==="in"){ NET.gotIn=true; NET.in={ mx:clamp(+m.mx||0,-1,1), my:clamp(+m.my||0,-1,1) }; return; }
+    if(m.t==="cardopen"){ if(G && NET.live[1]) NET.live[1].open=true; return; }
+    if(m.t==="cardclose"){ if(G && NET.live[1]) NET.live[1].open=false; return; }
     if(m.t==="card"){ if(G && NET.live[1]){ livePick(1, m.i); return; } if(G && state==="level" && G.coop && G.pid===1 && offers[m.i|0]) choose(offers[m.i|0]); return; }
     if(m.t==="reroll"){ if(G && NET.live[1]){ liveReroll(1); return; } if(G && state==="level" && G.pid===1 && G.rerolls>0){ G.rerolls--; state="play"; openLevel(); } return; }
     if(m.t==="pause"){ pause(); return; } if(m.t==="resume"){ resume(); return; }
@@ -2599,7 +2614,7 @@ function netMsg(m){
       NET.hostGod=m.god; NET.world=m.world; selWorld=m.world; koop=true; koopNet=false; openHeroes(); if(m.taken) $("heroes-sub").textContent="Diesen Gott spielt schon Spieler 1. Wähle einen anderen"; return; }
     if(m.t==="start"){ guestStart(m); return; }
     if(m.t==="s"){ applySnap(m); return; }
-    if(m.t==="cards" && m.live){ if(!G) return; liveUi(m.title, m.html, m.rerolls); sfx("level"); return; }
+    if(m.t==="cards" && m.live){ if(!G) return; const fresh=!NET.gopen; liveUi(m.title, m.html, m.rerolls, NET.gopen); if(fresh) sfx("level"); return; }
     if(m.t==="cardsoff"){ liveClose(); return; }
     if(m.t==="cards"){ if(!G) return; hide("ov-wait"); $("level-title").textContent=m.title; $("cards").innerHTML=m.html; $("btn-reroll").hidden=!(m.rerolls>0); $("btn-reroll").textContent=`Neu würfeln (${m.rerolls})`; show("ov-level"); state="level"; sfx("level"); return; }
     if(m.t==="over"){ guestOver(m); return; }
@@ -2629,8 +2644,8 @@ function packE(cx,cy){ let n=0; for(let i=0;i<MAXE;i++){ const e=E[i]; if(!e.on)
   return EBUF.slice(0,n*NE).buffer; }
 function packPt(){ let n=(pHead-NET.ph+MAXPT)%MAXPT; NET.ph=pHead; n=Math.min(n,500); const a=new Float32Array(n*8);
   for(let j=0;j<n;j++){ const i=(pHead-n+j+MAXPT)%MAXPT, b=j*8; a[b]=pt.x[i]; a[b+1]=pt.y[i]; a[b+2]=pt.vx[i]; a[b+3]=pt.vy[i]; a[b+4]=pt.l[i]; a[b+5]=pt.m[i]; a[b+6]=pt.s[i]; a[b+7]=pt.c[i]; } return a.buffer; }
-function snap(){ const C=ctr();
-  return { t:"s", st:state, g:{ wave:G.wave, waveT:G.waveT, phase:G.phase, kills:G.kills, runes:G.runes, level:G.level, xp:G.xp, xpNeed:G.xpNeed, event:G.event, world:G.world, cine:G.cine||0, ultiDim:G.ultiDim||0, time:G.time, hitstop:G.hitstop||0, lvTurn:G.lvTurn, chest:!!G.chest, lvt:NET.live[1]?NET.live[1].t:0, shrines:G.shrines.map(plainFx) },
+function snap(){ const C=PL2();
+  return { t:"s", st:state, g:{ wave:G.wave, waveT:G.waveT, phase:G.phase, kills:G.kills, runes:G.runes, level:G.level, xp:G.xp, xpNeed:G.xpNeed, event:G.event, world:G.world, cine:G.cine||0, ultiDim:G.ultiDim||0, time:G.time, hitstop:G.hitstop||0, lvTurn:G.lvTurn, chest:!!G.chest, lvt:NET.live[1]?NET.live[1].t:0, lvn:NET.live[1]?1+((G.lvq&&G.lvq[1])||0):0, shrines:G.shrines.map(plainFx) },
     p:[plainP(PL1()), plainP(PL2())], e:packE(C.x,C.y), b:(G.bosses||[]).filter(b=>b.on).map(b=>[b.id, b.name||"", b.hp, b.maxHp]), boss:G.boss&&G.boss.on?G.boss.id:-1,
     pr:PR.filter(p=>p.on).map(p=>[p.kind,p.x,p.y,p.vx,p.vy,p.r,p.rot,p.evo?1:0,p.el||0]), ep:EP.filter(p=>p.on).map(p=>[p.kind,p.x,p.y,p.vx,p.vy,p.r]),
     gm:GM.filter(g=>g.on).map(g=>[g.k,g.x,g.y,g.t]), tx:TX.filter(t=>t.on).map(t=>[t.x,t.y,t.v,t.l,t.c]),
@@ -2668,6 +2683,7 @@ function applySnap(m){
   for(const q of m.q) banner(q[0]||null,q[1]||null); for(const n of m.snd) sfx(n);
   const sig=JSON.stringify([a.weapons,a.passives,b.weapons,b.passives].map(o=>Object.entries(o).map(([k,v])=>k+(v.lvl||v)+(v.evo?"*":"")))); if(sig!==NET.wsig){ NET.wsig=sig; renderSlots(); }
   if(liveUiOn()) $("level-bar").firstChild.style.width=Math.max(0,m.g.lvt/LIVE_T*100)+"%";
+  liveBadge(m.st==="play" && $("cards").children.length ? (m.g.lvn||0) : 0);
   guestState(m.st);
 }
 function guestState(st){
@@ -2723,20 +2739,28 @@ function liveUpdate(dt){
   if(!NET.gotIn && G.time<15){ const p=PL2(); p.inv=Math.max(p.inv,.12); }                              // Gast geschützt, bis seine Steuerung ankommt
   for(let k=0;k<2;k++){ const P=k?PL2():PL1(), L=NET.live[k];
     if(k===1 && NET.lost){ NET.live[1]=null; G.lvq[1]=0; continue; }
-    if(L){ L.t-=dt; P.inv=Math.max(P.inv,.12); if(k===0) $("level-bar").firstChild.style.width=Math.max(0,L.t/LIVE_T*100)+"%"; if(L.t<=0) livePick(k,0); }
-    else if(G.lvq[k]>0 && !P.down){ G.lvq[k]--; asP(k,()=>{ NET.live[k]={ o:buildOffers(), t:LIVE_T }; }); liveShow(k); } }
+    if(L){ if(L.open){ L.t-=dt; P.inv=Math.max(P.inv,.12); if(k===0) $("level-bar").firstChild.style.width=Math.max(0,L.t/LIVE_T*100)+"%"; if(L.t<=0) livePick(k,0); } }
+    else if(G.lvq[k]>0 && !P.down){ G.lvq[k]--; asP(k,()=>{ NET.live[k]={ o:buildOffers(), t:LIVE_T, open:false }; }); liveShow(k); } }
+  liveBadge(NET.live[0]? 1+G.lvq[0] : 0);
 }
+function liveBadge(n){ const b=$("livebtn"), hide=!(n>0) || liveUiOn() || state!=="play", t=n>1?`✦ Gabe wählen (${n})`:"✦ Gabe wählen";   // kleiner Knopf statt Karten im Bild
+  if(b.hidden!==hide) b.hidden=hide; if(b.textContent!==t) b.textContent=t; }
+function liveOpen(){ if(NET.guest){ if(!$("cards").children.length || !NET.conn) return; NET.gopen=true; NET.conn.send({t:"cardopen"}); $("ov-level").hidden=false; $("livebtn").hidden=true; return; }
+  const L=NET.live[0]; if(!L) return; L.open=true; $("ov-level").hidden=false; $("livebtn").hidden=true; }
+function liveLater(){ if(NET.guest){ NET.gopen=false; NET.conn&&NET.conn.send({t:"cardclose"}); } else if(NET.live[0]) NET.live[0].open=false; $("ov-level").hidden=true; }
 function liveShow(k){ const L=NET.live[k]; if(!L) return;
   asP(k,()=>{ const title=`${GODS[G.god].name}: neue Gabe`+(G.lvq[k]>0?` (+${G.lvq[k]} offen)`:""), html=L.o.map(cardHtml).join("");
-    if(k===0){ liveUi(title, html, G.rerolls); sfx("level"); } else if(NET.conn) NET.conn.send({t:"cards", live:1, title, html, rerolls:G.rerolls}); }); }
-function liveUi(title, html, rerolls){ const ov=$("ov-level"); ov.classList.add("live"); $("level-title").textContent=title; $("cards").innerHTML=html;
-  $("level-hint").textContent="Das Spiel läuft weiter. Solange du wählst, bist du geschützt (Tasten 1 bis 3)."; $("level-bar").firstChild.style.width="100%";
-  $("btn-reroll").hidden=!(rerolls>0); $("btn-reroll").textContent=`Neu würfeln (${rerolls})`; ov.hidden=false; }
-function liveClose(){ const ov=$("ov-level"); if(!ov.classList.contains("live")) return; ov.classList.remove("live"); ov.hidden=true; $("level-hint").textContent="Wähle eine Gabe der Götter"; }
+    if(k===0){ liveUi(title, html, G.rerolls, L.open); if(!L.open) sfx("level"); } else if(NET.conn) NET.conn.send({t:"cards", live:1, title, html, rerolls:G.rerolls}); }); }
+function liveUi(title, html, rerolls, open){ const ov=$("ov-level"); ov.classList.add("live"); $("level-title").textContent=title; $("cards").innerHTML=html;
+  $("level-hint").textContent="Das Spiel läuft weiter. Solange die Karten offen sind, bist du geschützt (10 s)."; $("level-bar").firstChild.style.width="100%";
+  $("btn-reroll").hidden=!(rerolls>0); $("btn-reroll").textContent=`Neu würfeln (${rerolls})`; ov.hidden=!open; }
+function liveClose(){ const ov=$("ov-level"); $("livebtn").hidden=true; NET.gopen=false; if(!ov.classList.contains("live")) return; $("cards").innerHTML=""; ov.classList.remove("live"); ov.hidden=true; $("level-hint").textContent="Wähle eine Gabe der Götter"; }
 function livePick(k,i){ const L=NET.live[k]; if(!L) return; const o=L.o[i|0]||L.o[0]; NET.live[k]=null;
   asP(k,()=>applyCard(o)); renderSlots(); if(k===0) liveClose(); else if(NET.conn) NET.conn.send({t:"cardsoff"}); }
 function liveReroll(k){ const L=NET.live[k]; if(!L) return; let ok=false; asP(k,()=>{ if(G.rerolls>0){ G.rerolls--; L.o=buildOffers(); ok=true; } }); if(ok) liveShow(k); }
 setInterval(()=>{ if(NET.conn) NET.conn.send({t:"hb"}); }, 1000);   // Herzschlag: hält die Verbindung auch im Menü oder im Hintergrund wach
+$("livebtn").addEventListener("click", liveOpen);
+$("btn-later").addEventListener("click", liveLater);
 $("btn-lobby-copy").addEventListener("click", ()=>{ const v=$("lobby-link").value; const done=()=>{ $("btn-lobby-copy").textContent="Kopiert ✓"; setTimeout(()=>$("btn-lobby-copy").textContent="Link kopieren",1800); };
   if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done,()=>{ $("lobby-link").select(); document.execCommand&&document.execCommand("copy"); done(); }); else { $("lobby-link").select(); document.execCommand&&document.execCommand("copy"); done(); } });
 $("btn-lobby-share").addEventListener("click", ()=>{ try{ navigator.share({ title:"Götterwacht Koop", text:"Kämpf mit mir in Götterwacht!", url:$("lobby-link").value }).catch(()=>{}); }catch(e){} });
@@ -2749,6 +2773,7 @@ $("btn-wait-leave").addEventListener("click", netLeave);
 /* ---------------- input ---------------- */
 addEventListener("keydown", e=>{ keys[e.code]=true;
   if(e.code==="Escape"||e.code==="KeyP"){ if(state==="play") pause(); else if(state==="pause") resume(); }
+  if(state==="play" && e.code==="KeyE"){ if(liveUiOn()) liveLater(); else if(!$("livebtn").hidden) liveOpen(); }
   if(state==="play" && liveUiOn() && ["Digit1","Digit2","Digit3","Digit4"].includes(e.code)){ const i=+e.code.slice(-1)-1; if($("cards").querySelector(`[data-i="${i}"]`)){ if(NET.guest) netCard(i); else livePick(0,i); } }
   if(state==="level" && ["Digit1","Digit2","Digit3"].includes(e.code)){ const i=+e.code.slice(-1)-1; if(NET.guest){ if($("cards").querySelector(`[data-i="${i}"]`)) netCard(i); } else { const o=offers[i]; if(o) choose(o); } }
   if(state==="play" && e.code.startsWith("Arrow")) e.preventDefault();
@@ -2762,7 +2787,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 43;
+const GAME_VERSION = 44;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -2846,7 +2871,7 @@ function simRun(god, opt={}){
   BOT.on=false; meta=JSON.parse(savedMeta); saveMeta(); G=null; state="title"; only("ov-title"); $("hud").hidden=true; $("bossbar").hidden=true;
   return res;
 }
-window.__gw = { sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, buyHero, heroLv, heroCost, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), PL1, PL2, COOP, swapP, joy, joy2, get koop(){return koop;}, NET, get code(){return NET.code;}, down:k=>{ const sw=G.pid!==k; if(sw) swapP(); playerDown(); if(sw) swapP(); }, alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
+window.__gw = { cam:()=>[camX,camY], sim:simRun, mus:MUS, ac:()=>AC, master:()=>master, hurt:(e,d)=>hurt(e,d), get G(){return G;}, get state(){return state;}, get version(){return GAME_VERSION;}, get fps(){return fps;}, isCoinOfferWave, waveEvent, worldOpen, metaMax, WORLDS, buyHero, heroLv, heroCost, ICE_SKILLS, buyIce, cleanIce, readAny, saveJSON, enterIce, get meta(){return meta;}, upgradeCoinSkills, hasCoinSkillUpgrade, coinBurnDamageForWave, tickCoinBurn, resolveCoinFlip, start:startGame, E, keys, choose:i=>offers[i]&&choose(offers[i]), PL1, PL2, COOP, swapP, joy, joy2, get koop(){return koop;}, NET, get code(){return NET.code;}, down:k=>{ const sw=G.pid!==k; if(sw) swapP(); playerDown(); if(sw) swapP(); }, alive:()=>E.reduce((n,e)=>n+(e.on?1:0),0) };
 })();
 </script>
 

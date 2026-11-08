@@ -1,8 +1,12 @@
 # Status
 
-Stand: 08.11.2026, Version 43
+Stand: 08.11.2026, Version 44
 
 ## Zuletzt geändert
+- Version 44 (Claude, nach Nicos Test zu zweit): **Online-Koop frei laufen, Karten auf Knopfdruck.**
+  - Frei laufen: Im Online-Koop folgt die Kamera auf jedem Gerät dem eigenen Gott, es gibt keine Leine und kein Herauszoomen mehr. Ist der Mitspieler nicht im Bild, zeigt ein Pfeil am Rand, wo er ist (rot mit «Hilfe!», wenn er am Boden liegt). Gegner, Bosse und Schreine erscheinen abwechselnd bei einem der beiden; Gegner, die weit weg zurückbleiben, tauchen beim Spieler wieder auf, den sie jagen. Spieler 2 bekommt die Gegner um sich herum geschickt.
+  - Karten: Beim Stufenaufstieg erscheint nur ein kleiner Knopf «✦ Gabe wählen» rechts über der Karte (mit Zahl, wenn mehrere warten). Erst ein Tipp darauf (oder Taste E) öffnet die Karten. Solange sie offen sind, ist man geschützt, insgesamt höchstens 10 s, dann nimmt das Spiel die erste Karte. «Später» schliesst die Karten wieder, die Restzeit bleibt. Die Karten sind kompakter (ohne Zusatz-Hinweise).
+  - Lokaler Koop und Solo bleiben genau gleich (gleiche Testläufe mit festem Zufall).
 - Version 43 (Claude): **Umweg-Server für Online-Koop.** Nicos Test im Handy-Hotspot zeigte: auch im selben Netz keine direkte Verbindung. Jetzt ist ein TURN-Server eingetragen (ExpressTURN, Gratis-Konto von Nico, `free.expressturn.com:3478`, UDP und TCP). Klappt die direkte Verbindung nicht, läuft das Spiel über diesen Server. Getestet mit erzwungenem Umweg: Verbindung steht, Spiel läuft mit rund 19 Ständen pro Sekunde, etwa 130 KB/s (rund 0,5 GB pro Stunde, zählt aufs Gratis-Kontingent und aufs Handy-Datenvolumen). Die Zugangsdaten stehen offen im Spiel (bei Gratis-TURN üblich).
 - Version 42 (Claude, nach Nicos Test «Man verbindet sich nicht»): **Klare Meldung, woran die Verbindung scheitert.**
   - Befund: Die Umweg-Server (TURN), die PeerJS eingebaut hat (eu-0/us-0.turn.peerjs.com), gibt es nicht mehr (Adresse löst sich nicht auf). Ohne Umweg-Server klappt Online-Koop nur, wenn die Netze eine direkte Verbindung erlauben; im Mobilfunk ist das oft nicht so. Getestet mit erzwungenem Umweg: keine Verbindung möglich.
