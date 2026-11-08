@@ -15,6 +15,7 @@ Nordisches Wellen-Überlebensspiel im Browser. Eine einzige HTML-Datei, keine In
 - Runenschmiede: 15 Upgrades mit 180 Stufen (ab Niflheim +10 Stufen pro Kraft-Upgrade, zusammen 300), 15 freischaltbare Fähigkeiten, danach Vidar als Verbündeter; dazu der **Pfad nach Niflheim** (Skilltree mit 10 Fähigkeiten für die Eiswelt)
 - Gaben beim Stufenaufstieg: dazu Frostnova, Eiszapfenregen, Zähigkeit, Runenwissen, Scharfblick
 - **Heldenhalle** in der Ruhmeshalle: jeden Gott einzeln mit Seelen bis Stufe 10 leveln (mehr Leben, Schaden, Tempo und eine eigene Stärke); sichtbar mächtiger bei Stufe 1, 4, 7 und 10 (Goldbeschläge, Schulterpanzer und grössere Waffe, leuchtende Rune und Aura, göttliche Krone mit Funken)
+- **Runde fortsetzen:** Eine Solo-Runde wird laufend gespeichert. Nach der Heldenwahl fragt das Spiel «Fortfahren» oder «Neues Spiel».
 - **Runenschmiede pro Held:** Jeder Gott hat seine eigene Schmiede. Nach der Heldenwahl «Runenschmiede <Held>» oder gleich starten, im Koop für beide Spieler.
 - **Spielstände:** Unter «Spielstand» gibt es drei Plätze (zum Beispiel für verschiedene Spieler), jeder lässt sich löschen (zweimal tippen).
 - **Gaben wählen:** Schalter im Spiel unten rechts über der Karte («Gaben: Kampf / Pause / Auto») mit drei Stellungen: «im Kampf wählen» (das Spiel läuft weiter, Knopf «✦ Gabe wählen», auch solo), «Spiel hält an» oder «automatisch» für alle, die nur kämpfen wollen. Ab Stufe 15 gibt es seltener neue Gaben, dafür je +3 % Schaden

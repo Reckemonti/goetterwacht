@@ -19,6 +19,7 @@ Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Um
 | GW-5 | ✅ v35: Weitere wählbare Fähigkeiten beim Seelen-Levelaufstieg | GW-4 |
 | GW-7 | ✅ v38: Koop-Modus (lokal zu zweit an einem Gerät) | GW-6 |
 | GW-8 | ✅ v39: Online-Koop mit Einladungslink, jeder auf seinem Gerät, nicht derselbe Gott | GW-7 |
+| GW-18 | ✅ v50: Tor-Intro, laufende Runde speichern/fortsetzen, Skadi Eisstern + Eissplitter, Gaben Standard Auto | GW-17 |
 | GW-17 | ✅ v49: Runenschmiede pro Held, Schmiede nach der Heldenwahl (auch Koop) | GW-16 |
 | GW-16 | ✅ v48: drei Spielstände, Spielstand löschen | GW-15 |
 | GW-15 | ✅ v47: Gaben-Schalter im Spiel unten rechts, nicht mehr im Menü | GW-14 |

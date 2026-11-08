@@ -15,7 +15,7 @@ const { chromium } = require('playwright');
   const toHeroes = async () => { await click('#btn-solo'); await click('[data-world=mittgard]'); };
   const pickHero = async id => { await click('[data-god=' + id + ']'); await click('#btn-start'); await W(250); };
   const hidden = id => p.evaluate(i => document.getElementById(i).hidden, id);
-  const snap = () => p.evaluate(() => { const G = __gw.G; return JSON.stringify({ god: G.god, wave: G.wave, level: G.level, xp: Math.round(G.xp), kills: G.kills, runes: G.runes, hp: Math.round(G.hp), maxHp: G.maxHp, dmg: +G.dmgMul.toFixed(4), cd: +G.cdMul.toFixed(4), spd: +G.speed.toFixed(3), area: +G.area.toFixed(4), armor: +G.armor.toFixed(3), w: Object.values(G.weapons).map(w => w.id + w.lvl + (w.evo ? '*' : '')).sort(), p: G.passives, fate: G.fate, rr: G.rerolls, rv: G.revives, x: Math.round(G.x), y: Math.round(G.y), pend: G.pendingLv }); });
+  const snap = () => p.evaluate(() => { const G = __gw.G; return JSON.stringify({ god: G.god, wave: G.wave, level: G.level, xp: Math.round(G.xp), kills: G.kills, runes: G.runes, hp: Math.round(G.hp), maxHp: G.maxHp, dmg: +G.dmgMul.toFixed(4), cd: +G.cdMul.toFixed(4), spd: +G.speed.toFixed(3), area: +G.area.toFixed(4), armor: +G.armor.toFixed(3), w: Object.values(G.weapons).map(w => w.id + w.lvl + (w.evo ? '*' : '')).sort(), p: Object.fromEntries(Object.entries(G.passives).sort()), fate: G.fate, rr: G.rerolls, rv: G.revives, x: Math.round(G.x), y: Math.round(G.y), pend: G.pendingLv }); });
 
   await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload(); await W(500);
 

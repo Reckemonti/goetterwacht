@@ -1,8 +1,14 @@
 # Status
 
-Stand: 08.11.2026, Version 49
+Stand: 08.11.2026, Version 50
 
 ## Zuletzt geändert
+- Version 50 (Claude mit drei Agenten, Wünsche Nico):
+  - **Tor-Intro:** Nach dem Laden 2 s «Open the Gate to Götterwacht»: Runentor öffnet sich mit Blitzen, Nebel und Licht (Canvas, `introTor`). Tippen/Taste überspringt; bei «weniger Bewegung» nur Text; bei Einladungslinks (`?koop=`) kein Intro.
+  - **Laufende Runde speichern (solo):** pro Spielstand-Platz unter `gw-run-<Platz>`. Gespeichert bei jeder Welle, Pause und beim Schliessen/Wechseln der App. Nach der Heldenwahl fragt das Spiel «Fortfahren (Welle N, Stufe M)» oder «Neues Spiel»; im Heldenbildschirm zusätzlich ein Knopf «Fortfahren». Gegner auf dem Feld werden nicht gespeichert (Welle startet mit frischen Gegnern, ein Boss kommt mit vollem Leben). Tod löscht die Runde. Koop/online speichert nicht. Test `werkzeuge/spielstand-runde.js`.
+  - **Skadi attraktiver:** Speerstoss wird «Eisstern» (3 Speere als Stern, ab Stufe 3 vier, ab 5 sechs, Entwicklung +1; je Speer etwas weniger Schaden). Neu «Eissplitter»: gefrorene (und 30 % der gebremsten) Gegner zerspringen beim Tod und treffen Nachbarn (Kette bis 3 tief). Leben 130, Tempo 178, Schaden 1.1, Frostbiss 30 %. Simulation (4 Läufe, SEED 7): Skadi 7.8 → 9.5 Wellen, Ulfr 10.5, Donar 7.3 (jetzt der schwächste).
+  - **Gaben standardmässig «Auto»:** wer den Schalter nie angefasst hat, bekommt automatische Gaben (`meta.autoPick` fehlt = Auto).
+  - UX-Prüfung (Agent) liegt als Bericht vor, noch nicht umgesetzt.
 - Version 49 (Claude, Wunsch Nico): **Runenschmiede pro Held.** Jeder Gott hat seine eigene Schmiede (`meta.upH[gott]`, `meta.up` zeigt immer auf die Schmiede von `meta.forgeGod`, `linkForge()`). Alte gemeinsame Stufen hat beim ersten Start jeder Held bekommen, niemand verliert etwas. Nach der Heldenwahl: «Runenschmiede <Held>» oder starten. Im Koop (lokal) kann zuerst Spieler 1, dann Spieler 2 in seine Schmiede, ohne dass die Koop-Wahl neu beginnt; online bringt der Gast die Schmiede seines Gottes mit. Aus Hauptmenü und Rundenende hat die Schmiede Reiter für alle Götter. Der Eispfad bleibt gemeinsam. JSON-Spielstand speichert `runenschmiedeHelden`.
 - Version 48 (Claude, Wunsch Nico): **Drei Spielstände und Löschen.** Im Bildschirm «Spielstand» wählt man Platz 1, 2 oder 3 (mit Name, Runen, Rekord). Platz 1 ist der bisherige Speicher (`gw-meta`), 2 und 3 sind `gw-meta-2` / `gw-meta-3`, der aktive Platz steht in `gw-slot`. «Spielstand n löschen» braucht zwei Tipper und setzt den Platz auf neu. Ton, Musik und Gaben-Modus bleiben beim Wechseln und Löschen. Der Menüknopf zeigt «Spielstand n». Die Ruhmeshalle online ist pro Gerät, nicht pro Platz.
 - Version 47 (Claude, Wunsch Nico): Der Gaben-Schalter ist jetzt nur noch im Spiel, unten rechts über der Karte («Gaben: Kampf / Pause / Auto», ein Tippen wechselt). Aus Hauptmenü und Pausenmenü entfernt. Der Knopf «✦ Gabe wählen» sitzt darüber.
