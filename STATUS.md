@@ -1,8 +1,13 @@
 # Status
 
-Stand: 08.11.2026, Version 50
+Stand: 08.11.2026, Version 51
 
 ## Zuletzt geändert
+- Version 51 (Claude mit Agent, Wünsche Nico und UX-Prüfung «unübersichtlich»):
+  - **Skadi:** Grundangriff «Frostschlag» ist ein normaler Kreis wie bei Donar/Ulfr (Radius 80–124, bremst). Eisstern-Speere entfernt. Eissplitter bleiben. Simulation: Skadi 8.8, Ulfr 10.5, Donar 7.3 Wellen.
+  - **Intro** dauert 5 s (5 Blitze, Tor öffnet 1–3.8 s).
+  - **Übersicht:** Orbs im Spiel heissen «Funken» (Seelen nur noch Heldenhalle); eigener Titelknopf «Helden» (Heldenhalle, `ov-hall`), Ruhmeshalle nur Rekorde; Heldenwahl mit klebender Startleiste (Starten, Runenschmiede, Fortfahren); Wortwahl Rang / Heldengrad / Meisterkraft / Eiskräfte statt überall «Stufe»; Eispfad in der Schmiede erst ab Niflheim, «Zurück» klebt; Titelmenü gestrafft (Speichern/Laden nur unter «Spielstand»); Knöpfe im Spiel verschwinden, solange ein Menü offen ist, Menüs dunkler; Rundenende zeigt «Welle erreicht».
+  - Gaben-Schalter im Spiel braucht zwei Tipper (erster zeigt die Erklärung), damit er nicht aus Versehen wechselt.
 - Version 50 (Claude mit drei Agenten, Wünsche Nico):
   - **Tor-Intro:** Nach dem Laden 2 s «Open the Gate to Götterwacht»: Runentor öffnet sich mit Blitzen, Nebel und Licht (Canvas, `introTor`). Tippen/Taste überspringt; bei «weniger Bewegung» nur Text; bei Einladungslinks (`?koop=`) kein Intro.
   - **Laufende Runde speichern (solo):** pro Spielstand-Platz unter `gw-run-<Platz>`. Gespeichert bei jeder Welle, Pause und beim Schliessen/Wechseln der App. Nach der Heldenwahl fragt das Spiel «Fortfahren (Welle N, Stufe M)» oder «Neues Spiel»; im Heldenbildschirm zusätzlich ein Knopf «Fortfahren». Gegner auf dem Feld werden nicht gespeichert (Welle startet mit frischen Gegnern, ein Boss kommt mit vollem Leben). Tod löscht die Runde. Koop/online speichert nicht. Test `werkzeuge/spielstand-runde.js`.

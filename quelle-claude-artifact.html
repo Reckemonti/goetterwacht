@@ -71,7 +71,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 /* overlays */
 .ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:max(16px, env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) max(16px, env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));
-  background:radial-gradient(ellipse at center, rgba(7,11,18,.55), rgba(7,11,18,.92));overflow-y:auto;touch-action:pan-y}
+  background:radial-gradient(ellipse at center, rgba(5,8,14,.84), rgba(5,8,14,.97));overflow-y:auto;touch-action:pan-y}
 .ov-in{width:min(1180px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto}
 .ov.live{background:none;pointer-events:none;align-items:flex-end;overflow:visible}
 .ov.live .ov-in{pointer-events:auto;width:min(760px,100%);margin:0 auto;gap:8px;background:rgba(7,11,18,.84);border:1px solid var(--line);border-radius:16px;padding:10px 12px;max-height:50vh;overflow-y:auto}
@@ -204,6 +204,13 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 #intro.reduced canvas{display:none}
 #intro.reduced .itxt{animation-duration:.2s;animation-delay:0s}
 @keyframes intro-txt{from{opacity:0;transform:translateY(-46%)}to{opacity:1;transform:translateY(-50%)}}
+/* Spiel-Knöpfe und Banner ausblenden, solange ein Menü offen ist (kein doppelter Aufruf zum Handeln) */
+body:has(.ov:not([hidden]):not(.live)) :is(#livebtn,#btn-auto3,#pausebtn,#banner){visibility:hidden;pointer-events:none}
+/* Klebende Knopfleiste unten (Heldenwahl, Schmiede), damit «Starten» und «Zurück» immer sichtbar sind */
+.stickybar{position:sticky;bottom:-1px;z-index:5;width:100%;display:flex;flex-direction:column;gap:8px;align-items:center;padding:10px 0 calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(5,8,14,0),rgba(5,8,14,.94) 22%)}
+.stickybar .row{gap:8px}.stickybar .btn{font-size:16px;padding:10px 16px}.stickybar .btn.big{font-size:19px}
+.btn.sm{font-size:14px;padding:7px 12px;letter-spacing:.03em}
+textarea.code{box-sizing:border-box;max-width:100%;overflow-wrap:anywhere}#ov-save .panel{box-sizing:border-box;min-width:0;max-width:100%}
 </style>
 
 <canvas id="game" aria-label="Spielfeld"></canvas>
@@ -232,26 +239,24 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 50</div>
+    <div class="ver" id="ver">Version 51</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
     <div class="row">
       <button class="btn" id="btn-shop" type="button">Runenschmiede <span class="runesTotal" id="runes-title"></span></button>
-      <button class="btn" id="btn-board" type="button">Ruhmeshalle</button>
+      <button class="btn" id="btn-hall" type="button">Helden <span class="runesTotal" id="souls-title"></span></button>
       <button class="btn" id="btn-ach" type="button">Erfolge <span class="runesTotal" id="ach-count"></span></button>
-      <button class="btn" id="btn-save" type="button">Spielstand</button>
     </div>
     <div class="row">
-      <button class="btn" id="btn-quicksave" type="button">⬇ Spielstand speichern</button>
-      <label class="btn" for="quick-load" style="cursor:pointer">⬆ Spielstand laden</label><input type="file" id="quick-load" accept=".json,.gwsave,.txt,application/json,text/plain" hidden>
-      <button class="btn" id="btn-sound" type="button">Ton: an</button>
-      <button class="btn" id="btn-music" type="button">Musik: an</button>
+      <button class="btn sm" id="btn-save" type="button">Spielstand</button>
+      <button class="btn sm" id="btn-board" type="button">Ruhmeshalle</button>
+      <button class="btn sm" id="btn-sound" type="button">Ton: an</button>
+      <button class="btn sm" id="btn-music" type="button">Musik: an</button>
     </div>
     <div class="keys" id="keys-desktop"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeile bewegen</span><span><kbd>Esc</kbd> Pause</span><span>Koop: Spieler 1 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, Spieler 2 Pfeile</span></div>
     <div class="keys" id="keys-touch" hidden><span>Daumen irgendwo aufs Spielfeld legen und ziehen, um zu laufen</span><span>❚❚ oben rechts: Pause</span><span>Koop: linke Bildhälfte Spieler 1, rechte Bildhälfte Spieler 2</span></div>
     <div class="hint" id="best-title"></div>
-    <div class="hint" id="quick-msg" role="status"></div>
     <div class="hint" id="music-hint" style="color:var(--gold)">♪ Tippe irgendwo, um die Musik zu starten</div>
   </div>
 </div>
@@ -259,15 +264,17 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 <div class="ov" id="ov-worlds" hidden><div class="ov-in">
   <div class="runes" aria-hidden="true">ᛗᛁᛞᚷᚨᚱᛞ</div><h2 class="t">Wähle die Welt</h2><div class="hint">Jede Welt beginnt bei Welle 1. Schaffst du Welle 20, öffnet sich die nächste.</div>
   <div class="gods worlds" id="worlds"></div>
-  <div class="row"><button class="btn gold" id="btn-worldsback" type="button">Hauptmenü</button></div>
+  <div class="row"><button class="btn" id="btn-worldsback" type="button">Hauptmenü</button></div>
 </div></div>
 <div class="ov" id="ov-heroes" hidden><div class="ov-in">
   <h2 class="t" id="heroes-title">Midgard</h2><div class="sub" id="heroes-sub">Wähle deinen Gott</div>
   <div class="gods" id="gods"></div>
-  <div class="row"><button class="btn gold big" id="btn-start" type="button" disabled>Ragnarök starten</button></div>
-  <div class="row"><button class="btn" id="btn-shop3" type="button">Runenschmiede <span class="runesTotal" id="runes-heroes"></span></button><button class="btn" id="btn-heroes-worlds" type="button">Welt wechseln</button><button class="btn" id="btn-heroes-menu" type="button">Hauptmenü</button></div>
   <div class="hint" id="best-heroes"></div>
-  <div class="row" id="run-box" hidden><button class="btn gold" id="btn-run-box" type="button"></button></div>
+  <div class="row"><button class="btn" id="btn-heroes-worlds" type="button">Welt wechseln</button><button class="btn" id="btn-heroes-menu" type="button">Hauptmenü</button></div>
+  <div class="stickybar" id="startbar">
+    <div class="row" id="run-box" hidden><button class="btn gold" id="btn-run-box" type="button"></button></div>
+    <div class="row"><button class="btn gold big" id="btn-start" type="button" disabled>Ragnarök starten</button><button class="btn" id="btn-shop3" type="button">Runenschmiede <span class="runesTotal" id="runes-heroes"></span></button></div>
+  </div>
 </div></div>
 
 <div class="ov" id="ov-resume" hidden><div class="ov-in">
@@ -289,7 +296,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="runes" aria-hidden="true">ᚦ</div><h2 class="t">Münzwurf mit dem Tod</h2>
   <div class="hint" id="coin-death">☠ Der Tod beobachtet dich schweigend.</div>
   <div class="coin-token" id="coin-token" aria-hidden="true">ᚱ</div>
-  <div class="hint" id="coin-msg">Nimmst du das Risiko an? Totenkopf bedeutet den sofortigen Tod. Das Kleeblatt stärkt deine Fähigkeiten.</div>
+  <div class="hint" id="coin-msg">Nimmst du das Risiko an? Totenkopf bedeutet den sofortigen Tod. Das Kleeblatt stärkt deine Gaben.</div>
   <div class="row"><button class="btn gold" id="btn-coin-yes" type="button">Münzwurf annehmen</button><button class="btn" id="btn-coin-no" type="button">Ablehnen</button></div>
 </div></div>
 <div class="ov" id="ov-pause" hidden><div class="ov-in"><h2 class="t">Pause</h2><div class="build" id="pause-build"></div>
@@ -314,13 +321,13 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
 <div class="ov" id="ov-over" hidden><div class="ov-in">
   <h2 class="t" id="over-title">Gefallen in Welle 7</h2>
   <div class="summary">
-    <div class="sum"><b id="o-waves">0</b><span>Wellen überlebt</span></div>
+    <div class="sum"><b id="o-waves">0</b><span id="o-waves-l">Wellen überlebt</span></div>
     <div class="sum"><b id="o-kills">0</b><span>Kills</span></div>
     <div class="sum"><b id="o-time">0:00</b><span>Zeit</span></div>
     <div class="sum"><b id="o-runes">0</b><span>Runen verdient</span></div>
   </div>
   <div class="hint" id="o-record"></div>
-  <div class="panel" id="o-dmgwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Schaden nach Fähigkeit</div><div id="o-dmg" class="dmgbars"></div></div>
+  <div class="panel" id="o-dmgwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Schaden nach Gabe</div><div id="o-dmg" class="dmgbars"></div></div>
   <div class="panel" id="o-boardwrap"><div class="hint" style="text-align:left;margin-bottom:8px">Ruhmeshalle</div><ul class="board" id="o-board"></ul><div class="hint" id="o-boardnote" style="margin-top:8px"></div></div>
   <div class="row"><button class="btn gold" id="btn-again" type="button">Nochmals</button><button class="btn" id="btn-shop2" type="button">Runenschmiede</button><button class="btn" id="btn-menu" type="button">Heldenauswahl</button></div>
 </div></div>
@@ -331,7 +338,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="shop-gods" id="shop-gods"></div>
   <div class="runesTotal" id="runes-shop"></div>
   <div class="shop" id="shop"></div>
-  <div class="row"><button class="btn gold" id="btn-shopback" type="button">Zurück</button></div>
+  <div class="stickybar"><div class="row"><button class="btn gold" id="btn-shopback" type="button">Zurück</button></div></div>
 </div></div>
 
 <div class="ov" id="ov-save" hidden><div class="ov-in">
@@ -362,9 +369,14 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="shop" id="ach-list"></div>
   <div class="row"><button class="btn gold" id="btn-achback" type="button">Zurück</button></div>
 </div></div>
+<div class="ov" id="ov-hall" hidden><div class="ov-in">
+  <h2 class="t">Heldenhalle</h2>
+  <div class="hint">Seelen bekommst du am Ende jeder Runde. Hier machst du jeden Gott stärker (Heldengrad 1 bis 10).</div>
+  <div class="panel"><div class="hint" style="text-align:left;margin-bottom:8px"><span id="souls-hall" style="color:var(--gold)"></span></div><div class="cards" id="hero-hall"></div><div class="hint" id="hero-msg" role="status" style="margin-top:8px"></div></div>
+  <div class="row"><button class="btn gold" id="btn-hallback" type="button">Zurück</button></div>
+</div></div>
 <div class="ov" id="ov-board" hidden><div class="ov-in">
   <h2 class="t">Ruhmeshalle</h2>
-  <div class="panel"><div class="hint" style="text-align:left;margin-bottom:8px">Heldenhalle · <span id="souls-hall" style="color:var(--gold)"></span> · Seelen bekommst du am Ende jeder Runde</div><div class="cards" id="hero-hall"></div><div class="hint" id="hero-msg" role="status" style="margin-top:8px"></div></div>
   <div class="panel"><ul class="board" id="board"></ul><div class="hint" id="boardnote" style="margin-top:8px"></div></div>
   <div class="row"><label class="hint" for="nick">Dein Name</label><input class="nick" id="nick" maxlength="16" autocomplete="off"></div>
   <div class="row"><button class="btn gold" id="btn-boardback" type="button">Zurück</button></div>
@@ -782,7 +794,7 @@ const GODS = {
     desc:"Gewaltiger Schaden, wenig Leben. Axtschwung im Kreis, später kreisende Äxte und Wurfäxte. Mehrfach-Kills oder wenig Leben lösen den Blutrausch aus.",
     passive:"Blutrausch: 50 % schneller, Treffer heilen" },
   skadi:{ name:"Skadi", title:"Göttin des Winters", color:"#cfeeff", hp:130, speed:178, armor:1, dmg:1.1, start:"thrust",
-    desc:"Schnell und eiskalt. Ihr Speerstoss trifft als langer Balken und bremst. Gefrorene Gegner zerspringen in Eissplitter, die Nachbarn treffen: ganze Gruppen zerbrechen in Ketten.",
+    desc:"Schnell und eiskalt. Ihr Frostschlag trifft im Kreis um sie und bremst. Gefrorene Gegner zerspringen in Eissplitter, die Nachbarn treffen: ganze Gruppen zerbrechen in Ketten.",
     passive:"Frostbiss: +30 % Schaden an gebremsten Gegnern. Eissplitter: Gefrorene zerspringen" },
 };
 const L = (arr,l)=>arr[Math.min(arr.length,l)-1];
@@ -806,9 +818,9 @@ const WEAP = {
   cleave:{ name:"Axtschwung", rune:"ᛏ", max:10, god:"ulfr", base:true,
     d:l=>["Lade auf und schwinge die Axt: Schaden im Kreis um dich.","Grösserer Kreis, mehr Schaden","Schnelleres Aufladen","Grösserer Kreis, mehr Schaden","Blutiger Wirbel"][l-1],
     ct:[1,.92,.85,.78,.7], rad:[72,80,90,100,112], dmg:[28,35,42,52,66] },
-  thrust:{ name:"Speerstoss", rune:"ᛁ", max:10, god:"skadi", base:true,
-    d:l=>["Lade auf und stoss zu: drei Eisspeere schiessen als Stern in alle Richtungen und bremsen Gegner.","Längerer Stoss, mehr Schaden","+1 Speer, schnelleres Aufladen","Breiter und länger","Eisstern: sechs Speere rundum"][l-1],
-    ct:[.9,.84,.78,.72,.64], len:[200,220,245,272,310], wid:[42,46,50,56,64], dmg:[40,48,56,68,86], dirs:[3,3,4,4,6] },
+  thrust:{ name:"Frostschlag", rune:"ᛁ", max:10, god:"skadi", base:true,
+    d:l=>["Lade auf und schlage zu: eisiger Schaden im Kreis um dich, bremst Gegner.","Grösserer Kreis, mehr Schaden","Schnelleres Aufladen","Grösserer Kreis, mehr Schaden","Gewaltiger Frostschlag"][l-1],
+    ct:[.9,.84,.78,.72,.64], rad:[80,88,98,110,124], dmg:[32,40,48,58,74] },
   hammer:{ name:"Donnerhammer", rune:"ᚦ", max:10, god:"donar",
     d:l=>[ "Ein Donnerhammer kreist um dich. Treffer springen als Kettenblitz auf drei weitere Gegner.", "+1 Hammer", "Mehr Schaden und grösserer Kreis", "+1 Hammer", "+1 Hammer, schneller und härter"][l-1],
     cnt:[1,2,2,3,4], dmg:[16,18,24,26,34], rad:[78,82,96,100,112], spin:[3,3.2,3.4,3.6,4.2] },
@@ -854,7 +866,7 @@ const PASS = {
   eile:{ name:"Eile", rune:"ᚱ", max:10, d:"−7 % Abklingzeit aller Waffen" },
   ausdauer:{ name:"Ausdauer", rune:"ᛒ", max:10, d:"+25 maximales Leben, heilt sofort 25" },
   tempo:{ name:"Tempo", rune:"ᛖ", max:10, d:"+8 % Laufgeschwindigkeit" },
-  magnet:{ name:"Seelenzug", rune:"ᚷ", max:10, d:"+35 % Sammelradius für Seelen" },
+  magnet:{ name:"Funkenzug", rune:"ᚷ", max:10, d:"+35 % Sammelradius für Funken" },
   ruestung:{ name:"Rüstung", rune:"ᛉ", max:10, d:"+1 Rüstung, weniger Schaden pro Treffer" },
   weite:{ name:"Weite", rune:"ᛞ", max:10, d:"+10 % Wirkungsbereich" },
   herz:{ name:"Lebensquell", rune:"ᛃ", max:10, d:"+0.6 Leben pro Sekunde" },
@@ -888,7 +900,7 @@ const SKILLS = [
   { id:"wurzeln", req:"area", lvl:5, name:"Wurzeln Yggdrasils", rune:"ᛇ", d:"Alle 22 s brechen Wurzeln aus dem Boden, fesseln Gegnergruppen und verletzen sie." },
   { id:"raben", req:"ulti", lvl:5, name:"Odins Raben", rune:"ᚩ", d:"Hugin und Munin kreisen über dir, picken Gegner an und markieren sie (+20 % Schaden)." },
   { id:"freyja", req:"luck", lvl:5, name:"Freyjas Gunst", rune:"ᛟ", d:"Schatzkisten geben zwei Gaben statt einer." },
-  { id:"sog", req:"magnet", lvl:5, name:"Seelensog", rune:"ᚷ", d:"Alle 30 s fliegen alle Seelen und Münzen der Karte zu dir." },
+  { id:"sog", req:"magnet", lvl:5, name:"Funkensog", rune:"ᚷ", d:"Alle 30 s fliegen alle Funken und Münzen der Karte zu dir." },
   { id:"andvari", req:"greed", lvl:5, name:"Andvaris Hort", rune:"ᚠ", d:"Elite-Gegner und Bosse lassen doppelt so viele Münzen fallen." },
   { id:"mimir", req:"xp", lvl:5, name:"Mimirs Quelle", rune:"ᚨ", d:"Bei jedem Stufenaufstieg kannst du aus vier statt drei Gaben wählen." },
   { id:"nornen", req:"reroll", lvl:3, name:"Nornenblick", rune:"ᚾ", d:"Flüche beim Schicksalswurf kommen nur noch halb so oft." },
@@ -915,7 +927,7 @@ const ICE_SKILLS = [
   { id:"splitter", br:"Eis", tier:2, need:["frostklinge"], cost:650, name:"Splitterhagel", rune:"ᛇ", d:"Besiegte Gegner zerspringen mit 15 % Chance in drei Eissplitter." },
   { id:"ymir", br:"Eis", tier:3, need:["splitter"], cost:1100, name:"Ymirs Atem", rune:"ᛃ", d:"Alle 25 s friert eine Eiswelle alle Gegner um dich ein." },
   { id:"schuh", br:"Wandel", tier:1, need:[], cost:300, name:"Schneeschuhe", rune:"ᛖ", d:"+12 % Tempo und +20 % Sammelradius." },
-  { id:"nordlicht", br:"Wandel", tier:2, need:["schuh"], cost:650, name:"Nordlicht", rune:"ᛜ", d:"Im Schneesturm siehst du weiter. Seelen geben +25 % Erfahrung." },
+  { id:"nordlicht", br:"Wandel", tier:2, need:["schuh"], cost:650, name:"Nordlicht", rune:"ᛜ", d:"Im Schneesturm siehst du weiter. Funken geben +25 % Erfahrung." },
   { id:"rudel", br:"Wandel", tier:3, need:["nordlicht"], cost:1100, name:"Schneewolf-Rudel", rune:"ᚹ", d:"Zwei Schneewölfe kämpfen an deiner Seite." },
   { id:"krone", br:"Krone", tier:4, need:["funke","ymir","rudel"], cost:1800, name:"Krone des Winters", rune:"ᛟ", d:"+2 Rüstung. Wirst du getroffen, friert eine Frostnova alle Gegner um dich ein (alle 6 s)." },
 ];
@@ -963,9 +975,9 @@ const metaMax = id => META[id].max + (worldOpen("eis") ? (META[id].ext||0) : 0);
 // Heldenhalle (GW-6): jeder Gott einzeln bis Stufe 10, bezahlt mit Seelen aus den Runden; sichtbar mächtiger bei Stufe 1, 4, 7 und 10
 const HERO_MAX = 10;
 const HERO = {
-  donar:{ hp:.06, dmg:.04, spd:.01, sp:"Donnergrollen öfter, ab Stufe 4 und 7 je ein Blitz mehr" },
+  donar:{ hp:.06, dmg:.04, spd:.01, sp:"Donnergrollen öfter, ab Heldengrad 4 und 7 je ein Blitz mehr" },
   ulfr:{ hp:.05, dmg:.08, spd:.02, sp:"Kills heilen mehr, grösserer Kriegsschrei" },
-  skadi:{ hp:.05, dmg:.07, spd:.015, sp:"Frostbiss +3 % pro Stufe" },
+  skadi:{ hp:.05, dmg:.07, spd:.015, sp:"Frostbiss +3 % pro Heldengrad" },
 };
 const HERO_STAGE = ["Sterblich","Erwählt","Gerüstet","Runengezeichnet","Göttlich"];
 const heroStage = l => l>=10?4 : l>=7?3 : l>=4?2 : l>=1?1 : 0;
@@ -1129,7 +1141,7 @@ function newRun(godId, world, god2, m2){
   T=0; shake=0; flash=0;
   for(let i=0;i<14;i++){ const a=i/14*TAU+rnd(-.1,.1); spawnEnemy("draugr", Math.cos(a)*rnd(380,460), Math.sin(a)*rnd(380,460)); }
   banner(G.world==="eis"?"Niflheim · Welle 1":"Welle 1", G.world==="eis"?"Halte stand im ewigen Eis":"Halte stand");
-  G.tips = (meta.runs||0)<3 ? [[6,"Tipp: Weiche den roten Feldern aus, dann trifft dich nichts"],[16,"Tipp: Blaue Seelen einsammeln bringt neue Gaben"],[28,"Tipp: Am Ende jeder Welle kommen Bosse, besiege sie alle"],[45,"Tipp: Runen aus jeder Runde machen dich in der Runenschmiede dauerhaft stärker"]] : [];
+  G.tips = (meta.runs||0)<3 ? [[6,"Tipp: Weiche den roten Feldern aus, dann trifft dich nichts"],[16,"Tipp: Blaue Funken einsammeln bringt neue Gaben"],[28,"Tipp: Am Ende jeder Welle kommen Bosse, besiege sie alle"],[45,"Tipp: Runen aus jeder Runde machen dich in der Runenschmiede dauerhaft stärker"]] : [];
 }
 
 /* ---------------- Koop (v38): zwei Spieler an einem Gerät ----------------
@@ -1215,7 +1227,7 @@ function tickCoinBurn(area,dt,enemies,damage){
 function openCoinOffer(){
   if(!G || BOT.on || !isCoinOfferWave(G.wave) || G.coinOffered[G.wave]) return;
   G.coinOffered[G.wave]=true; state="coin";
-  $("coin-msg").textContent="Nimmst du das Risiko an? Totenkopf bedeutet den sofortigen Tod. Das Kleeblatt stärkt deine Fähigkeiten.";
+  $("coin-msg").textContent="Nimmst du das Risiko an? Totenkopf bedeutet den sofortigen Tod. Das Kleeblatt stärkt deine Gaben.";
   $("coin-death").textContent="☠ Der Tod beobachtet dich schweigend.";
   $("coin-token").classList.remove("spin");
   $("btn-coin-yes").disabled=false; $("btn-coin-no").disabled=false;
@@ -1233,12 +1245,12 @@ function resolveCoinFlip(outcome){
       $("coin-msg").textContent="Der Totenkopf. Der Tod holt deine Seele."; hide("ov-coin"); state="play"; gameOver(); return;
     }
     let raised=0; allP(()=>{ const r=upgradeCoinSkills(G); raised+=r; if(r) applyPassives(); });
-    if(raised){ renderSlots(); $("coin-msg").textContent=`Das Kleeblatt! ${raised} deiner Fähigkeiten steigen je eine Stufe.`; }
-    else { grantCoinSoulLevel(G); $("coin-msg").textContent="Das Kleeblatt! Alle Fähigkeiten sind am Maximum: Du erhältst Seelen im Wert eines Stufenaufstiegs."; }
+    if(raised){ renderSlots(); $("coin-msg").textContent=`Das Kleeblatt! ${raised} deiner Gaben steigen je eine Stufe.`; }
+    else { grantCoinSoulLevel(G); $("coin-msg").textContent="Das Kleeblatt! Alle Gaben sind am Maximum: Du erhältst Funken im Wert eines Stufenaufstiegs."; }
     $("coin-death").textContent="☠ Der Tod wird zornig!";
     pools.push({x:G.x,y:G.y,r:130,t:8,dps:coinBurnDamageForWave(G.wave),enemy:false,tick:0,col:"fire",coinBurn:true});
     burst(G.x,G.y,36,PIDX.fire,200,.8,4); hide("ov-coin"); state="play"; lastT=performance.now();
-    banner("Kleeblatt!", raised ? `${raised} Fähigkeiten +1 Stufe. Der Tod wird zornig!` : "Seelen für einen Stufenaufstieg. Der Tod wird zornig!");
+    banner("Kleeblatt!", raised ? `${raised} Gaben +1 Stufe. Der Tod wird zornig!` : "Funken für einen Stufenaufstieg. Der Tod wird zornig!");
   },1200);
 }
 $("btn-coin-yes").addEventListener("click", ()=>resolveCoinFlip(Math.random()<.5?"skull":"clover"));
@@ -1432,24 +1444,15 @@ let strikeId=1;
 function baseStrike(id,w){
   const l=w.lvl, D=WEAP[id], sid=strikeId++; let dmg=L(D.dmg,l)*OV(l)*G.dmgMul;
   if(G.sk.tyr){ w.n=(w.n||0)+1; if(w.n%4===0){ dmg*=3; effects.push({k:"ring",x:G.x,y:G.y,r:90,l:.4,m:.4,c:"rgba(255,215,120,"}); text(G.x,G.y-44,"Tyrs Urteil",2); } }
-  if(id==="thrust"){
-    const len=L(D.len,l)*G.area, wid=L(D.wid,l)*G.area, nd=L(D.dirs,l)+(w.evo?1:0); let a0=Math.atan2(G.diry,G.dirx);
-    const tg=thrustTarget(len); if(tg) a0=Math.atan2(tg.y-G.y,tg.x-G.x);
-    for(let k=0;k<nd;k++){ const a=a0+k/nd*TAU, dx=Math.cos(a), dy=Math.sin(a);   // Eisstern: Speere in alle Richtungen, der erste zielt
-      for(let t=12;t<=len;t+=wid*.6){ const x=G.x+dx*t, y=G.y+dy*t, n=query(x,y,wid/2); for(let q=0;q<n;q++){ const e=E[QR[q]]; if(e.vt===sid) continue; e.vt=sid; hurt(e,dmg,dx,dy,200,1); e.slow=1.4; } }
-      effects.push({k:"thrust", x:G.x, y:G.y, dx, dy, len, wid, l:.22, m:.22});
-      for(let i=0;i<6;i++){ const t=rnd(20,len); particle(G.x+dx*t,G.y+dy*t,dx*rnd(80,300),dy*rnd(80,300),.35,3,PIDX.ice); } }
-    shake=Math.max(shake,2.5); sfx("shoot"); return; }
   const R=L(D.rad,l)*G.area, n=query(G.x,G.y,R);
-  for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,dmg,e.x-G.x,e.y-G.y,id==="smash"?220:160,id==="smash"?1:0); if(id==="cleave"&&G.frenzyT>0) heal(.6); if(G.world==="eis") e.slow=Math.max(e.slow,1); }
+  for(let q=0;q<n;q++){ const e=E[QR[q]]; hurt(e,dmg,e.x-G.x,e.y-G.y,id==="smash"?220:160,id==="smash"?1:0); if(id==="cleave"&&G.frenzyT>0) heal(.6); if(id==="thrust") e.slow=Math.max(e.slow||0,1.4); if(G.world==="eis") e.slow=Math.max(e.slow,1); }
   kick=Math.max(kick,.18);
   if(l>=6){ const t=VT[Math.min(5,l-4)]; effects.push({k:"ring",x:G.x,y:G.y,r:(L(D.rad,l)||100)*G.area*1.1,l:.3,m:.3,c:`rgba(${t.trail},`}); burst(G.x,G.y,6+3*(l-5),t.pi,240,.4,3); }
-  if(id==="smash"){ effects.push({k:"ring",x:G.x,y:G.y,r:R,l:.3,m:.3,c:"rgba(150,215,255,"}); burst(G.x,G.y,26,PIDX.frost,R*2.4,.4,3);
+  if(id==="smash"||id==="thrust"){ effects.push({k:"ring",x:G.x,y:G.y,r:R,l:.3,m:.3,c:id==="thrust"?"rgba(190,240,255,":"rgba(150,215,255,"}); burst(G.x,G.y,26,PIDX.frost,R*2.4,.4,3);
     for(let i=0;i<4;i++){ const a=Math.random()*TAU; effects.push({k:"arc",x1:G.x,y1:G.y,x2:G.x+Math.cos(a)*R,y2:G.y+Math.sin(a)*R,l:.15,m:.15}); } sfx("zap"); }
   else { effects.push({k:"slash",x:G.x,y:G.y,r:R,a:Math.random()*TAU,l:.25,m:.25}); burst(G.x,G.y,22,PIDX.red,R*2.2,.35,3); sfx("axe"); }
   shake=Math.max(shake,n?4:2);
 }
-function thrustTarget(len){ const b=G.boss&&G.boss.on&&Math.hypot(G.boss.x-G.x,G.boss.y-G.y)<len+30?G.boss:null; return b||nearestEnemy(G.x,G.y,len+30); }
 function chainLightning(from,dmg,jumps){
   let cur=from; const hit=[from.id];
   for(let j=0;j<jumps;j++){ let best=null, bd=200*200;
@@ -1826,7 +1829,7 @@ const FATE = [
   { k:"area", name:"Weiter Himmel", rune:"ᛞ", roll:()=>ri(8,18), txt:v=>`+${v} % Wirkungsbereich`, apply:v=>G.fate.area*=1+v/100 },
   { k:"crit", name:"Odins Auge", rune:"ᛟ", roll:()=>ri(4,10), txt:v=>`+${v} % kritische Treffer`, apply:v=>G.fate.crit+=v/100 },
   { k:"steal", name:"Blutzoll", rune:"ᚺ", roll:()=>ri(3,8)/10, txt:v=>`+${v.toFixed(1)} Leben pro Kill`, apply:v=>G.fate.steal+=v },
-  { k:"magnet", name:"Seelenruf", rune:"ᚷ", roll:()=>ri(25,60), txt:v=>`+${v} % Sammelradius`, apply:v=>G.fate.magnet*=1+v/100 },
+  { k:"magnet", name:"Funkenruf", rune:"ᚷ", roll:()=>ri(25,60), txt:v=>`+${v} % Sammelradius`, apply:v=>G.fate.magnet*=1+v/100 },
 ];
 const CURSE = [
   { name:"Bleierne Glieder", rune:"ᛖ", roll:()=>ri(8,14), txt:v=>`−${v} % Tempo`, apply:v=>G.fate.spd*=1-v/100 },
@@ -1866,7 +1869,7 @@ function openFate(){
     fateRes.forEach((r,i)=>{ dice[i].textContent=r.f.rune; dice[i].className="die done"; });
     $("fate-cards").innerHTML = fateRes.map(r=>`<div class="card ${r.curse?"curse":"evo"}"><div class="ic">${r.f.rune}</div><div><div class="lvl">${r.curse?"Fluch":r.blessed?"Gesegnet":"Schicksal"}</div><h4>${r.f.name}</h4><p>${r.f.txt(r.v)}</p></div></div>`).join("");
     fateRes.forEach((r,i)=>{ if(r.curse) dice[i].className="die done cursed"; });
-    $("fate-sub").textContent= fateRes.some(r=>r.curse)? `Stufe ${G.level-G.pendingLv+1}: Ein Fluch, doch dafür ein starker Segen` : `Stufe ${G.level-G.pendingLv+1}: Das Schicksal ist dir gnädig`; $("btn-fate").hidden=false; $("btn-fate").focus({preventScroll:true}); sfx("win");
+    $("fate-sub").textContent= fateRes.some(r=>r.curse)? "Ein Fluch, doch dafür ein starker Segen" : "Das Schicksal ist dir gnädig"; $("btn-fate").hidden=false; $("btn-fate").focus({preventScroll:true}); sfx("win");
   }, reduce?50:1500);
 }
 $("btn-fate").addEventListener("click", ()=>{ if(fateRes.some(r=>r.curse)) G.cursed=true; allP(()=>{ fateRes.forEach(r=>r.f.apply(r.v)); applyPassives(); }); hide("ov-fate"); state="play"; lastT=performance.now(); renderSlots(); });
@@ -2025,7 +2028,7 @@ const SHRINES = [
   { id:"zorn", name:"Schrein des Zorns", rune:"ᚢ", col:"#ff6a4a", glow:"red", d:"+50 % Schaden", dur:15 },
   { id:"eile", name:"Schrein der Eile", rune:"ᛖ", col:"#7fd8ff", glow:"frost", d:"+40 % Tempo", dur:15 },
   { id:"leben", name:"Schrein des Lebens", rune:"ᛒ", col:"#7dffb0", glow:"green", d:"Heilt 40 %", dur:0 },
-  { id:"gier", name:"Schrein der Gier", rune:"ᚠ", col:"#f2c14e", glow:"gold", d:"Doppelte Seelen und Münzen", dur:20 },
+  { id:"gier", name:"Schrein der Gier", rune:"ᚠ", col:"#f2c14e", glow:"gold", d:"Doppelte Funken und Münzen", dur:20 },
 ];
 function shrinesUpdate(dt){
   G.shrineT-=dt;
@@ -2081,9 +2084,7 @@ function drawPlayer(c){
   const W=G.weapons;
   // charge indicators of the base attacks
   for(const id of ["smash","cleave","thrust"]){ const w=W[id]; if(!w) continue; const k=w.c||0, D=WEAP[id], col= w.lvl>=6 ? VT[Math.min(5,w.lvl-4)].trail : id==="cleave"?"255,80,60":id==="smash"?"150,215,255":"190,240,255";
-    if(id==="thrust"){ const len=L(D.len,w.lvl)*G.area, wid=L(D.wid,w.lvl)*G.area; const tg=(T*10|0)%2===0||!w.tg?(w.tg=thrustTarget(len)||null):w.tg; const a0=tg&&tg.on?Math.atan2(tg.y-G.y,tg.x-G.x):Math.atan2(G.diry,G.dirx), nd=L(D.dirs,w.lvl)+(w.evo?1:0);
-      for(let j=0;j<nd;j++){ c.save(); c.translate(G.x,G.y); c.rotate(a0+j/nd*TAU); c.strokeStyle=`rgba(${col},${j?.18:.35})`; c.lineWidth=1.5; c.strokeRect(10,-wid/2,len-10,wid); c.fillStyle=`rgba(${col},${(.08+k*.22)*(j?.6:1)})`; c.fillRect(10,-wid/2,(len-10)*k,wid); c.restore(); } }
-    else { const R=L(D.rad,w.lvl)*G.area; c.strokeStyle=`rgba(${col},.3)`; c.lineWidth=1.5; c.beginPath(); c.arc(G.x,G.y,R,0,TAU); c.stroke();
+    { const R=L(D.rad,w.lvl)*G.area; c.strokeStyle=`rgba(${col},.3)`; c.lineWidth=1.5; c.beginPath(); c.arc(G.x,G.y,R,0,TAU); c.stroke();
       c.strokeStyle=`rgba(${col},${.5+k*.4})`; c.lineWidth=3; c.beginPath(); c.arc(G.x,G.y,R,-Math.PI/2,-Math.PI/2+k*TAU); c.stroke();
       if(k>.75){ c.fillStyle=`rgba(${col},${(k-.75)*.5})`; c.beginPath(); c.arc(G.x,G.y,R,0,TAU); c.fill(); } } }
   if(G.frenzyT>0){ c.globalCompositeOperation="lighter"; c.globalAlpha=.35+.15*Math.sin(T*12); c.drawImage(GLOW.red,G.x-70,G.y-70,140,140); c.globalAlpha=1; c.globalCompositeOperation="source-over"; }
@@ -2259,8 +2260,6 @@ function render(dt){
     if(f.k==="bolt"){ c.strokeStyle=`rgba(140,210,255,${.45*k})`; c.lineWidth=9; c.lineJoin="round"; c.beginPath(); f.pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y)); c.stroke(); c.strokeStyle=`rgba(255,255,255,${k})`; c.lineWidth=2.5; c.stroke(); const [lx,ly]=f.pts[f.pts.length-1]; c.globalAlpha=k; c.drawImage(GLOW.frost,lx-60,ly-60,120,120); c.globalAlpha=1; }
     else if(f.k==="arc"){ c.strokeStyle=`rgba(200,240,255,${k})`; c.lineWidth=2; c.beginPath(); c.moveTo(f.x1,f.y1); const mx=(f.x1+f.x2)/2+rnd(-20,20), my=(f.y1+f.y2)/2+rnd(-20,20); c.lineTo(mx,my); c.lineTo(f.x2,f.y2); c.stroke(); }
     else if(f.k==="ring"){ const u=1-k, eb=1+2.70158*Math.pow(u-1,3)+1.70158*Math.pow(u-1,2); c.strokeStyle=f.c+(k*.9)+")"; c.lineWidth=4+10*k; c.beginPath(); c.arc(f.x,f.y,Math.max(1,f.r*(.35+.75*eb)),0,TAU); c.stroke(); }
-    else if(f.k==="thrust"){ c.save(); c.translate(f.x,f.y); c.rotate(Math.atan2(f.dy,f.dx)); const gr=c.createLinearGradient(0,0,f.len,0); gr.addColorStop(0,`rgba(190,240,255,${.1*k})`); gr.addColorStop(.8,`rgba(220,250,255,${.8*k})`); gr.addColorStop(1,`rgba(255,255,255,${k})`);
-      c.fillStyle=gr; c.beginPath(); c.moveTo(0,-f.wid/2); c.lineTo(f.len*.85,-f.wid/2); c.lineTo(f.len,0); c.lineTo(f.len*.85,f.wid/2); c.lineTo(0,f.wid/2); c.closePath(); c.fill(); c.restore(); }
     else if(f.k==="slash"){ c.strokeStyle=`rgba(255,90,70,${k})`; c.lineWidth=10*k+2; c.beginPath(); c.arc(f.x,f.y,f.r*.85,f.a,f.a+TAU*(1-k*.3)); c.stroke(); c.strokeStyle=`rgba(255,220,200,${k})`; c.lineWidth=2; c.beginPath(); c.arc(f.x,f.y,f.r*.85,f.a+1,f.a+TAU*(1-k*.3)); c.stroke(); }
     else if(f.k==="spikes"){ c.fillStyle=`rgba(200,245,255,${k})`; const n=26; for(let i=0;i<n;i++){ const a=i/n*TAU, r0=f.r*(.75+.1*Math.sin(i*3)), r1=r0+f.r*.45*(1-(1-k)*.4);
         c.beginPath(); c.moveTo(f.x+Math.cos(a-.05)*r0,f.y+Math.sin(a-.05)*r0); c.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); c.lineTo(f.x+Math.cos(a+.05)*r0,f.y+Math.sin(a+.05)*r0); c.fill(); } }
@@ -2402,7 +2401,7 @@ function hud(){
 }
 
 /* ---------------- overlays & flow ---------------- */
-const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-coin","ov-koop","ov-lobby","ov-wait","ov-resume"];
+const OVS=["ov-ach","ov-title","ov-worlds","ov-heroes","ov-level","ov-pause","ov-over","ov-shop","ov-board","ov-fate","ov-save","ov-hall","ov-coin","ov-koop","ov-lobby","ov-wait","ov-resume"];
 function show(id){ $(id).hidden=false; }
 function hide(id){ $(id).hidden=true; }
 function only(id){ OVS.forEach(o=>$(o).hidden = o!==id); }
@@ -2412,22 +2411,25 @@ function renderGods(){
   $("btn-start").disabled=!selGod; $("runes-heroes").textContent=`ᚱ ${meta.runes}`; if(typeof shop3Txt==="function") shop3Txt();
   const Bh = selWorld==="eis"? meta.bestEis : meta.best; $("best-heroes").textContent = Bh&&Bh.wave? `Rekord in ${WORLDS[selWorld].name}: ${Bh.wave} Wellen mit ${GODS[Bh.god]?.name||"?"}` : "";
   if(typeof koop!=="undefined" && koop){ const K=(meta.bestKoop||{})[selWorld]; $("best-heroes").textContent = K&&K.wave? `Koop-Rekord in ${WORLDS[selWorld].name}: ${K.wave} Wellen (${(K.gods||[]).map(g=>GODS[g]?.name||"?").join(" + ")})` : `Noch kein Koop-Rekord in ${WORLDS[selWorld].name}`; }
-  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"${id===blockGod?" disabled title=\"Schon von Spieler 1 gewählt\"":""}><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div>${heroLv(id)?`<div class="st" style="margin-top:2px"><span>Heldenstufe <b>${heroLv(id)}/${HERO_MAX}</b> · ${HERO_STAGE[heroStage(heroLv(id))]}</span></div>`:""}</div></button>`).join("");
+  $("gods").innerHTML = Object.entries(GODS).map(([id,g])=>`<button class="god${id===selGod?" sel":""}" type="button" data-god="${id}" style="--c:${g.color}"${id===blockGod?" disabled title=\"Schon von Spieler 1 gewählt\"":""}><canvas width="192" height="192" data-portrait="${id}"></canvas><div><h3>${g.name}</h3><div class="ti">${g.title}</div><p>${g.desc}</p><div class="st"><span>Leben <b>${g.hp}</b></span><span>Tempo <b>${g.speed}</b></span><span>Schaden <b>${Math.round(g.dmg*100)} %</b></span></div><div class="st" style="margin-top:4px"><span>Start: <b>${WEAP[g.start].name}</b></span></div><div class="st" style="margin-top:2px"><span style="color:var(--c)">${g.passive}</span></div>${heroLv(id)?`<div class="st" style="margin-top:2px"><span>Heldengrad <b>${heroLv(id)}/${HERO_MAX}</b> · ${HERO_STAGE[heroStage(heroLv(id))]}</span></div>`:""}</div></button>`).join("");
   document.querySelectorAll("[data-portrait]").forEach(cv=>{ const g=cv.getContext("2d"); g.clearRect(0,0,192,192); g.drawImage(heroSpr(cv.dataset.portrait,heroStage(heroLv(cv.dataset.portrait))).img,0,0,192,192); });
-  $("runes-title").textContent = `ᚱ ${meta.runes}`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
+  $("runes-title").textContent = `ᚱ ${meta.runes}`; $("souls-title").textContent = `${meta.souls||0} Seelen`; meta.ach=meta.ach||{}; $("ach-count").textContent=`${ACH.filter(a=>meta.ach[a.id]).length}/${ACH.length}`;
   $("best-title").textContent = (meta.best.wave? `Rekord Midgard: ${meta.best.wave} Wellen mit ${GODS[meta.best.god]?.name||"?"}, ${meta.best.kills} Kills` : "") + (meta.bestEis&&meta.bestEis.wave? ` · Niflheim: ${meta.bestEis.wave} Wellen` : worldOpen("eis")? " · Niflheim ist offen!" : "");
   $("btn-sound").textContent = $("btn-sound2").textContent = `Ton: ${meta.sound?"an":"aus"}`; autoTxt();
   runBox();
 }
 function cardMode(){ return (meta.autoPick??true)? "auto" : meta.cardStop? "stop" : "live"; }   // Standard: automatisch; live = im Kampf wählen, stop = Spiel hält an, auto = automatisch
-const CARD_TXT = { live:"Gaben: im Kampf wählen", stop:"Gaben: Spiel hält an", auto:"Gaben: automatisch" };
+const CARD_TXT = { live:"Gaben: du wählst im Kampf", stop:"Gaben: Spiel hält zum Wählen an", auto:"Gaben: werden automatisch gewählt" };
 const CARD_SHORT = { live:"Gaben: Kampf", stop:"Gaben: Pause", auto:"Gaben: Auto" };   // kurzer Text für den Knopf im Spiel
 function autoTxt(){ $("btn-auto3").textContent = CARD_SHORT[cardMode()]; $("btn-auto3").title = CARD_TXT[cardMode()]; }
 function toggleAuto(){ const m=cardMode(), nx= m==="live"?"stop" : m==="stop"?"auto" : "live";
   meta.autoPick= nx==="auto"; meta.cardStop= nx==="stop"; saveMeta(); autoTxt();
   if(G && !G.coop && !NET.guest && !liveOn() && G.lvq){ G.pendingLv += (NET.live[0]?1:0) + (G.lvq[0]||0); G.lvq[0]=0; NET.live=[null,null]; liveClose(); }   // offene Karten nicht verlieren
   if(NET.guest && NET.conn) NET.conn.send({t:"auto", v:cardMode()==="auto"}); }
-$("btn-auto3").addEventListener("click", e=>{ toggleAuto(); e.currentTarget.blur(); if(G) floatTxt(CARD_TXT[cardMode()]); });
+let autoArm=0;   // Im Spiel wechselt erst das zweite Tippen innerhalb 2,5 s den Modus (verhindert versehentliches Umstellen)
+$("btn-auto3").addEventListener("click", e=>{ e.currentTarget.blur(); const now=performance.now();
+  if(G && now>autoArm){ autoArm=now+2500; $("btn-auto3").textContent="Nochmals tippen"; floatTxt(CARD_TXT[cardMode()]+" · nochmals tippen zum Ändern"); setTimeout(autoTxt,2600); return; }
+  autoArm=0; toggleAuto(); if(G) floatTxt(CARD_TXT[cardMode()]); });
 function autoNote(o){ const nm=o.t==="w"||o.t==="evo"?WEAP[o.id].name:o.t==="p"?PASS[o.id].name:o.t==="heal"?"Heilung":o.t==="runes"?"Runen":"Macht"; floatTxt(`✦ ${nm}`); }
 function floatTxt(v){ if(G) text(G.x, G.y-44, v, 2); }
 let selWorld = meta.lastWorld && worldOpen(meta.lastWorld) ? meta.lastWorld : "mittgard", selGod = null;
@@ -2546,26 +2548,27 @@ function gameOver(){
   else if(waves>B.wave || (waves===B.wave && G.kills>B.kills)){ const nb={wave:waves,kills:G.kills,god:G.god}; if(ice) meta.bestEis=nb; else meta.best=nb; record=true; }
   saveMeta();
   $("over-title").textContent = `Gefallen in ${WORLDS[G.world].name}, Welle ${G.wave}${G.coop?" (Koop)":""}`;
-  $("o-waves").textContent=waves; $("o-kills").textContent=G.kills; $("o-time").textContent=fmt(G.time); $("o-runes").textContent=earned;
-  const na=(G.newAch||[]); const nowOpen=!G.world||G.world==="mittgard" ? (worldOpen("eis") && !meta.eisNotified) : false; if(nowOpen){ meta.eisNotified=true; saveMeta(); } $("o-record").textContent = `+${souls} Seelen für die Heldenhalle (Ruhmeshalle). ` + (nowOpen? "Niflheim ist jetzt offen: Wähle die Eiswelt im Solo-Menü. Die Runenschmiede hat 10 Stufen mehr pro Upgrade. " : "") + (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (G.coop? (record&&waves>0? "Neuer Koop-Rekord! " : `Koop-Rekord in ${WORLDS[G.world].name}: ${meta.bestKoop[G.world].wave} Wellen. `) : record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord in ${WORLDS[G.world].name}: ${(ice?meta.bestEis:meta.best).wave} Wellen. `) + "Tipp: Unter «Spielstand» sicherst du deinen Fortschritt.";
-  { const NAMES={ passive:["Göttliche Eigenschaft","ᛝ"], skills:["Schmiede-Fähigkeiten","ᛜ"], vidar:["Vidar","ᚢ"], eispfad:["Pfad nach Niflheim","ᛁ"], other:["Sonstiges","ᛝ"] }; const tot=Object.values(G.dmgBy).reduce((a,b)=>a+b,0)||1;
+  $("o-waves").textContent=G.wave; $("o-waves-l").textContent="Welle erreicht"; $("o-kills").textContent=G.kills; $("o-time").textContent=fmt(G.time); $("o-runes").textContent=earned;
+  const na=(G.newAch||[]); const nowOpen=!G.world||G.world==="mittgard" ? (worldOpen("eis") && !meta.eisNotified) : false; if(nowOpen){ meta.eisNotified=true; saveMeta(); } $("o-record").textContent = `+${souls} Seelen für die Heldenhalle (Menü «Helden»). ` + (nowOpen? "Niflheim ist jetzt offen: Wähle die Eiswelt im Solo-Menü. Die Runenschmiede hat 10 Ränge mehr pro Upgrade. " : "") + (na.length? `Neue Erfolge: ${na.map(a=>a.name).join(", ")}. ` : "") + (G.coop? (record&&waves>0? "Neuer Koop-Rekord! " : `Koop-Rekord in ${WORLDS[G.world].name}: ${meta.bestKoop[G.world].wave} Wellen. `) : record&&waves>0? "Neuer persönlicher Rekord! " : `Rekord in ${WORLDS[G.world].name}: ${(ice?meta.bestEis:meta.best).wave} Wellen. `);
+  { const NAMES={ passive:["Göttliche Eigenschaft","ᛝ"], skills:["Schmiede-Meisterkräfte","ᛜ"], vidar:["Vidar","ᚢ"], eispfad:["Pfad nach Niflheim","ᛁ"], other:["Sonstiges","ᛝ"] }; const tot=Object.values(G.dmgBy).reduce((a,b)=>a+b,0)||1;
     const rows=Object.entries(G.dmgBy).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v])=>{ const n=WEAP[k]?[WEAP[k].name,WEAP[k].rune]:(NAMES[k]||[k,"ᛝ"]); const pc=v/tot*100;
       return `<div class="dmgrow"><span class="r">${n[1]}</span><span>${n[0]}</span><span class="b"><i style="width:${pc.toFixed(1)}%"></i></span><span class="v">${pc<1?"<1":Math.round(pc)} %</span></div>`; }).join("");
     $("o-dmg").innerHTML = rows || '<div class="hint">Kein Schaden verursacht</div>'; }
   $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
   if(!ice && !G.coop) submitScore({wave:waves,kills:G.kills,god:G.god,time:Math.round(G.time),level:G.level});
   renderBoard("o-board","o-boardnote"); $("o-boardwrap").hidden = !db;
-  if(NET.host && NET.conn) NET.conn.send({ t:"over", title:$("over-title").textContent, waves, kills:G.kills, time:fmt(G.time), earned, souls, world:G.world, gods:[PL1().god,PL2().god], dmg:$("o-dmg").innerHTML });
+  if(NET.host && NET.conn) NET.conn.send({ t:"over", title:$("over-title").textContent, waves, reached:G.wave, kills:G.kills, time:fmt(G.time), earned, souls, world:G.world, gods:[PL1().god,PL2().god], dmg:$("o-dmg").innerHTML });
 }
 $("btn-again").addEventListener("click", ()=>{ if(NET.guest) return; if(NET.host) netStart(); else startGame(lastGod, lastGod2); });
 $("btn-menu").addEventListener("click", ()=>{ if(NET.guest||NET.host) netLeave(); else toHeroes(); });
 function toTitle(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; renderGods(); only("ov-title"); }
 function toHeroes(){ setMusic("title"); G=null; state="title"; $("hud").hidden=true; openHeroes(); }
 
-function iceShopHtml(){ const own=ICE_SKILLS.filter(k=>iceOwned(k.id)).length;
-  let h=`<div class="shop-grp">Pfad nach Niflheim · ${own}/${ICE_SKILLS.length}</div><div class="hint" style="grid-column:1/-1;margin-top:-4px">Diese Fähigkeiten wirken in der Eiswelt Niflheim (frei nach Welle 20 in Midgard). Jede braucht die Fähigkeit davor.</div>`;
+function iceShopHtml(){ if(!worldOpen("eis")) return `<div class="shop-grp">Pfad nach Niflheim</div><div class="hint" style="grid-column:1/-1">Gesperrt. Er öffnet sich, sobald du Welle 20 in Midgard schaffst.</div>`;
+  const own=ICE_SKILLS.filter(k=>iceOwned(k.id)).length;
+  let h=`<div class="shop-grp">Pfad nach Niflheim · ${own}/${ICE_SKILLS.length}</div><div class="hint" style="grid-column:1/-1;margin-top:-4px">Diese Eiskräfte gelten für alle Götter und wirken in der Eiswelt Niflheim. Jede braucht die Kraft davor.</div>`;
   for(const k of ICE_SKILLS){ const on=iceOwned(k.id), ok=k.need.every(iceOwned), can=!on&&ok&&meta.runes>=k.cost;
-    const need=k.need.length? `Braucht: ${k.need.map(n=>ICE_SKILLS.find(x=>x.id===n).name).join(", ")}` : "Erste Stufe";
+    const need=k.need.length? `Braucht: ${k.need.map(n=>ICE_SKILLS.find(x=>x.id===n).name).join(", ")}` : "Ohne Voraussetzung";
     h+=`<button class="card${on?" evo iceon":""}" type="button" data-ice="${k.id}" ${can?"":"disabled"}><div class="ic">${k.rune}</div><div><h4>${k.name} <span class="lvl-n">${k.br} ${k.tier}</span></h4><p>${k.d}</p><div class="tot">${on?"Gelernt":need}</div><div class="cost">${on?"Freigeschaltet":`ᚱ ${k.cost}`}</div></div></button>`; }
   return h; }
 function buyIce(id){ const k=ICE_SKILLS.find(x=>x.id===id); if(!k || iceOwned(id) || !k.need.every(iceOwned) || meta.runes<k.cost) return false;
@@ -2574,18 +2577,18 @@ function buyIce(id){ const k=ICE_SKILLS.find(x=>x.id===id); if(!k || iceOwned(id
 function renderShop(){
   const fg=meta.forgeGod, lock = shopFrom==="ov-heroes";   // aus der Heldenwahl: nur der gewählte Held
   $("shop-gods").innerHTML = lock? "" : Object.entries(GODS).map(([g,d])=>`<button type="button" data-shopgod="${g}" class="${g===fg?"on":""}" style="--c:${d.color}">${d.name}</button>`).join("");
-  $("shop-hint").textContent = `Dauerhafte Stärkung nur für ${GODS[fg].name}. Jeder Gott hat seine eigene Schmiede. Runen verdienst du mit jeder Welle und jedem Boss.`;
+  $("shop-hint").textContent = `Dauerhafte Stärkung für ${GODS[fg].name}. Jeder Gott hat seine eigene Schmiede. Runen verdienst du mit jeder Welle und jedem Boss.`+(worldOpen("eis")?" Der Pfad nach Niflheim ganz unten gilt für alle Götter.":"");
   document.querySelector("#ov-shop h2.t").textContent = `Runenschmiede · ${GODS[fg].name}`;
   $("runes-shop").textContent=`ᚱ ${meta.runes} Runen`;
   let last="", h="";
   for(const [id,m] of Object.entries(META)){ const mx=metaMax(id), l=meta.up[id], maxed=l>=mx, cost=m.cost(l), can=!maxed&&meta.runes>=cost;
     if(m.grp!==last){ last=m.grp; h+=`<div class="shop-grp">${m.grp}</div>`; }
     const sk=SKILLS.find(k=>k.req===id), skOn=sk&&l>=sk.lvl;
-    const skH = sk? `<div class="skill ${skOn?"on":""}"><b>${skOn?"Freigeschaltet":`Ab Stufe ${sk.lvl}`}: ${sk.name}</b><span>${sk.d}</span></div>` : "";
-    h+=`<button class="card" type="button" data-up="${id}" ${can?"":"disabled"}><div class="ic">${m.rune}</div><div><h4>${m.name} <span class="lvl-n">${l}/${mx}</span></h4><p>${m.d} pro Stufe</p><div class="bar"><i style="width:${l/mx*100}%"></i></div><div class="tot">${l?m.tot(l):"noch nicht gelernt"}</div>${m.ext&&!worldOpen("eis")?`<div class="tot" style="color:var(--frost)">+${m.ext} Stufen, sobald Niflheim offen ist</div>`:""}${skH}<div class="cost">${maxed?"Voll ausgebaut":`ᚱ ${cost}`}</div></div></button>`; }
+    const skH = sk? `<div class="skill ${skOn?"on":""}"><b>${skOn?"Freigeschaltet":`Meisterkraft ab Rang ${sk.lvl}`}: ${sk.name}</b><span>${sk.d}</span></div>` : "";
+    h+=`<button class="card" type="button" data-up="${id}" ${can?"":"disabled"}><div class="ic">${m.rune}</div><div><h4>${m.name} <span class="lvl-n">${l}/${mx}</span></h4><p>${m.d} pro Rang</p><div class="bar"><i style="width:${l/mx*100}%"></i></div><div class="tot">${l?m.tot(l):"noch nicht gelernt"}</div>${skH}<div class="cost">${maxed?"Voll ausgebaut":`ᚱ ${cost}`}</div></div></button>`; }
   const nOn=unlockedSkills().length;
-  h+=`<div class="vidar-panel ${nOn===SKILLS.length?"on":""}"><div class="ic">ᚢ</div><div><h4>Vidar, der schweigende Rächer <span class="lvl-n">${nOn}/${SKILLS.length} Fähigkeiten</span></h4>
-    <p>Schalte alle ${SKILLS.length} Fähigkeiten frei. Dann erscheint Vidar zufällig für 2 Minuten im Kampf, frühestens alle 5 Minuten. Er hat ein Drittel deines Lebens und mäht alles nieder. Danach reisst ihn ein Höllenportal zurück in die Tiefe.</p>
+  h+=`<div class="vidar-panel ${nOn===SKILLS.length?"on":""}"><div class="ic">ᚢ</div><div><h4>Vidar, der schweigende Rächer <span class="lvl-n">${nOn}/${SKILLS.length} Meisterkräfte</span></h4>
+    <p>Schalte alle ${SKILLS.length} Meisterkräfte frei (je ab Rang 5 eines Upgrades). Dann erscheint Vidar zufällig für 2 Minuten im Kampf, frühestens alle 5 Minuten. Er hat ein Drittel deines Lebens und mäht alles nieder. Danach reisst ihn ein Höllenportal zurück in die Tiefe.</p>
     <div class="bar"><i style="width:${nOn/SKILLS.length*100}%"></i></div></div></div>`;
   h += iceShopHtml();
   $("shop").innerHTML = h + (meta.refunded?`<div class="shop-grp" style="color:var(--gold)">Die Schmiede wurde neu gebaut: ${meta.refunded} Runen aus deinen alten Upgrades wurden dir zurückgegeben.</div>`:"");
@@ -2594,7 +2597,7 @@ function renderShop(){
 $("shop-gods").addEventListener("click", e=>{ const b=e.target.closest("[data-shopgod]"); if(!b) return; linkForge(b.dataset.shopgod); saveMeta(); renderShop(); });
 $("shop").addEventListener("click", e=>{ const ib=e.target.closest("[data-ice]"); if(ib){ if(ib.disabled) return; const id=ib.dataset.ice; if(buyIce(id)){ audioInit(); sfx("win"); renderShop(); $("runes-shop").textContent=`Gelernt: ${ICE_SKILLS.find(x=>x.id===id).name}`; } return; } const b=e.target.closest("[data-up]"); if(!b||b.disabled) return; const id=b.dataset.up, m=META[id], l=meta.up[id], cost=m.cost(l); if(l>=metaMax(id)||meta.runes<cost) return;
   const before=unlockedSkills().length; meta.runes-=cost; meta.up[id]++; saveMeta(); audioInit(); sfx("level"); renderShop();
-  const sk=SKILLS.find(k=>k.req===id && k.lvl===meta.up[id]); if(sk){ $("runes-shop").textContent=`Neue Fähigkeit freigeschaltet: ${sk.name}`; sfx("win"); }
+  const sk=SKILLS.find(k=>k.req===id && k.lvl===meta.up[id]); if(sk){ $("runes-shop").textContent=`Neue Meisterkraft freigeschaltet: ${sk.name}`; sfx("win"); }
   if(before<SKILLS.length && unlockedSkills().length===SKILLS.length){ $("runes-shop").textContent="Vidar ist freigeschaltet. Er wird in deinen Kämpfen erscheinen."; } });
 let shopFrom="ov-title";
 $("btn-shop").addEventListener("click", ()=>{ shopFrom="ov-title"; renderShop(); only("ov-shop"); });
@@ -2676,11 +2679,6 @@ $("btn-saveback").addEventListener("click", ()=>{ renderGods(); only("ov-title")
 $("btn-copy").addEventListener("click", ()=>{ const t=$("save-code"); const done=()=>{ $("btn-copy").textContent="Kopiert"; setTimeout(()=>$("btn-copy").textContent="Code kopieren",1500); };
   try{ navigator.clipboard.writeText(t.value).then(done, ()=>{ t.select(); $("btn-copy").textContent="Markiert, jetzt kopieren"; }); }catch(e){ t.select(); } });
 $("btn-dl").addEventListener("click", ()=>{ const n=downloadSave(); $("load-msg").textContent=`Gespeichert als ${n}`; });
-const inClaude = !!(window.claude && window.claude.use);
-$("btn-quicksave").addEventListener("click", ()=>{ if(inClaude){ openSave(); return; } const n=downloadSave(); $("quick-msg").textContent=`Spielstand gespeichert: ${n} (im Download-Ordner)`; });
-$("quick-load").addEventListener("change", e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const r=new FileReader();
-  r.onload=()=>{ try{ const m=readAny(r.result); applyLoaded(m); renderGods(); $("quick-msg").textContent=`Spielstand geladen: ${saveSummary(meta)}`; }catch(err){ $("quick-msg").textContent=err.message; } };
-  r.readAsText(f); e.target.value=""; });
 function tryLoad(code){
   try{ const m=readAny(code); pendingLoad=m; $("load-msg").textContent=`Gefunden: ${saveSummary(m)}. Dein jetziger Stand wird ersetzt. Zum Bestätigen nochmals auf «Jetzt laden» tippen.`; $("btn-load").textContent="Jetzt laden"; }
   catch(e){ pendingLoad=null; $("load-msg").textContent=e.message; $("btn-load").textContent="Code laden"; }
@@ -2717,12 +2715,14 @@ $("btn-achback").addEventListener("click", ()=>{ renderGods(); only("ov-title");
 function forgePct(){ let a=0,b=0; for(const k in META){ a+=meta.up[k]; b+=META[k].max+(META[k].ext||0); } return Math.round(a/b*100); }
 function renderHall(){ $("souls-hall").textContent=`${meta.souls||0} Seelen`;
   $("hero-hall").innerHTML = Object.entries(GODS).map(([id,g])=>{ const l=heroLv(id), H=HERO[id], max=l>=HERO_MAX, cost=heroCost(l), can=!max&&(meta.souls||0)>=cost;
-    return `<div class="card" style="cursor:default;transform:none"><canvas width="108" height="108" data-hero="${id}" style="width:54px;height:54px"></canvas><div><h4 style="color:${g.color}">${g.name} <span class="lvl-n">Stufe ${l}/${HERO_MAX}</span></h4><div class="lvl">${HERO_STAGE[heroStage(l)]}</div><p>Pro Stufe: +${Math.round(H.hp*100)} % Leben, +${Math.round(H.dmg*100)} % Schaden, +${String(+(H.spd*100).toFixed(1))} % Tempo. ${H.sp}.</p><div class="bar"><i style="width:${l/HERO_MAX*100}%"></i></div><p style="font-size:13px;color:var(--mute)">Sichtbar mächtiger bei Stufe 1, 4, 7 und 10</p><button class="btn${can?" gold":""}" type="button" data-hero-up="${id}" ${can?"":"disabled"} style="margin-top:8px">${max?"Höchste Stufe":`Aufsteigen · ${cost} Seelen`}</button></div></div>`; }).join("");
+    return `<div class="card" style="cursor:default;transform:none"><canvas width="108" height="108" data-hero="${id}" style="width:54px;height:54px"></canvas><div><h4 style="color:${g.color}">${g.name} <span class="lvl-n">Heldengrad ${l}/${HERO_MAX}</span></h4><div class="lvl">${HERO_STAGE[heroStage(l)]}</div><p>Pro Heldengrad: +${Math.round(H.hp*100)} % Leben, +${Math.round(H.dmg*100)} % Schaden, +${String(+(H.spd*100).toFixed(1))} % Tempo. ${H.sp}.</p><div class="bar"><i style="width:${l/HERO_MAX*100}%"></i></div><p style="font-size:13px;color:var(--mute)">Sichtbar mächtiger bei Heldengrad 1, 4, 7 und 10</p><button class="btn${can?" gold":""}" type="button" data-hero-up="${id}" ${can?"":"disabled"} style="margin-top:8px">${max?"Höchster Heldengrad":`Aufsteigen · ${cost} Seelen`}</button></div></div>`; }).join("");
   document.querySelectorAll("[data-hero]").forEach(cv=>{ const g=cv.getContext("2d"); g.clearRect(0,0,108,108); g.drawImage(heroSpr(cv.dataset.hero,heroStage(heroLv(cv.dataset.hero))).img,0,0,108,108); }); }
 $("hero-hall").addEventListener("click", e=>{ const b=e.target.closest("[data-hero-up]"); if(!b||b.disabled) return; const id=b.dataset.heroUp, st0=heroStage(heroLv(id));
   if(!buyHero(id)) return; const st=heroStage(heroLv(id)); audioInit(); sfx(st>st0?"win":"level"); renderHall();
-  $("hero-msg").textContent = st>st0? `${GODS[id].name} wird sichtbar mächtiger: ${HERO_STAGE[st]}` : `${GODS[id].name} steigt auf Stufe ${heroLv(id)}`; });
-$("btn-board").addEventListener("click", ()=>{ renderHall(); $("nick").value=meta.nick||""; renderBoard("board","boardnote"); only("ov-board"); });
+  $("hero-msg").textContent = st>st0? `${GODS[id].name} wird sichtbar mächtiger: ${HERO_STAGE[st]}` : `${GODS[id].name} steigt auf Heldengrad ${heroLv(id)}`; });
+$("btn-hall").addEventListener("click", ()=>{ renderHall(); only("ov-hall"); });
+$("btn-hallback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
+$("btn-board").addEventListener("click", ()=>{ $("nick").value=meta.nick||""; renderBoard("board","boardnote"); only("ov-board"); });
 $("btn-boardback").addEventListener("click", ()=>{ renderGods(); only("ov-title"); });
 $("nick").addEventListener("change", async ()=>{ meta.nick=$("nick").value.trim().slice(0,16); saveMeta();
   const mine=boardDocs.find(d=>d.id===uid); if(db&&uid&&mine&&canWrite!==false){ try{ await db.collection("scores").doc(uid).update({nick:meta.nick||"Namenlos"}); }catch(e){} } });
@@ -2963,7 +2963,7 @@ function guestOver(m){
   state="over"; setMusic("title");
   meta.runes+=m.earned|0; meta.souls=(meta.souls||0)+(m.souls|0); meta.runs=(meta.runs||0)+1; meta.totalKills=(meta.totalKills||0)+(m.kills|0);
   meta.bestKoop=meta.bestKoop||{}; const K=meta.bestKoop[m.world]||{wave:0,kills:0,gods:[]}; const rec=m.waves>K.wave || (m.waves===K.wave && m.kills>K.kills); if(rec) meta.bestKoop[m.world]={wave:m.waves,kills:m.kills,gods:m.gods}; saveMeta();
-  $("over-title").textContent=m.title; $("o-waves").textContent=m.waves; $("o-kills").textContent=m.kills; $("o-time").textContent=m.time; $("o-runes").textContent=m.earned;
+  $("over-title").textContent=m.title; $("o-waves").textContent=m.reached??m.waves; $("o-waves-l").textContent=m.reached!=null?"Welle erreicht":"Wellen überlebt"; $("o-kills").textContent=m.kills; $("o-time").textContent=m.time; $("o-runes").textContent=m.earned;
   $("o-record").textContent=`+${m.souls} Seelen und +${m.earned} Runen für dich. `+(rec&&m.waves>0?"Neuer Koop-Rekord! ":"")+"Spieler 1 kann eine neue Runde starten.";
   $("o-dmg").innerHTML=m.dmg||""; $("o-boardwrap").hidden=true; $("btn-again").disabled=true; $("btn-again").textContent="Warte auf Spieler 1";
   hide("ov-wait"); liveClose(); $("hud").hidden=true; $("bossbar").hidden=true; show("ov-over");
@@ -3031,7 +3031,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 50;
+const GAME_VERSION = 51;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
@@ -3125,10 +3125,10 @@ window.__gw = { cam:()=>[camX,camY], heroSpr, sim:simRun, mus:MUS, ac:()=>AC, ma
   const end=()=>{ if(done) return; done=true; el.style.pointerEvents="none"; el.classList.add("out"); setTimeout(()=>el.remove(),340); window.removeEventListener("keydown",end); };
   el.addEventListener("pointerdown",end); window.addEventListener("keydown",end);
   if(red){ el.classList.add("reduced"); setTimeout(end,700); return; }
-  const cv=el.querySelector("canvas"), c=cv.getContext("2d"); if(!c){ setTimeout(end,1700); return; }
+  const cv=el.querySelector("canvas"), c=cv.getContext("2d"); if(!c){ setTimeout(end,4000); return; }
   const dpr=Math.min(window.devicePixelRatio||1,1.5); const W=innerWidth, H=innerHeight;
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); c.scale(dpr,dpr);
-  const DUR=2000, ease=x=>x<0?0:x>1?1:x*x*(3-2*x);
+  const DUR=5000, ease=x=>x<0?0:x>1?1:x*x*(3-2*x);
   // Nebel-Sprite
   const fs=document.createElement("canvas"); fs.width=fs.height=128; { const f=fs.getContext("2d"), g=f.createRadialGradient(64,64,0,64,64,64); g.addColorStop(0,"rgba(170,195,230,.9)"); g.addColorStop(.5,"rgba(140,170,210,.35)"); g.addColorStop(1,"rgba(140,170,210,0)"); f.fillStyle=g; f.fillRect(0,0,128,128); }
   const fog=[]; for(let i=0;i<11;i++) fog.push({x:Math.random(),y:.45+Math.random()*.55,r:.35+Math.random()*.4,v:(Math.random()<.5?-1:1)*(.04+Math.random()*.08),a:.05+Math.random()*.07,front:i>5});
@@ -3136,7 +3136,7 @@ window.__gw = { cam:()=>[camX,camY], heroSpr, sim:simRun, mus:MUS, ac:()=>AC, ma
   const gh=Math.min(H*.76,W*1.5), gw=Math.min(W*.92,gh*.95), pw=gw*.11, ow=gw-2*pw, top=H*.13, bot=top+gh, cx=W/2, dw=ow/2;
   const archPath=(x0,w,y0,y1)=>{ c.beginPath(); c.moveTo(x0,y1); c.lineTo(x0,y0+w/2); c.arc(x0+w/2,y0+w/2,w/2,Math.PI,0); c.lineTo(x0+w,y1); c.closePath(); };
   // Blitze: [Start, Länge, Stärke]
-  const FL=[[110,230,.8],[620,260,1],[1120,230,.6]];
+  const FL=[[250,260,.8],[1550,300,1],[2800,260,.6],[3600,260,.7],[4200,280,.9]];
   const mkBolt=()=>{ const pts=[]; let x=W*(.15+Math.random()*.7), y=0; const tx=x+(Math.random()-.5)*W*.3, n=11; for(let k=0;k<=n;k++){ pts.push([x,y]); y+=H*.5/n; x+=(tx-x)/(n-k+1)+(Math.random()-.5)*W*.07; } const br=[]; for(let b=0;b<2;b++){ const k=3+Math.floor(Math.random()*5), q=[pts[k]]; let bx=pts[k][0], by=pts[k][1]; for(let m=0;m<4;m++){ bx+=(b?1:-1)*W*.04+(Math.random()-.5)*W*.03; by+=H*.05; q.push([bx,by]); } br.push(q); } return {pts,br}; };
   const bolts=FL.map(mkBolt);
   const stone=(x,y,w,h)=>{ const g=c.createLinearGradient(x,0,x+w,0); g.addColorStop(0,"#1a2332"); g.addColorStop(.5,"#2b374a"); g.addColorStop(1,"#141b28"); c.fillStyle=g; c.fillRect(x,y,w,h); c.strokeStyle="rgba(0,0,0,.35)"; c.lineWidth=1; const bh=gh/11; for(let yy=y+bh;yy<y+h;yy+=bh){ c.beginPath(); c.moveTo(x,yy); c.lineTo(x+w,yy); c.stroke(); } };
@@ -3162,7 +3162,7 @@ window.__gw = { cam:()=>[camX,camY], heroSpr, sim:simRun, mus:MUS, ac:()=>AC, ma
     let g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#0a1220"); g.addColorStop(.6,"#101c33"); g.addColorStop(1,"#070b12"); c.fillStyle=g; c.fillRect(0,0,W,H);
     // Blitzhelligkeit
     let fl=0, flIdx=-1; FL.forEach((f,i)=>{ const d=t-f[0]; if(d>=0&&d<f[1]){ const v=f[2]*Math.pow(1-d/f[1],1.6); if(v>fl){ fl=v; flIdx=i; } } });
-    const open=ease((t-420)/1150);   // Tor öffnet sich von 0.42 s bis 1.57 s
+    const open=ease((t-1000)/2800);   // Tor öffnet sich von 1.0 s bis 3.8 s
     // Licht hinter dem Tor
     const iy=bot-gh*.45; c.save(); archPath(cx-ow/2,ow,top+pw,bot); c.clip();
     let lg=c.createRadialGradient(cx,iy,0,cx,iy,gh*.75); lg.addColorStop(0,"rgba(255,244,205,"+(.25+.75*open)+")"); lg.addColorStop(.25,"rgba(242,193,78,"+(.15+.7*open)+")"); lg.addColorStop(.7,"rgba(60,90,150,.35)"); lg.addColorStop(1,"rgba(10,18,32,1)"); c.fillStyle=lg; c.fillRect(cx-ow/2,top,ow,gh);
@@ -3186,12 +3186,12 @@ window.__gw = { cam:()=>[camX,camY], heroSpr, sim:simRun, mus:MUS, ac:()=>AC, ma
     if(fl>0){ c.fillStyle="rgba(200,225,255,"+(fl*.5)+")"; c.fillRect(0,0,W,H); }
     // Donner: nur wenn der Ton schon freigegeben ist
     if(flIdx>=0 && flIdx!==lastBoom && t-FL[flIdx][0]<60){ lastBoom=flIdx; try{ if(flIdx<2 && AC && AC.state==="running") sfx(flIdx===0?"boom":"big"); }catch(e){} }
-    // Ausblenden zur Titelseite in den letzten 0.3 s
-    if(t>DUR-300 && !el.classList.contains("out")) el.classList.add("out");
+    // Ausblenden zur Titelseite in den letzten 0.4 s
+    if(t>DUR-400 && !el.classList.contains("out")) el.classList.add("out");
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  setTimeout(end,DUR+400);   // Notausgang, falls requestAnimationFrame pausiert (Tab im Hintergrund)
+  setTimeout(end,DUR+500);   // Notausgang, falls requestAnimationFrame pausiert (Tab im Hintergrund)
 })();
 })();
 </script>
