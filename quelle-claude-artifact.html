@@ -77,7 +77,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ov.live .ov-in{pointer-events:auto;width:min(760px,100%);margin:0 auto;gap:8px;background:rgba(7,11,18,.84);border:1px solid var(--line);border-radius:16px;padding:10px 12px;max-height:50vh;overflow-y:auto}
 .ov.live h2.t{font-size:18px;margin:0}.ov.live .hint{font-size:13px;margin:0}.ov.live .cards{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
 .ov.live .card{padding:9px 10px;grid-template-columns:34px minmax(0,1fr);gap:8px;animation:none}.ov.live .card p{font-size:13px}
-.livebtn{position:fixed;right:12px;bottom:calc(min(120px, 26vw) + 24px + env(safe-area-inset-bottom,0px));z-index:30;padding:10px 18px;border-radius:999px;border:1px solid var(--gold);background:rgba(10,15,24,.88);color:var(--gold);font:600 15px/1 inherit;animation:lbp 1.6s ease-in-out infinite}
+.autobtn{position:fixed;right:12px;bottom:calc(min(120px, 26vw) + 20px + env(safe-area-inset-bottom,0px));pointer-events:auto;z-index:25;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(10,15,24,.82);color:var(--text,#e8e2d0);font:600 13px/1 inherit;min-width:min(120px, 26vw)}
+.livebtn{position:fixed;right:12px;bottom:calc(min(120px, 26vw) + 64px + env(safe-area-inset-bottom,0px));z-index:30;padding:10px 18px;border-radius:999px;border:1px solid var(--gold);background:rgba(10,15,24,.88);color:var(--gold);font:600 15px/1 inherit;animation:lbp 1.6s ease-in-out infinite}
 @keyframes lbp{0%,100%{box-shadow:0 0 0 0 rgba(255,215,120,.45)}50%{box-shadow:0 0 0 8px rgba(255,215,120,0)}}
 .livelater{display:none}.ov.live .card p+p{display:none}.ov.live .card h4{font-size:16px;margin:2px 0}.ov.live .card .lvl{font-size:11px}.ov.live .card .ic{width:34px;height:34px;font-size:20px}
 #updbar{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:60;display:flex;gap:10px;align-items:center;background:rgba(7,11,18,.92);border:1px solid var(--gold,#f2c14e);border-radius:12px;padding:8px 12px;font-size:14px;max-width:calc(100% - 24px)}#updbar[hidden]{display:none}#updbar .btn{padding:6px 12px;min-height:0}
@@ -210,6 +211,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div id="bossbar" hidden><div class="n" id="bossname">Jötunn</div><div class="b"><div id="bossfill"></div></div></div>
   <div id="banner"></div>
   <div id="weapons"></div>
+  <button class="autobtn" id="btn-auto3" type="button" aria-label="Gaben wählen: Modus wechseln">Gaben: Kampf</button>
 </div>
 
 <!-- title -->
@@ -217,7 +219,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 46</div>
+    <div class="ver" id="ver">Version 47</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -231,7 +233,6 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
       <button class="btn" id="btn-quicksave" type="button">⬇ Spielstand speichern</button>
       <label class="btn" for="quick-load" style="cursor:pointer">⬆ Spielstand laden</label><input type="file" id="quick-load" accept=".json,.gwsave,.txt,application/json,text/plain" hidden>
       <button class="btn" id="btn-sound" type="button">Ton: an</button>
-      <button class="btn" id="btn-auto" type="button">Gaben: selbst wählen</button>
       <button class="btn" id="btn-music" type="button">Musik: an</button>
     </div>
     <div class="keys" id="keys-desktop"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeile bewegen</span><span><kbd>Esc</kbd> Pause</span><span>Koop: Spieler 1 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, Spieler 2 Pfeile</span></div>
@@ -271,7 +272,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="row"><button class="btn gold" id="btn-coin-yes" type="button">Münzwurf annehmen</button><button class="btn" id="btn-coin-no" type="button">Ablehnen</button></div>
 </div></div>
 <div class="ov" id="ov-pause" hidden><div class="ov-in"><h2 class="t">Pause</h2><div class="build" id="pause-build"></div>
-  <div class="row"><button class="btn gold" id="btn-resume" type="button">Weiter</button><button class="btn" id="btn-sound2" type="button">Ton: an</button><button class="btn" id="btn-auto2" type="button">Gaben: selbst wählen</button><button class="btn" id="btn-music2" type="button">Musik: an</button><button class="btn" id="btn-quit" type="button">Aufgeben</button></div></div></div>
+  <div class="row"><button class="btn gold" id="btn-resume" type="button">Weiter</button><button class="btn" id="btn-sound2" type="button">Ton: an</button><button class="btn" id="btn-music2" type="button">Musik: an</button><button class="btn" id="btn-quit" type="button">Aufgeben</button></div></div></div>
 
 <div class="ov" id="ov-koop" hidden><div class="ov-in">
   <div class="runes" aria-hidden="true">ᚷᛖᛗᛖᛁᚾ</div><h2 class="t">Koop</h2>
@@ -2371,12 +2372,13 @@ function renderGods(){
 }
 function cardMode(){ return meta.autoPick? "auto" : meta.cardStop? "stop" : "live"; }   // live = im Kampf wählen, stop = Spiel hält an, auto = automatisch
 const CARD_TXT = { live:"Gaben: im Kampf wählen", stop:"Gaben: Spiel hält an", auto:"Gaben: automatisch" };
-function autoTxt(){ $("btn-auto").textContent = $("btn-auto2").textContent = CARD_TXT[cardMode()]; }
+const CARD_SHORT = { live:"Gaben: Kampf", stop:"Gaben: Pause", auto:"Gaben: Auto" };   // kurzer Text für den Knopf im Spiel
+function autoTxt(){ $("btn-auto3").textContent = CARD_SHORT[cardMode()]; $("btn-auto3").title = CARD_TXT[cardMode()]; }
 function toggleAuto(){ const m=cardMode(), nx= m==="live"?"stop" : m==="stop"?"auto" : "live";
   meta.autoPick= nx==="auto"; meta.cardStop= nx==="stop"; saveMeta(); autoTxt();
   if(G && !G.coop && !NET.guest && !liveOn() && G.lvq){ G.pendingLv += (NET.live[0]?1:0) + (G.lvq[0]||0); G.lvq[0]=0; NET.live=[null,null]; liveClose(); }   // offene Karten nicht verlieren
   if(NET.guest && NET.conn) NET.conn.send({t:"auto", v:!!meta.autoPick}); }
-$("btn-auto").addEventListener("click", toggleAuto); $("btn-auto2").addEventListener("click", toggleAuto);
+$("btn-auto3").addEventListener("click", e=>{ toggleAuto(); e.currentTarget.blur(); if(G) floatTxt(CARD_TXT[cardMode()]); });
 function autoNote(o){ const nm=o.t==="w"||o.t==="evo"?WEAP[o.id].name:o.t==="p"?PASS[o.id].name:o.t==="heal"?"Heilung":o.t==="runes"?"Runen":"Macht"; floatTxt(`✦ ${nm}`); }
 function floatTxt(v){ if(G) text(G.x, G.y-44, v, 2); }
 let selWorld = meta.lastWorld && worldOpen(meta.lastWorld) ? meta.lastWorld : "mittgard", selGod = null;
@@ -2896,7 +2898,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 46;
+const GAME_VERSION = 47;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
