@@ -1,8 +1,9 @@
 # Status
 
-Stand: 08.11.2026, Version 42
+Stand: 08.11.2026, Version 43
 
 ## Zuletzt geändert
+- Version 43 (Claude): **Umweg-Server für Online-Koop.** Nicos Test im Handy-Hotspot zeigte: auch im selben Netz keine direkte Verbindung. Jetzt ist ein TURN-Server eingetragen (ExpressTURN, Gratis-Konto von Nico, `free.expressturn.com:3478`, UDP und TCP). Klappt die direkte Verbindung nicht, läuft das Spiel über diesen Server. Getestet mit erzwungenem Umweg: Verbindung steht, Spiel läuft mit rund 19 Ständen pro Sekunde, etwa 130 KB/s (rund 0,5 GB pro Stunde, zählt aufs Gratis-Kontingent und aufs Handy-Datenvolumen). Die Zugangsdaten stehen offen im Spiel (bei Gratis-TURN üblich).
 - Version 42 (Claude, nach Nicos Test «Man verbindet sich nicht»): **Klare Meldung, woran die Verbindung scheitert.**
   - Befund: Die Umweg-Server (TURN), die PeerJS eingebaut hat (eu-0/us-0.turn.peerjs.com), gibt es nicht mehr (Adresse löst sich nicht auf). Ohne Umweg-Server klappt Online-Koop nur, wenn die Netze eine direkte Verbindung erlauben; im Mobilfunk ist das oft nicht so. Getestet mit erzwungenem Umweg: keine Verbindung möglich.
   - Neu: eigene Serverliste im Spiel (`TURN` und `PEER_OPT`, zwei STUN-Server von Google und Cloudflare). Der Gast unterscheidet «Spieler 1 nicht erreichbar» (Einladung nicht offen) von «Spieler 1 gefunden, aber Netze blockieren» (dann: beide ins WLAN). Spieler 1 sieht «Mitspieler klopft an …» und dieselbe Netz-Meldung.

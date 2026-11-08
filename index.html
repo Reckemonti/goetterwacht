@@ -228,7 +228,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 42</div>
+    <div class="ver" id="ver">Version 43</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -2528,9 +2528,9 @@ function netLeave(){ netReset(); koop=false; koopNet=false; toTitle(); }
 const cleanGuest = m => { const up={}; for(const k in META) up[k]=clamp(Math.floor(Number(m&&m.up&&m.up[k])||0),0,META[k].max+(META[k].ext||0)); return { god:m.god, up, heroLv:cleanHeroes(m&&m.heroLv) }; };
 
 const JOIN_MS = 120000, KNOCK_MS = 8000;
-const TURN = [];   // Umweg-Server für Netze, die keine direkte Verbindung erlauben (Mobilfunk). Eintrag: { urls:["turn:…"], username:"…", credential:"…" }
+const TURN = [ { urls:["turn:free.expressturn.com:3478","turn:free.expressturn.com:3478?transport=tcp"], username:"000000002109555920", credential:"kZVmmXvhDf1bCPOPIeP7PNhCgyo=" } ];   // Umweg-Server (ExpressTURN, Gratis-Konto von Nico) für Netze ohne direkte Verbindung (Mobilfunk, Hotspot)
 const PEER_OPT = { config:{ iceServers:[ {urls:"stun:stun.l.google.com:19302"}, {urls:"stun:stun.cloudflare.com:3478"}, ...TURN ] } };
-const NO_DIRECT = "Spieler 1 ist gefunden, aber eure Netze lassen keine direkte Verbindung zu (oft im Mobilfunk). Versucht beide im WLAN, am besten im selben.";   // Gast klopft bis 2 Minuten lang alle 8 s an
+const NO_DIRECT = "Spieler 1 ist gefunden, aber die Verbindung kommt nicht zustande, auch nicht über den Umweg-Server. Versucht es nochmals oder beide in einem WLAN.";   // Gast klopft bis 2 Minuten lang alle 8 s an
 function netRejoin(peer){ if(!peer || peer.destroyed || NET.peer!==peer || !peer.disconnected || peer._rj) return; peer._rj=true;
   setTimeout(()=>{ peer._rj=false; try{ if(NET.peer===peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(e){} }, 1500); }
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && NET.peer) netRejoin(NET.peer); });
@@ -2762,7 +2762,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 42;
+const GAME_VERSION = 43;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
