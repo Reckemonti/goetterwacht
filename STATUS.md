@@ -1,8 +1,12 @@
 # Status
 
-Stand: 08.11.2026, Version 41
+Stand: 08.11.2026, Version 42
 
 ## Zuletzt geändert
+- Version 42 (Claude, nach Nicos Test «Man verbindet sich nicht»): **Klare Meldung, woran die Verbindung scheitert.**
+  - Befund: Die Umweg-Server (TURN), die PeerJS eingebaut hat (eu-0/us-0.turn.peerjs.com), gibt es nicht mehr (Adresse löst sich nicht auf). Ohne Umweg-Server klappt Online-Koop nur, wenn die Netze eine direkte Verbindung erlauben; im Mobilfunk ist das oft nicht so. Getestet mit erzwungenem Umweg: keine Verbindung möglich.
+  - Neu: eigene Serverliste im Spiel (`TURN` und `PEER_OPT`, zwei STUN-Server von Google und Cloudflare). Der Gast unterscheidet «Spieler 1 nicht erreichbar» (Einladung nicht offen) von «Spieler 1 gefunden, aber Netze blockieren» (dann: beide ins WLAN). Spieler 1 sieht «Mitspieler klopft an …» und dieselbe Netz-Meldung.
+  - Offen: einen Umweg-Server eintragen. Dafür braucht es ein kostenloses Konto bei einem TURN-Anbieter (Nico entscheidet); Zugangsdaten kommen in `TURN`.
 - Version 41 (Claude, nach Nicos Test: «Keine Verbindung … passiert die ganze Zeit»): **Einladung übersteht den Wechsel in eine andere App.**
   - Fehler: Wechselt Spieler 1 auf dem Handy kurz in eine andere App (z. B. WhatsApp, um den Link zu schicken), trennt Android die Verbindung zum PeerJS-Vermittler. Das Spiel gab die Einladung dann sofort auf; der Mitspieler sah nach 20 s «Keine Verbindung».
   - Lösung: Spieler 1 verbindet sich selbst neu mit dem Vermittler (sofort und beim Zurückkommen in die App), die Einladung und der Link bleiben gültig. Der Mitspieler klopft bis 2 Minuten lang alle 8 Sekunden neu an und zeigt «Warte auf Spieler 1 … (Versuch n)». Klopft er neu an, ersetzt die neue Verbindung die alte.

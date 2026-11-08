@@ -212,7 +212,7 @@ input.nick{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius
   <div class="ov-in">
     <div class="runes" aria-hidden="true">ᚷᛟᛏᛏᛖᚱᚹᚨᚲᚺᛏ</div>
     <div class="logo">Götterwacht</div>
-    <div class="ver" id="ver">Version 41</div>
+    <div class="ver" id="ver">Version 42</div>
     <div class="hint" id="credit">Made by a Legend NMO</div>
     <div class="sub">Überlebe die Wellen. Erobere die Welten.</div>
     <div class="row"><button class="btn gold big" id="btn-solo" type="button">Spiel starten · Solo</button><button class="btn big" id="btn-koop" type="button" title="Zu zweit an einem Gerät">Spiel starten · Koop</button></div>
@@ -2511,7 +2511,10 @@ function netFail(msg){ const g=NET.guest; netReset(); G=null; state="title"; $("
 function netLeave(){ netReset(); koop=false; koopNet=false; toTitle(); }
 const cleanGuest = m => { const up={}; for(const k in META) up[k]=clamp(Math.floor(Number(m&&m.up&&m.up[k])||0),0,META[k].max+(META[k].ext||0)); return { god:m.god, up, heroLv:cleanHeroes(m&&m.heroLv) }; };
 
-const JOIN_MS = 120000, KNOCK_MS = 8000;   // Gast klopft bis 2 Minuten lang alle 8 s an
+const JOIN_MS = 120000, KNOCK_MS = 8000;
+const TURN = [];   // Umweg-Server für Netze, die keine direkte Verbindung erlauben (Mobilfunk). Eintrag: { urls:["turn:…"], username:"…", credential:"…" }
+const PEER_OPT = { config:{ iceServers:[ {urls:"stun:stun.l.google.com:19302"}, {urls:"stun:stun.cloudflare.com:3478"}, ...TURN ] } };
+const NO_DIRECT = "Spieler 1 ist gefunden, aber eure Netze lassen keine direkte Verbindung zu (oft im Mobilfunk). Versucht beide im WLAN, am besten im selben.";   // Gast klopft bis 2 Minuten lang alle 8 s an
 function netRejoin(peer){ if(!peer || peer.destroyed || NET.peer!==peer || !peer.disconnected || peer._rj) return; peer._rj=true;
   setTimeout(()=>{ peer._rj=false; try{ if(NET.peer===peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(e){} }, 1500); }
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && NET.peer) netRejoin(NET.peer); });
@@ -2524,9 +2527,10 @@ async function netHost(god){
   if(NET_LOCAL){ attach(wrapBC(NET.code,"h")); ready(); return; }
   try{ await loadPeer(); }catch(e){ netFail("Die Verbindungs-Bibliothek konnte nicht geladen werden. Prüfe das Internet."); return; }
   if(!NET.host) return;
-  const peer=new Peer("gwacht-"+NET.code.toLowerCase()); NET.peer=peer;
+  const peer=new Peer("gwacht-"+NET.code.toLowerCase(), PEER_OPT); NET.peer=peer;
   peer.on("open", ready);
-  peer.on("connection", c=>{ c.on("open", ()=>{
+  peer.on("connection", c=>{ if(!G){ $("lobby-msg").textContent="Mitspieler klopft an, Verbindung wird aufgebaut …"; setTimeout(()=>{ if(NET.host && !c.open && !NET.conn && NET.peer===peer) $("lobby-msg").textContent=NO_DIRECT.replace("Spieler 1 ist gefunden","Dein Mitspieler hat angeklopft"); }, KNOCK_MS+1000); }
+    c.on("open", ()=>{
     if(NET.conn && G){ try{ c.send({t:"full"}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },500); return; }
     if(NET.conn){ const old=NET.conn; old.onClose=null; old.onData=null; old.close(); NET.conn=null; NET.guestInfo=null; $("btn-lobby-start").hidden=true; }   // Gast hat neu angeklopft: neue Verbindung gilt
     attach(wrapPeer(c)); }); });
@@ -2540,18 +2544,20 @@ async function netJoin(code){
   netReset(); NET.guest=true; NET.code=code; lobby("Online-Koop", "Verbinde mit Spieler 1 …");
   if(NET_LOCAL){ attach(wrapBC(code,"g")); NET.conn.send({t:"hello", v:GAME_VERSION}); return; }
   try{ await loadPeer(); }catch(e){ netFail("Die Verbindungs-Bibliothek konnte nicht geladen werden. Prüfe das Internet."); return; }
-  const peer=new Peer(); NET.peer=peer; const t0=performance.now(); let tries=0, started=false;
+  const peer=new Peer(PEER_OPT); NET.peer=peer; const t0=performance.now(); let tries=0, started=false, why="", found=false;
   const knock=()=>{ if(!NET.guest || NET.conn || NET.peer!==peer) return;
-    if(peer.destroyed || performance.now()-t0>JOIN_MS){ netFail("Keine Verbindung zu Spieler 1. Er muss das Spiel mit der Einladung offen haben. Sonst um einen neuen Link bitten."); return; }
+    if(peer.destroyed || performance.now()-t0>JOIN_MS){ netFail(found && why!=="nohost" ? NO_DIRECT : "Keine Verbindung zu Spieler 1. Er muss das Spiel mit der Einladung offen und vorne haben. Sonst um einen neuen Link bitten."); return; }
     if(peer.disconnected){ netRejoin(peer); setTimeout(knock,3000); return; }
-    if(++tries>1) $("lobby-msg").textContent=`Warte auf Spieler 1 … (Versuch ${tries}). Spieler 1 muss das Spiel mit der Einladung offen haben.`;
+    if(++tries>1) $("lobby-msg").textContent = why==="nohost" ? `Warte auf Spieler 1 … (Versuch ${tries}). Spieler 1 ist gerade nicht erreichbar: Er muss das Spiel mit der Einladung offen und vorne haben.` : `Versuch ${tries}: ${NO_DIRECT}`;
+    why="";
     const c=peer.connect("gwacht-"+code.toLowerCase(), {reliable:true});
     c.on("open", ()=>{ if(NET.conn || !NET.guest){ try{ c.close(); }catch(e){} return; } attach(wrapPeer(c)); NET.conn.send({t:"hello", v:GAME_VERSION}); });
-    setTimeout(()=>{ if(NET.guest && !NET.conn && NET.peer===peer){ try{ c.close(); }catch(e){} knock(); } }, KNOCK_MS); };
+    setTimeout(()=>{ if(NET.guest && !NET.conn && NET.peer===peer){ if(why!=="nohost") found=true; try{ c.close(); }catch(e){} knock(); } }, KNOCK_MS); };
   peer.on("open", ()=>{ if(started) return; started=true; knock(); });
   peer.on("disconnected", ()=>{ if(!NET.conn) netRejoin(peer); });
   peer.on("error", e=>{ if(!NET.guest || NET.peer!==peer) return;
-    if(["peer-unavailable","network","disconnected","socket-error","socket-closed","server-error","webrtc"].includes(e.type)) return;   // weiter anklopfen
+    if(e.type==="peer-unavailable"){ why="nohost"; return; }
+    if(["network","disconnected","socket-error","socket-closed","server-error","webrtc"].includes(e.type)) return;   // weiter anklopfen
     netFail(`Verbindung fehlgeschlagen (${e.type}).`); });
   setTimeout(()=>{ if(NET.guest && NET.peer===peer && !started && !NET.conn) netFail("Der Verbindungsdienst antwortet nicht. Prüfe das Internet und lade die Seite neu."); }, 30000);
 }
@@ -2740,7 +2746,7 @@ const joyEnd=e=>{ for(const J of [joy,joy2]) if(e.pointerId===J.id){ J.on=false;
 cv.addEventListener("pointerup", joyEnd); cv.addEventListener("pointercancel", joyEnd);
 
 /* ---------------- boot ---------------- */
-const GAME_VERSION = 41;
+const GAME_VERSION = 42;
 $("ver").textContent = `Version ${GAME_VERSION}`;
 if(MOBILE || matchMedia("(hover:none)").matches){ $("keys-desktop").hidden=true; $("keys-touch").hidden=false; }
 // Audio unlock: iOS only counts touchend/click as a gesture, and the ring/silent switch mutes Web Audio
