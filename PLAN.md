@@ -19,6 +19,7 @@ Vorhanden: Wellen (Meilensteine bis Welle 20), Ruhmeshalle, Seelen, Nebel als Um
 | GW-5 | ✅ v35: Weitere wählbare Fähigkeiten beim Seelen-Levelaufstieg | GW-4 |
 | GW-7 | ✅ v38: Koop-Modus (lokal zu zweit an einem Gerät) | GW-6 |
 | GW-8 | ✅ v39: Online-Koop mit Einladungslink, jeder auf seinem Gerät, nicht derselbe Gott | GW-7 |
+| GW-9 | ✅ v40: Online-Koop: Herzschlag gegen Abbrüche, Karten ohne Unterbruch (10 s, geschützt) | GW-8 |
 | GW-6 | ✅ v37: Helden einzeln in der Ruhmeshalle leveln (passend zu ihren Fähigkeiten), Helden optisch überarbeiten, mit dem Level sichtbar mächtiger | GW-1 |
 
 Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
@@ -51,6 +52,8 @@ Alle Punkte ändern dieselbe Datei: nacheinander, nicht parallel.
   - Nicht derselbe Gott (online und lokal). Welt wählt Spieler 1; Niflheim darf der Gast auch ohne eigene Freischaltung mitspielen.
   - Verbindung weg: Gast landet im Menü, Gastgeber spielt allein weiter (Partner bleibt am Boden). 20 Sekunden ohne Nachricht gelten als Abbruch.
   - Test: `werkzeuge/online-qa.js` (zwei Fenster, ohne Internet über BroadcastChannel, mit `NETZ=echt` über PeerJS).
+
+- Karten im Online-Koop (v40, Nico 08.11.: «sonst gibt es ständig Unterbrüche»): kein Anhalten. Jede gemeinsame Stufe gibt beiden eine Karte, jeder wählt für sich in einer Leiste unten. Während der Wahl ist man geschützt, nach 10 s nimmt das Spiel die erste Karte. Lokaler Koop bleibt beim Abwechseln mit Pause (ein Bildschirm). Schicksal und Münzwurf halten weiter an, weil sie für beide gelten und selten sind.
 
 ## Nächster Schritt
 Online-Koop mit zwei echten Geräten testen, dann Koop feinjustieren. Offen: Versionen 35-39 ins claude.ai-Artifact veröffentlichen.
